@@ -1,0 +1,14 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+*.swp
+*.swo
+
+# Personal data (if you accidentally put real data here)
+# Uncomment these if you fork and add your own data:
+# .cursor/skills/engineer-brain/BRAIN.md
+# .cursor/skills/engineer-brain/RESUME.md
+# .cursor/skills/engineer-brain/*.pdf
