@@ -1,6 +1,8 @@
-# cursor-engineer-brain
+# engineer-brain
 
-A self-updating engineering context system for [Cursor IDE](https://cursor.sh) that tracks your work patterns, expertise, habits, and growth — then generates daily standups and quarterly review content automatically.
+A self-updating engineering context system that tracks your work patterns, expertise, habits, and growth — then generates daily standups and quarterly review content automatically.
+
+Works with **any AI coding assistant**: Cursor, Claude Code, VS Code Copilot, Windsurf, Aider, Continue.dev, and more.
 
 Think of it as a **second brain for your engineering career**, powered by your git history and living inside your IDE.
 
@@ -10,28 +12,43 @@ Think of it as a **second brain for your engineering career**, powered by your g
 
 | Command | What You Get |
 |---------|-------------|
-| `/engineer-brain sync` | Ready-to-paste standup notes (scans git, detects blockers, suggests today's work) |
-| `/engineer-brain update` | Refreshes your BRAIN.md with latest commit data, velocity trends, expertise shifts |
-| `/engineer-brain quarterly` | Generates structured quarterly review content with impact metrics |
-| `/engineer-brain reflect` | Pattern analysis: blind spots, habit observations, actionable recommendations |
-| `/engineer-brain scan [days]` | Raw git scan output across all your repos |
+| `engineer-brain sync` | Ready-to-paste standup notes (scans git, detects blockers, suggests today's work) |
+| `engineer-brain update` | Refreshes your BRAIN.md with latest commit data, velocity trends, expertise shifts |
+| `engineer-brain quarterly` | Generates structured quarterly review content with impact metrics |
+| `engineer-brain reflect` | Pattern analysis: blind spots, habit observations, actionable recommendations |
+| `engineer-brain scan [days]` | Raw git scan output across all your repos |
+
+---
+
+## Supported Platforms
+
+| Platform | Context File | Installation |
+|----------|-------------|--------------|
+| [Cursor](https://cursor.sh) | `.cursor/rules/engineer-brain.mdc` + `SKILL.md` | `bash install.sh cursor` |
+| [Claude Code](https://claude.ai/code) | `CLAUDE.md` | `bash install.sh claude-code` |
+| [VS Code Copilot](https://github.com/features/copilot) | `.github/copilot-instructions.md` | `bash install.sh vscode-copilot` |
+| [Windsurf](https://codeium.com/windsurf) | `.windsurfrules` | `bash install.sh windsurf` |
+| [Aider](https://aider.chat) | `CONVENTIONS.md` | `bash install.sh aider` |
+| [Continue.dev](https://continue.dev) | `.continue/rules.md` | `bash install.sh continue-dev` |
+
+Each platform gets the same core brain — just with its native context file format.
 
 ---
 
 ## Features
 
-### Always-On Context (`.cursor/rules/engineer-brain.mdc`)
-- Cursor loads your engineering profile **on every message** — no need to explain your stack, your repos, or your goals repeatedly
-- AI knows your strengths, growing areas, workspace layout, and preferred work style
+### Always-On Context
+- Your AI loads your engineering profile **on every interaction** — no need to explain your stack, repos, or goals repeatedly
+- AI knows your strengths, growth areas, workspace layout, and preferred work style
 - Custom instructions shape how the AI assists you (push toward architecture, flag security issues, reference your test patterns, etc.)
 
-### Self-Updating Brain (`.cursor/skills/engineer-brain/BRAIN.md`)
+### Self-Updating Brain (`BRAIN.md`)
 - Living document that evolves as you work
 - Tracks: career history, skills inventory, active repos, expertise map, work patterns, sprint context, growth roadmap
 - Auto-classifies expertise levels (Strong / Growing / Exposure) based on commit frequency
 - Detects patterns: fix-to-feature ratio, velocity trends, cooling repos, stale goals
 
-### Multi-Repo Git Scanner (`scripts/scan.sh`)
+### Multi-Repo Git Scanner (`scan.sh`)
 - Scans **all git repos** in your workspace in one pass
 - Outputs: recent commits, active branches, uncommitted changes, commit type breakdown, files touched, velocity metrics
 - Works with any number of repos (monorepos, polyrepos, whatever)
@@ -42,7 +59,7 @@ Think of it as a **second brain for your engineering career**, powered by your g
 - Monday-aware: looks back 3 days on Mondays (covers the weekend)
 - Weekend-aware: tells you to take the day off
 - Detects blockers automatically (merge conflicts, CI failures, stale branches)
-- Integrates with Jira if available
+- Integrates with Jira/Linear if available
 
 ### Quarterly Review Automation
 - Generates structured performance review content from your actual git history
@@ -64,59 +81,92 @@ Think of it as a **second brain for your engineering career**, powered by your g
 
 ---
 
-## Installation
+## Quick Start
 
-1. **Copy the `.cursor` folder** into your workspace root:
+### 1. Install for your platform
 
 ```bash
-cp -r .cursor /path/to/your/workspace/
+git clone https://github.com/Hrithik-Gavankar/engineer-brain.git
+cd engineer-brain
+
+# Pick your platform:
+bash install.sh cursor ~/my-workspace
+bash install.sh claude-code ~/my-workspace
+bash install.sh vscode-copilot ~/my-workspace
+bash install.sh windsurf ~/my-workspace
+bash install.sh aider ~/my-workspace
+bash install.sh continue-dev ~/my-workspace
 ```
 
-2. **Configure the scanner** — edit `.cursor/skills/engineer-brain/scripts/scan.sh`:
+### 2. Configure
+
+Edit the context file that was installed (the main one for your platform) and fill in:
+- `[YOUR NAME]`, `[YOUR ROLE]`, `[YOUR COMPANY]`
+- Career history, skills inventory, workspace layout
+- Custom "When Helping Me" instructions
+
+### 3. Configure the scanner
+
+Edit `.engineer-brain/scripts/scan.sh` (or `.cursor/skills/engineer-brain/scripts/scan.sh` for Cursor):
 
 ```bash
-# Set your workspace path
 WORKSPACE="${1:-$HOME/path/to/your/workspace}"
-
-# Set your git author pattern (matches across all repos)
 AUTHOR_PATTERN="your-name\|your-username\|your-email"
 ```
 
-3. **Fill in the rule** — edit `.cursor/rules/engineer-brain.mdc`:
-   - Replace `[YOUR NAME]`, `[YOUR ROLE]`, etc. with your info
-   - Customize the "When Helping Me" instructions to match your preferences
+### 4. Go
 
-4. **Fill in BRAIN.md** — edit `.cursor/skills/engineer-brain/BRAIN.md`:
-   - Add your career history, skills, active repos
-   - Or just run `/engineer-brain update` and let it auto-populate from git history
+Open your AI assistant and say: **"engineer-brain update"**
 
-5. **Optional**: Add your resume as `RESUME.md` or a PDF in the skill folder for richer context.
+It will scan your git history and auto-populate BRAIN.md. From then on, run `sync` before standups, `reflect` on Fridays, and `quarterly` before reviews.
 
 ---
 
-## File Structure
+## Project Structure
 
 ```
-.cursor/
-├── rules/
-│   └── engineer-brain.mdc          # Always-on context rule (loaded every message)
-└── skills/
-    └── engineer-brain/
-        ├── SKILL.md                 # Skill definition (commands, logic, prompts)
-        ├── BRAIN.md                 # Living document (your data, auto-updated)
-        ├── RESUME.md                # (Optional) Your resume for richer context
-        └── scripts/
-            └── scan.sh              # Multi-repo git scanner
+engineer-brain/
+├── core/                              # Platform-agnostic core
+│   ├── BRAIN.md                       # Living document template
+│   ├── COMMANDS.md                    # Full command reference & logic
+│   ├── CONTEXT.md                     # Context rule template (generic)
+│   └── scripts/
+│       └── scan.sh                    # Multi-repo git scanner
+├── platforms/                         # Platform-specific adapters
+│   ├── cursor/                        # Cursor IDE
+│   │   ├── rules/engineer-brain.mdc
+│   │   ├── skills/engineer-brain/SKILL.md
+│   │   └── README.md
+│   ├── claude-code/                   # Claude Code
+│   │   ├── CLAUDE.md
+│   │   └── README.md
+│   ├── vscode-copilot/               # VS Code + GitHub Copilot
+│   │   ├── .github/copilot-instructions.md
+│   │   └── README.md
+│   ├── windsurf/                      # Windsurf (Codeium)
+│   │   ├── .windsurfrules
+│   │   └── README.md
+│   ├── aider/                         # Aider
+│   │   ├── CONVENTIONS.md
+│   │   └── README.md
+│   └── continue-dev/                  # Continue.dev
+│       ├── .continue/rules.md
+│       └── README.md
+├── install.sh                         # Universal installer
+├── .gitignore
+├── LICENSE
+└── README.md                          # This file
 ```
 
 ### How the pieces work together:
 
-| File | Purpose | When It's Used |
-|------|---------|----------------|
-| `rules/engineer-brain.mdc` | Always-on AI context | Every single AI interaction |
-| `skills/.../SKILL.md` | Command definitions & logic | When you invoke `/engineer-brain` |
-| `skills/.../BRAIN.md` | Your living engineering profile | Referenced by sync/update/quarterly |
-| `scripts/scan.sh` | Git data collection | Called by sync/update/quarterly/scan |
+| Component | Purpose | Used By |
+|-----------|---------|---------|
+| `core/BRAIN.md` | Your living engineering profile | All platforms |
+| `core/COMMANDS.md` | Command definitions & logic | Non-Cursor platforms |
+| `core/scripts/scan.sh` | Git data collection | All commands |
+| `platforms/<name>/` | Platform-specific context file | Your chosen AI assistant |
+| `install.sh` | Sets up everything for a platform | You, once |
 
 ---
 
@@ -124,22 +174,23 @@ AUTHOR_PATTERN="your-name\|your-username\|your-email"
 
 ### Add Your Own Commands
 
-Edit `SKILL.md` and add a new `### command-name` section following the existing pattern.
+Edit `core/COMMANDS.md` (or `SKILL.md` for Cursor) and add a new section following the existing pattern.
 
 ### Change Standup Format
 
-Edit the standup template in `SKILL.md` under the `sync` command to match your team's Slack/Teams format.
+Edit the standup template in `core/COMMANDS.md` under the `sync` command to match your team's Slack/Teams format.
 
 ### Add More Data Sources
 
-The system is designed to be extensible. You can add:
-- **Jira integration**: If you have a `jira-integration` MCP tool, the brain will pull sprint data automatically
-- **Session analytics**: If you have a `session-analyzer` tool, it'll include AI usage stats
-- **Custom scripts**: Add more scripts to the `scripts/` folder and reference them in SKILL.md
+The system is designed to be extensible:
+- **Jira integration**: Pull sprint data automatically
+- **Linear integration**: Pull issue assignments and cycle data
+- **Session analytics**: Include AI usage stats
+- **Custom scripts**: Add more scripts to `scripts/` and reference them in COMMANDS.md
 
 ### Tune Pattern Detection Thresholds
 
-In `SKILL.md` under "Auto-Learning Rules", adjust:
+In `core/COMMANDS.md` under "Auto-Learning Rules", adjust:
 - Expertise classification commit thresholds
 - Fix-to-feature ratio warning threshold (default: 60%)
 - Repo cooling period (default: 30 days)
@@ -149,7 +200,7 @@ In `SKILL.md` under "Auto-Learning Rules", adjust:
 
 ## Example Output
 
-### `/engineer-brain sync` (Monday morning)
+### `engineer-brain sync` (Monday morning)
 
 ```
 1. What I worked on Friday:
@@ -164,7 +215,7 @@ In `SKILL.md` under "Auto-Learning Rules", adjust:
 - api-server: refactor/auth-middleware has merge conflict with main
 ```
 
-### `/engineer-brain reflect`
+### `engineer-brain reflect`
 
 ```
 ## Reflection — 2026-07-13
@@ -186,9 +237,23 @@ In `SKILL.md` under "Auto-Learning Rules", adjust:
 
 ## Requirements
 
-- [Cursor IDE](https://cursor.sh) (with Skills support)
+- Any AI coding assistant (see [Supported Platforms](#supported-platforms))
 - Git repositories in your workspace
 - Bash (macOS or Linux)
+
+---
+
+## Adding a New Platform
+
+Want to add support for another AI tool? It's simple:
+
+1. Create `platforms/<platform-name>/`
+2. Add the context file in whatever format the tool expects
+3. Add a `README.md` with setup instructions
+4. Add an install case in `install.sh`
+5. Submit a PR!
+
+The core content (`BRAIN.md`, `COMMANDS.md`, `scan.sh`) stays the same — you're just creating a new context file adapter.
 
 ---
 
@@ -200,7 +265,10 @@ PRs welcome! Ideas for improvement:
 - [ ] Integration with more project management tools (Linear, Shortcut, etc.)
 - [ ] Weekly email digest mode
 - [ ] Team-level brain (aggregate patterns across a team)
-- [ ] VS Code extension wrapper (for non-Cursor users)
+- [ ] Web UI dashboard for visualizing patterns and progress
+- [ ] Zed editor support
+- [ ] JetBrains AI Assistant support
+- [ ] Neovim + AI plugin support
 
 ---
 
