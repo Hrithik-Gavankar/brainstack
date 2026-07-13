@@ -203,6 +203,48 @@ Just run the scanner and display results.
 
 ---
 
+## Jira Comment Formats
+
+When asked to write a Jira comment, use one of two formats based on the request:
+
+### `short` (default — quick status update)
+
+```
+Hi team,
+
+[One-liner update summarizing the status, action taken, or decision made.]
+
+Thank you!
+```
+
+### `in-depth` (detailed update with structure)
+
+```
+Hi team,
+
+**Updates:**
+- [Update point 1]
+- [Update point 2]
+- [Update point 3]
+
+**Next Steps:**
+- [Action item 1]
+- [Action item 2]
+- [Action item 3]
+
+Thank you!
+```
+
+**Rules:**
+- If the user says "short" or "quick" or "one-liner" → use the short format
+- If the user says "detailed" or "in-depth" or "full update" → use the in-depth format
+- If unspecified, ask which format they want
+- Always open with "Hi team," and close with "Thank you!"
+- Keep bullet points concise and action-oriented
+- Use bold headers for sections in the in-depth format
+
+---
+
 ## Auto-Learning Rules
 
 When running `update`, apply these heuristics to evolve the brain:
