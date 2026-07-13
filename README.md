@@ -1,95 +1,255 @@
-# engineer-brain
+<p align="center">
+  <h1 align="center">Engineer Brain</h1>
+  <p align="center">
+    <strong>A persistent engineering context layer for AI coding assistants.</strong>
+  </p>
+  <p align="center">
+    <a href="https://github.com/Hrithik-Gavankar/engineer-brain/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
+    <a href="https://github.com/Hrithik-Gavankar/engineer-brain/stargazers"><img src="https://img.shields.io/github/stars/Hrithik-Gavankar/engineer-brain?style=social" alt="Stars"></a>
+    <a href="https://github.com/Hrithik-Gavankar/engineer-brain/issues"><img src="https://img.shields.io/github/issues/Hrithik-Gavankar/engineer-brain" alt="Issues"></a>
+    <img src="https://img.shields.io/badge/platforms-6-green" alt="Platforms">
+    <img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs Welcome">
+  </p>
+</p>
 
-A self-updating engineering context system that tracks your work patterns, expertise, habits, and growth — then generates daily standups and quarterly review content automatically.
-
-Works with **any AI coding assistant**: Cursor, Claude Code, VS Code Copilot, Windsurf, Aider, Continue.dev, and more.
-
-Think of it as a **second brain for your engineering career**, powered by your git history and living inside your IDE.
+<p align="center">
+  <a href="#quick-start">Quick Start</a> •
+  <a href="#how-it-works">How It Works</a> •
+  <a href="docs/brain-spec.md">BRAIN.md Spec</a> •
+  <a href="docs/architecture.md">Architecture</a> •
+  <a href="docs/roadmap.md">Roadmap</a> •
+  <a href="docs/faq.md">FAQ</a>
+</p>
 
 ---
 
-## What It Does
+## The Problem
 
-| Command | What You Get |
-|---------|-------------|
-| `engineer-brain sync` | Ready-to-paste standup notes (scans git, detects blockers, suggests today's work) |
-| `engineer-brain update` | Refreshes your BRAIN.md with latest commit data, velocity trends, expertise shifts |
-| `engineer-brain quarterly` | Generates structured quarterly review content with impact metrics |
-| `engineer-brain reflect` | Pattern analysis: blind spots, habit observations, actionable recommendations |
-| `engineer-brain scan [days]` | Raw git scan output across all your repos |
+AI coding assistants understand code. They don't understand *engineers*.
+
+Every session starts from zero. Your AI doesn't know your expertise, your active projects, your team conventions, or your career trajectory. You re-explain context dozens of times a day across multiple tools — burning cognitive energy on something a machine should handle.
+
+Prompts are ephemeral. Chat history is tool-locked. System instructions go stale the moment you write them.
+
+**Engineering context should be portable, persistent, and self-evolving.**
 
 ---
 
-## Supported Platforms
+## The Solution
 
-| Platform | Context File | Installation |
-|----------|-------------|--------------|
-| [Cursor](https://cursor.sh) | `.cursor/rules/engineer-brain.mdc` + `SKILL.md` | `bash install.sh cursor` |
-| [Claude Code](https://claude.ai/code) | `CLAUDE.md` | `bash install.sh claude-code` |
-| [VS Code Copilot](https://github.com/features/copilot) | `.github/copilot-instructions.md` | `bash install.sh vscode-copilot` |
-| [Windsurf](https://codeium.com/windsurf) | `.windsurfrules` | `bash install.sh windsurf` |
-| [Aider](https://aider.chat) | `CONVENTIONS.md` | `bash install.sh aider` |
-| [Continue.dev](https://continue.dev) | `.continue/rules.md` | `bash install.sh continue-dev` |
+Engineer Brain creates a **versioned engineering profile** — stored as a simple Markdown file called `BRAIN.md` — that follows you across every AI coding assistant you use.
 
-Each platform gets the same core brain — just with its native context file format.
+It's not another AI tool. It's a **context layer** that makes every AI tool better.
+
+```
+┌─────────────────────────────────────────────────────┐
+│                   Your Git History                    │
+└─────────────────────┬───────────────────────────────┘
+                      │
+                      ▼
+┌─────────────────────────────────────────────────────┐
+│              Engineer Brain Scanner                   │
+│   (commits, branches, patterns, velocity, expertise) │
+└─────────────────────┬───────────────────────────────┘
+                      │
+                      ▼
+┌─────────────────────────────────────────────────────┐
+│                    BRAIN.md                           │
+│   (your living, versioned engineering profile)       │
+└─────────────────────┬───────────────────────────────┘
+                      │
+          ┌───────────┼───────────┐
+          ▼           ▼           ▼
+     ┌─────────┐ ┌─────────┐ ┌─────────┐
+     │ Cursor  │ │ Claude  │ │ Copilot │  ...
+     │         │ │  Code   │ │         │
+     └─────────┘ └─────────┘ └─────────┘
+```
+
+---
+
+## Why Engineer Brain Exists
+
+| Without Engineer Brain | With Engineer Brain |
+|------------------------|---------------------|
+| Re-explain your stack every session | AI loads your full profile automatically |
+| Generic suggestions that ignore your expertise | Responses tailored to your skill level and goals |
+| Standups written from memory | Paste-ready standups generated from git history |
+| Quarterly reviews are a scramble | Structured reviews with real metrics, auto-generated |
+| Context locked inside one tool | Same brain across 6+ platforms |
+| Static system prompts that decay | Self-updating profile that evolves with your work |
+
+---
+
+## How It Works
+
+```mermaid
+flowchart TD
+    A[Git Repositories] -->|scan.sh| B[Multi-Repo Scanner]
+    B --> C{Pattern Detection}
+    C --> D[Expertise Classification]
+    C --> E[Velocity Analysis]
+    C --> F[Commit Type Distribution]
+    C --> G[Blind Spot Detection]
+    D --> H[BRAIN.md]
+    E --> H
+    F --> H
+    G --> H
+    H -->|Platform Adapter| I[Cursor]
+    H -->|Platform Adapter| J[Claude Code]
+    H -->|Platform Adapter| K[GitHub Copilot]
+    H -->|Platform Adapter| L[Windsurf]
+    H -->|Platform Adapter| M[Aider]
+    H -->|Platform Adapter| N[Continue.dev]
+```
+
+**Three layers:**
+
+1. **Scanner** — Collects raw data from your git history across all repositories
+2. **Brain** — A living Markdown document (`BRAIN.md`) that structures your engineering identity
+3. **Adapters** — Platform-specific context files that feed your brain into each AI tool
+
+---
+
+## What Is BRAIN.md?
+
+`BRAIN.md` is to engineers what `README.md` is to projects.
+
+It's a structured Markdown file that documents *you* — your skills, your work patterns, your active projects, your growth trajectory. It's designed to be consumed by AI assistants, providing them deep context about the human they're helping.
+
+```markdown
+# Jane Doe — Engineering Brain
+
+## Identity
+- Name: Jane Doe
+- Role: Senior Backend Engineer, Payments Team, Stripe
+- Experience: 7 years
+- Goal: Staff Engineer
+
+## Expertise Map
+### Strong
+- Distributed systems (designed payment routing at scale)
+- Go, Python, PostgreSQL
+### Growing
+- Kubernetes operator development
+- Team leadership
+
+## Work Patterns
+- Peak hours: 9AM–1PM PST
+- Style: Test-first, small PRs, security-conscious
+- Fix-to-feature ratio: 35% fix, 45% feat, 20% refactor
+
+## Current Sprint
+- Active: payment-retry-redesign (branch: feat/retry-v2)
+- Reviewing: PR #892 (rate limiter changes)
+```
+
+> Read the full specification: **[docs/brain-spec.md](docs/brain-spec.md)**
+
+---
+
+## Architecture
+
+```mermaid
+graph LR
+    subgraph "Data Sources"
+        GIT[Git History]
+        JIRA[Jira / Linear]
+        SESSION[Session Analytics]
+    end
+
+    subgraph "Core Engine"
+        SCAN[Scanner]
+        DETECT[Pattern Detection]
+        BRAIN[BRAIN.md]
+        CMD[Command Engine]
+    end
+
+    subgraph "Platform Adapters"
+        CUR[Cursor .mdc + SKILL.md]
+        CLA[Claude Code CLAUDE.md]
+        COP[Copilot copilot-instructions.md]
+        WIN[Windsurf .windsurfrules]
+        AID[Aider CONVENTIONS.md]
+        CON[Continue.dev rules.md]
+    end
+
+    GIT --> SCAN
+    JIRA --> CMD
+    SESSION --> CMD
+    SCAN --> DETECT
+    DETECT --> BRAIN
+    BRAIN --> CUR
+    BRAIN --> CLA
+    BRAIN --> COP
+    BRAIN --> WIN
+    BRAIN --> AID
+    BRAIN --> CON
+```
+
+> Full architecture documentation: **[docs/architecture.md](docs/architecture.md)**
+
+---
+
+## Platform Support
+
+Engineer Brain works with every major AI coding assistant. Same brain, native format.
+
+| Platform | Context File | Status |
+|----------|-------------|--------|
+| [Cursor](https://cursor.sh) | `.cursor/rules/engineer-brain.mdc` + `SKILL.md` | ✅ Supported |
+| [Claude Code](https://claude.ai/code) | `CLAUDE.md` | ✅ Supported |
+| [GitHub Copilot](https://github.com/features/copilot) | `.github/copilot-instructions.md` | ✅ Supported |
+| [Windsurf](https://codeium.com/windsurf) | `.windsurfrules` | ✅ Supported |
+| [Aider](https://aider.chat) | `CONVENTIONS.md` | ✅ Supported |
+| [Continue.dev](https://continue.dev) | `.continue/rules.md` | ✅ Supported |
+| [Zed](https://zed.dev) | — | 🗓️ Planned |
+| [JetBrains AI](https://www.jetbrains.com/ai/) | — | 🗓️ Planned |
 
 ---
 
 ## Features
 
-### Always-On Context
-- Your AI loads your engineering profile **on every interaction** — no need to explain your stack, repos, or goals repeatedly
-- AI knows your strengths, growth areas, workspace layout, and preferred work style
-- Custom instructions shape how the AI assists you (push toward architecture, flag security issues, reference your test patterns, etc.)
+### Commands
 
-### Self-Updating Brain (`BRAIN.md`)
-- Living document that evolves as you work
-- Tracks: career history, skills inventory, active repos, expertise map, work patterns, sprint context, growth roadmap
-- Auto-classifies expertise levels (Strong / Growing / Exposure) based on commit frequency
-- Detects patterns: fix-to-feature ratio, velocity trends, cooling repos, stale goals
+| Command | Description |
+|---------|-------------|
+| `engineer-brain sync` | Generate paste-ready standup notes from git history |
+| `engineer-brain update` | Refresh BRAIN.md with latest commits, patterns, and metrics |
+| `engineer-brain quarterly` | Generate structured quarterly review with impact numbers |
+| `engineer-brain reflect` | Pattern analysis: blind spots, habits, recommendations |
+| `engineer-brain scan [days]` | Raw multi-repo git scan output |
 
-### Multi-Repo Git Scanner (`scan.sh`)
-- Scans **all git repos** in your workspace in one pass
-- Outputs: recent commits, active branches, uncommitted changes, commit type breakdown, files touched, velocity metrics
-- Works with any number of repos (monorepos, polyrepos, whatever)
-- Cross-platform (macOS + Linux)
+### Intelligence
 
-### Smart Standup Generation
-- Knows your team's standup format and generates paste-ready notes
-- Monday-aware: looks back 3 days on Mondays (covers the weekend)
-- Weekend-aware: tells you to take the day off
-- Detects blockers automatically (merge conflicts, CI failures, stale branches)
-- Integrates with Jira/Linear if available
+- **Auto-expertise classification** — Strong / Growing / Exposure based on commit frequency
+- **Pattern detection** — Fix-heavy mode, cooling repos, stale goals, velocity drops
+- **Monday-aware standups** — Looks back 3 days on Mondays, skips weekends
+- **Blocker detection** — Merge conflicts, CI failures, stale branches
+- **Growth coaching** — AI nudges you toward career goals, not just code completion
 
-### Quarterly Review Automation
-- Generates structured performance review content from your actual git history
-- Groups accomplishments by impact theme (Security, Quality, DevEx, Features)
-- Includes hard numbers: PRs merged, lines changed, test coverage added
-- Scoped to current team only — won't leak past-role context
+### Safety
 
-### Pattern Detection & Growth Tracking
-- Flags when you're stuck in "fix-only" mode (>60% fix commits)
-- Alerts on cooling repos (active before, dormant now)
-- Escalates stale growth goals (unchecked >30 days)
-- Celebrates new milestones (first `feat:` commit, new repo contributed to)
-
-### Safety Guardrails
-- **Never commits** without your explicit permission
-- **Never pushes** without your explicit permission
-- **Never force-pushes** unless you explicitly say to
-- Always asks before any destructive git operation
+- Never commits without explicit permission
+- Never pushes without explicit permission
+- Never force-pushes under any circumstance
+- Always asks before destructive operations
 
 ---
 
 ## Quick Start
 
-### 1. Install for your platform
+### Install
 
 ```bash
 git clone https://github.com/Hrithik-Gavankar/engineer-brain.git
 cd engineer-brain
+bash install.sh <platform> [workspace_path]
+```
 
-# Pick your platform:
+### Platforms
+
+```bash
 bash install.sh cursor ~/my-workspace
 bash install.sh claude-code ~/my-workspace
 bash install.sh vscode-copilot ~/my-workspace
@@ -98,27 +258,20 @@ bash install.sh aider ~/my-workspace
 bash install.sh continue-dev ~/my-workspace
 ```
 
-### 2. Configure
+### Configure
 
-Edit the context file that was installed (the main one for your platform) and fill in:
-- `[YOUR NAME]`, `[YOUR ROLE]`, `[YOUR COMPANY]`
-- Career history, skills inventory, workspace layout
-- Custom "When Helping Me" instructions
+1. Edit the installed context file — fill in your name, role, skills, and career context
+2. Edit the scanner config — set your workspace path and git author pattern
+3. Run `engineer-brain update` in your AI assistant — it auto-populates BRAIN.md from your git history
 
-### 3. Configure the scanner
+### Use
 
-Edit `.engineer-brain/scripts/scan.sh` (or `.cursor/skills/engineer-brain/scripts/scan.sh` for Cursor):
-
-```bash
-WORKSPACE="${1:-$HOME/path/to/your/workspace}"
-AUTHOR_PATTERN="your-name\|your-username\|your-email"
 ```
-
-### 4. Go
-
-Open your AI assistant and say: **"engineer-brain update"**
-
-It will scan your git history and auto-populate BRAIN.md. From then on, run `sync` before standups, `reflect` on Fridays, and `quarterly` before reviews.
+"engineer-brain sync"        → before standup
+"engineer-brain reflect"     → Friday afternoons
+"engineer-brain update"      → start of each month
+"engineer-brain quarterly"   → before performance reviews
+```
 
 ---
 
@@ -126,149 +279,100 @@ It will scan your git history and auto-populate BRAIN.md. From then on, run `syn
 
 ```
 engineer-brain/
-├── core/                              # Platform-agnostic core
+├── README.md                          # You are here
+├── LICENSE                            # MIT
+├── CONTRIBUTING.md                    # Contribution guidelines
+├── CODE_OF_CONDUCT.md                 # Community standards
+├── CHANGELOG.md                       # Release history
+├── install.sh                         # Universal installer
+│
+├── core/                              # Platform-agnostic engine
 │   ├── BRAIN.md                       # Living document template
-│   ├── COMMANDS.md                    # Full command reference & logic
-│   ├── CONTEXT.md                     # Context rule template (generic)
+│   ├── COMMANDS.md                    # Command definitions & logic
+│   ├── CONTEXT.md                     # Context rule template
 │   └── scripts/
 │       └── scan.sh                    # Multi-repo git scanner
+│
 ├── platforms/                         # Platform-specific adapters
-│   ├── cursor/                        # Cursor IDE
-│   │   ├── rules/engineer-brain.mdc
-│   │   ├── skills/engineer-brain/SKILL.md
-│   │   └── README.md
-│   ├── claude-code/                   # Claude Code
-│   │   ├── CLAUDE.md
-│   │   └── README.md
-│   ├── vscode-copilot/               # VS Code + GitHub Copilot
-│   │   ├── .github/copilot-instructions.md
-│   │   └── README.md
-│   ├── windsurf/                      # Windsurf (Codeium)
-│   │   ├── .windsurfrules
-│   │   └── README.md
-│   ├── aider/                         # Aider
-│   │   ├── CONVENTIONS.md
-│   │   └── README.md
-│   └── continue-dev/                  # Continue.dev
-│       ├── .continue/rules.md
-│       └── README.md
-├── install.sh                         # Universal installer
-├── .gitignore
-├── LICENSE
-└── README.md                          # This file
-```
-
-### How the pieces work together:
-
-| Component | Purpose | Used By |
-|-----------|---------|---------|
-| `core/BRAIN.md` | Your living engineering profile | All platforms |
-| `core/COMMANDS.md` | Command definitions & logic | Non-Cursor platforms |
-| `core/scripts/scan.sh` | Git data collection | All commands |
-| `platforms/<name>/` | Platform-specific context file | Your chosen AI assistant |
-| `install.sh` | Sets up everything for a platform | You, once |
-
----
-
-## Customization
-
-### Add Your Own Commands
-
-Edit `core/COMMANDS.md` (or `SKILL.md` for Cursor) and add a new section following the existing pattern.
-
-### Change Standup Format
-
-Edit the standup template in `core/COMMANDS.md` under the `sync` command to match your team's Slack/Teams format.
-
-### Add More Data Sources
-
-The system is designed to be extensible:
-- **Jira integration**: Pull sprint data automatically
-- **Linear integration**: Pull issue assignments and cycle data
-- **Session analytics**: Include AI usage stats
-- **Custom scripts**: Add more scripts to `scripts/` and reference them in COMMANDS.md
-
-### Tune Pattern Detection Thresholds
-
-In `core/COMMANDS.md` under "Auto-Learning Rules", adjust:
-- Expertise classification commit thresholds
-- Fix-to-feature ratio warning threshold (default: 60%)
-- Repo cooling period (default: 30 days)
-- Growth goal escalation period (default: 30 days)
-
----
-
-## Example Output
-
-### `engineer-brain sync` (Monday morning)
-
-```
-1. What I worked on Friday:
-- api-server: fixed rate limiting edge case on concurrent requests (PR #142)
-- dashboard: added loading states to analytics charts (#89)
-
-2. What I plan on working on today:
-- api-server: continue auth refactor (branch: refactor/auth-middleware)
-- review: PR #145 from @teammate (caching layer)
-
-3. Blockers:
-- api-server: refactor/auth-middleware has merge conflict with main
-```
-
-### `engineer-brain reflect`
-
-```
-## Reflection — 2026-07-13
-
-### What You're Doing Well
-- Consistent daily commits (avg 2.3/day)
-- Strong test coverage habit (every fix includes tests)
-
-### Blind Spots
-- Haven't touched frontend-app repo in 45 days (was active before)
-- No `perf:` commits detected — performance work is a growth goal
-
-### Recommendations
-1. Pick up one frontend-app issue this week to keep that repo warm
-2. Profile the API response times — you have the skills from past roles
+│   ├── cursor/
+│   ├── claude-code/
+│   ├── vscode-copilot/
+│   ├── windsurf/
+│   ├── aider/
+│   └── continue-dev/
+│
+├── docs/                              # Documentation
+│   ├── architecture.md
+│   ├── brain-spec.md
+│   ├── vision.md
+│   ├── roadmap.md
+│   └── faq.md
+│
+├── examples/                          # Example BRAIN.md profiles
+│   ├── backend-engineer/
+│   ├── frontend-engineer/
+│   ├── devops-engineer/
+│   ├── platform-engineer/
+│   └── oss-maintainer/
+│
+├── templates/                         # Starter templates
+│   └── BRAIN.md
+│
+└── .github/                           # GitHub configuration
+    ├── ISSUE_TEMPLATE/
+    ├── workflows/
+    └── PULL_REQUEST_TEMPLATE.md
 ```
 
 ---
 
-## Requirements
+## Roadmap
 
-- Any AI coding assistant (see [Supported Platforms](#supported-platforms))
-- Git repositories in your workspace
-- Bash (macOS or Linux)
+See **[docs/roadmap.md](docs/roadmap.md)** for the full roadmap.
 
----
+**Near-term:**
+- [ ] `engineer-brain doctor` — health check and brain completeness score
+- [ ] Web dashboard for visualizing patterns
+- [ ] Team-level brain (aggregate insights)
 
-## Adding a New Platform
+**Mid-term:**
+- [ ] Zed and JetBrains platform support
+- [ ] GitLab/Bitbucket integration
+- [ ] Weekly email digest mode
+- [ ] MCP server for real-time brain queries
 
-Want to add support for another AI tool? It's simple:
-
-1. Create `platforms/<platform-name>/`
-2. Add the context file in whatever format the tool expects
-3. Add a `README.md` with setup instructions
-4. Add an install case in `install.sh`
-5. Submit a PR!
-
-The core content (`BRAIN.md`, `COMMANDS.md`, `scan.sh`) stays the same — you're just creating a new context file adapter.
+**Long-term:**
+- [ ] BRAIN.md ecosystem — importers, exporters, validators
+- [ ] Organization-level engineering intelligence
+- [ ] Open standard adoption
 
 ---
 
 ## Contributing
 
-PRs welcome! Ideas for improvement:
+We welcome contributions! See **[CONTRIBUTING.md](CONTRIBUTING.md)** for guidelines.
 
-- [ ] Support for GitLab/Bitbucket alongside GitHub
-- [ ] Integration with more project management tools (Linear, Shortcut, etc.)
-- [ ] Weekly email digest mode
-- [ ] Team-level brain (aggregate patterns across a team)
-- [ ] Web UI dashboard for visualizing patterns and progress
-- [ ] Zed editor support
-- [ ] JetBrains AI Assistant support
-- [ ] Neovim + AI plugin support
+**Quick ways to contribute:**
+- Add support for a new AI platform
+- Improve pattern detection heuristics
+- Create example BRAIN.md profiles for different engineering roles
+- Improve documentation
+- Report bugs or suggest features
+
+---
+
+## FAQ
+
+See **[docs/faq.md](docs/faq.md)** for the full FAQ.
+
+**Is this another AI coding tool?**
+No. Engineer Brain doesn't write code. It provides context to tools that do.
+
+**Does it send my data anywhere?**
+No. Everything stays local — your git history, your BRAIN.md, your context files. Nothing leaves your machine.
+
+**Can I use it with multiple AI tools simultaneously?**
+Yes. That's the point. Install once, use everywhere.
 
 ---
 
@@ -278,6 +382,10 @@ MIT — use it, fork it, make it yours.
 
 ---
 
-## Credits
+<p align="center">
+  <strong>The future isn't smarter AI. It's AI that understands engineers.</strong>
+</p>
 
-Built by [Hrithik Gavankar](https://github.com/hrithikgavankar) while working on Ansible DevTools at Red Hat. Born out of the need to stop re-explaining context to AI tools and start getting personalized, career-aware assistance.
+<p align="center">
+  Built by <a href="https://github.com/Hrithik-Gavankar">Hrithik Gavankar</a>
+</p>
