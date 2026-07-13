@@ -18,6 +18,8 @@ jobs:
         with:
           use-quiet-mode: 'yes'
           config-file: '.github/mlc_config.json'
+          file-extension: '.md'
+          folder-path: 'docs,examples,platforms,core'
 
       - name: Validate shell scripts
         run: |

@@ -37,6 +37,6 @@ It's not another AI tool. It's a **context layer** that makes every AI tool bett
 
 ## Next Steps
 
-- [Quick Start](/docs/quick-start) — Install in 5 minutes
-- [BRAIN.md Spec](/docs/concepts/brain-spec) — Understand the format
-- [Architecture](/docs/architecture) — How it works under the hood
+- [Quick Start](./quick-start.md) — Install in 5 minutes
+- [BRAIN.md Spec](./concepts/brain-spec.md) — Understand the format
+- [Architecture](./architecture.md) — How it works under the hood
