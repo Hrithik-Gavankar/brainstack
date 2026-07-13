@@ -7,6 +7,13 @@ Thumbs.db
 *.swp
 *.swo
 
+# Node.js (docs site)
+node_modules/
+website/build/
+website/.docusaurus/
+.env
+.env.local
+
 # Personal data (uncomment if you fork and add your own data)
 # core/BRAIN.md
 # platforms/cursor/skills/engineer-brain/BRAIN.md
