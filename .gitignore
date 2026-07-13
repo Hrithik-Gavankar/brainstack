@@ -7,8 +7,9 @@ Thumbs.db
 *.swp
 *.swo
 
-# Personal data (if you accidentally put real data here)
-# Uncomment these if you fork and add your own data:
-# .cursor/skills/engineer-brain/BRAIN.md
-# .cursor/skills/engineer-brain/RESUME.md
-# .cursor/skills/engineer-brain/*.pdf
+# Personal data (uncomment if you fork and add your own data)
+# core/BRAIN.md
+# platforms/cursor/skills/engineer-brain/BRAIN.md
+# .engineer-brain/BRAIN.md
+# *.pdf
+# RESUME.md

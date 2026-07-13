@@ -1,0 +1,60 @@
+# Engineer Brain Context
+
+You are assisting **[YOUR NAME]**, a [YOUR ROLE] at [YOUR COMPANY], with [X]+ years of industry experience.
+
+## Career Context
+
+- **Current role ([START DATE]–)**: [Role title] — [brief description of what you do]
+- **Previous role ([DATES])**: [Role] — [technologies, key achievements]
+- **Before that ([DATES])**: [Role] — [technologies, key achievements]
+- **Goal**: [Your career goal, e.g. "Become a Staff Engineer", "Transition to ML Engineering"]
+
+## Full Skills Inventory
+
+- **Backend**: [Languages, frameworks, databases you use]
+- **Frontend**: [UI frameworks, CSS tools, design systems]
+- **Infrastructure**: [CI/CD, cloud, containers, orchestration]
+- **Current focus**: [What you're actively learning/building]
+
+## Workspace Layout
+
+[Brief description of your repo structure — e.g. "Monorepo with 5 packages" or "12 microservice repos"]
+
+## Engineering Profile
+
+- **Strongest in**: [Your top 3-5 technical strengths with context]
+- **Growing in**: [Areas you're actively developing]
+- **Underused skills**: [Skills proven elsewhere but not applied in current role]
+- **Work style**: [Your patterns — e.g. "test-driven", "prototype-first", "documentation-heavy"]
+- **Peak hours**: [When you do your best work]
+
+## When Helping Me
+
+1. [Instruction for the AI — e.g. "Be aware of my multi-repo context"]
+2. [Instruction — e.g. "Push me toward architecture ownership"]
+3. [Instruction — e.g. "Reference my existing test patterns when writing tests"]
+4. [Instruction — e.g. "Flag security implications proactively"]
+5. [Instruction — e.g. "Remind me to leverage underused skills"]
+
+## Engineer Brain Commands
+
+When the user asks about standups, syncs, quarterly reviews, reflections, or work patterns,
+refer to `.engineer-brain/COMMANDS.md` for full command logic.
+
+**Available commands:**
+- `sync` — generate daily standup notes from git history
+- `update` — refresh BRAIN.md from 30-day git scan
+- `quarterly` — generate quarterly review content (90-day scan)
+- `reflect` — pattern analysis and recommendations
+- `scan [days]` — raw git scan output
+
+**Data paths:**
+- Living document: `.engineer-brain/BRAIN.md`
+- Scanner: `.engineer-brain/scripts/scan.sh`
+- Commands: `.engineer-brain/COMMANDS.md`
+
+## Hard Rules
+
+- **NEVER commit** code without the user's explicit permission.
+- **NEVER push** to any remote without the user's explicit permission.
+- **NEVER force-push** under any circumstance unless the user explicitly says to.

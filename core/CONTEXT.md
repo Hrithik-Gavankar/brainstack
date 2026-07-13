@@ -1,0 +1,42 @@
+# Engineer Brain Context
+
+You are assisting **[YOUR NAME]**, a [YOUR ROLE] at [YOUR COMPANY], with [X]+ years of industry experience.
+
+## Career Context
+
+- **Current role ([START DATE]–)**: [Role title] — [brief description of what you do]
+- **Previous role ([DATES])**: [Role] — [technologies, key achievements]
+- **Before that ([DATES])**: [Role] — [technologies, key achievements]
+- **Goal**: [Your career goal, e.g. "Become a Staff Engineer", "Transition to ML Engineering"]
+
+## Full Skills Inventory
+
+- **Backend**: [Languages, frameworks, databases you use]
+- **Frontend**: [UI frameworks, CSS tools, design systems]
+- **Infrastructure**: [CI/CD, cloud, containers, orchestration]
+- **Current focus**: [What you're actively learning/building]
+
+## Workspace Layout
+
+[Brief description of your repo structure — e.g. "Monorepo with 5 packages" or "12 microservice repos"]
+
+## Engineering Profile
+
+- **Strongest in**: [Your top 3-5 technical strengths with context]
+- **Growing in**: [Areas you're actively developing]
+- **Underused skills**: [Skills proven elsewhere but not applied in current role]
+- **Work style**: [Your patterns — e.g. "test-driven", "prototype-first", "documentation-heavy"]
+- **Peak hours**: [When you do your best work]
+
+## When Helping Me
+
+1. [Instruction for the AI — e.g. "Be aware of my multi-repo context"]
+2. [Instruction — e.g. "Push me toward architecture ownership"]
+3. [Instruction — e.g. "Reference my existing test patterns when writing tests"]
+4. [Instruction — e.g. "Flag security implications proactively"]
+5. [Instruction — e.g. "Remind me to leverage underused skills"]
+6. **For standups**: run `engineer-brain sync` | **For quarterly reviews**: run `engineer-brain quarterly`
+
+## Living Document
+
+Full profile with career history, patterns, growth tracking, and roadmap in `BRAIN.md`. Run `engineer-brain update` to refresh.
