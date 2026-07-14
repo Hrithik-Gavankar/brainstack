@@ -48,10 +48,12 @@ follow the command logic in `.engineer-brain/COMMANDS.md`.
 - `quarterly` — generate quarterly review content
 - `reflect` — pattern analysis and recommendations
 - `scan [days]` — raw git scan output
+- `jira [filter]` — fetch assigned Jira tasks (all/active/backlog/review/sprint/done/weekly/quarterly)
 
 **Data paths:**
 - Living document: `.engineer-brain/BRAIN.md`
 - Scanner script: `.engineer-brain/scripts/scan.sh`
+- Jira script: `.engineer-brain/scripts/jira.sh`
 - Command reference: `.engineer-brain/COMMANDS.md`
 
 ## Hard Rules

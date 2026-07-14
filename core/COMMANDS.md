@@ -173,6 +173,35 @@ Analyze current patterns and provide actionable feedback.
    3. [Specific, actionable suggestion with reasoning]
    ```
 
+### `jira` (assigned tasks from Jira)
+
+Fetch your assigned Jira issues, grouped by status.
+
+**Usage:** `jira [filter] [days]`
+
+**Filters:**
+- `all` (default) — all open issues assigned to you
+- `active` — only "In Progress" issues
+- `backlog` — only "Backlog" issues
+- `review` — only issues in "Review" status
+- `sprint` — issues in the current open sprint
+- `done [days]` — issues completed in the last N days (default 7)
+- `weekly` — issues completed in the last 7 days
+- `quarterly` — issues completed since the start of the current quarter
+
+1. Run:
+   ```bash
+   bash <path-to-scripts>/jira.sh [filter] [days]
+   ```
+2. Display the output directly.
+
+**Required env vars:** `JIRA_URL`, `JIRA_EMAIL`, `JIRA_API_TOKEN`
+
+**Integration with other commands:**
+- When running `sync`, also run `jira done 1` (or `jira done 3` on Monday) to include recently closed Jira tasks in standup notes.
+- When running `quarterly`, also run `jira quarterly` to include all closed Jira tasks for the quarter in the review content.
+- When running `reflect`, check `jira all` for stale assigned issues that haven't been updated recently.
+
 ### `scan` (raw data refresh)
 
 Just run the scanner and display results.
@@ -267,5 +296,5 @@ After each `update`, compare current state against previous state:
 - **Weekly reflection**: Run `reflect` on Fridays
 - **Monthly update**: Run `update` at month start
 - **Quarterly prep**: Run `quarterly` before performance reviews
-- **Tracker context**: If Jira/Linear integration is available, pull sprint data
+- **Jira integration**: Run `jira` command to pull assigned tasks, completed work, and sprint data
 - **Session analyzer**: If session analytics are available, pull AI usage stats
