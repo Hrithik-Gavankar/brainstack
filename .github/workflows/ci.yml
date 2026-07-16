@@ -48,6 +48,10 @@ jobs:
         run: |
           find /tmp/test-workspace -name "scan.sh" -executable | grep -q scan.sh
 
+      - name: Verify doctor script is executable
+        run: |
+          find /tmp/test-workspace -name "doctor.sh" -executable | grep -q doctor.sh
+
   scanner-test:
     name: Test Scanner
     runs-on: ubuntu-latest

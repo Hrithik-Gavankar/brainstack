@@ -17,7 +17,7 @@ The foundation: a working system with multi-platform support.
 - [x] Monday-aware standups with blocker detection
 - [x] Documentation: architecture, BRAIN.md spec, vision, FAQ
 - [x] Examples for multiple engineering profiles
-- [ ] `engineer-brain doctor` — brain health check and completeness score
+- [x] `engineer-brain doctor` — brain health check and completeness score
 - [ ] GIF/screenshot demos for README and social media
 
 ---

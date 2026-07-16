@@ -7,8 +7,8 @@ description: >-
   "daily sync", "standup", "sync up", "quarterly connections", "what did I
   work on", "my progress", "where am I lacking", "what should I focus on",
   "update my brain", "brain scan", "engineering context", or ask about
-  your own work patterns.
-argument-hint: <command> — sync | update | quarterly | reflect | scan [days]
+  your own work patterns, "doctor", "health check", "brain health".
+argument-hint: <command> — sync | update | quarterly | reflect | scan [days] | doctor
 tools: Read, Write, Shell, Glob, Grep
 ---
 
@@ -191,6 +191,17 @@ Just run the scanner and display results.
    bash "${SKILL_DIR}/scripts/scan.sh" "$HOME/path/to/workspace" [days]
    ```
 3. Display the output directly.
+
+### `doctor` (brain health check)
+
+Check the health and completeness of your engineering brain.
+
+1. Run the doctor script:
+   ```bash
+   bash "${SKILL_DIR}/scripts/doctor.sh" "$HOME/path/to/workspace"
+   ```
+2. Display the output directly to the user. Do not modify, summarize, or reformat the report.
+3. If the overall score is below 80%, suggest the user run `/engineer-brain update` to improve data freshness.
 
 ---
 

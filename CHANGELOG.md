@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [Unreleased]
+
+### Added
+- `engineer-brain doctor` command — brain health check with weighted scoring, cooling repo detection, and growth suggestions
+- `core/scripts/doctor.sh` — portable health check script (macOS + Linux)
+
+---
+
 ## [1.0.0] — 2026-07-14
 
 ### Added

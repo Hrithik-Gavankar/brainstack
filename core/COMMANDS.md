@@ -213,6 +213,17 @@ Just run the scanner and display results.
    ```
 3. Display the output directly.
 
+### `doctor` (brain health check)
+
+Check the health and completeness of your engineering brain.
+
+1. Run the doctor script:
+   ```bash
+   bash <path-to-scripts>/doctor.sh "$HOME/path/to/workspace"
+   ```
+2. Display the output directly to the user. Do not modify, summarize, or reformat the report.
+3. If the overall score is below 80%, suggest the user run `engineer-brain update` to improve data freshness.
+
 ---
 
 ## Hard Rules

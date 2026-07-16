@@ -39,8 +39,8 @@ You are assisting **[YOUR NAME]**, a [YOUR ROLE] at [YOUR COMPANY], with [X]+ ye
 ## Engineer Brain Commands
 
 When the user says "engineer-brain sync", "daily sync", "standup", "update brain",
-"quarterly review", "reflect", "brain scan", or asks about their work patterns,
-follow the command logic in `.engineer-brain/COMMANDS.md`.
+"quarterly review", "reflect", "brain scan", "doctor", "health check", "brain health",
+or asks about their work patterns, follow the command logic in `.engineer-brain/COMMANDS.md`.
 
 **Available commands:**
 - `sync` — generate daily standup notes
@@ -48,11 +48,13 @@ follow the command logic in `.engineer-brain/COMMANDS.md`.
 - `quarterly` — generate quarterly review content
 - `reflect` — pattern analysis and recommendations
 - `scan [days]` — raw git scan output
+- `doctor` — brain health check and completeness score
 - `jira [filter]` — fetch assigned Jira tasks (all/active/backlog/review/sprint/done/weekly/quarterly)
 
 **Data paths:**
 - Living document: `.engineer-brain/BRAIN.md`
 - Scanner script: `.engineer-brain/scripts/scan.sh`
+- Doctor script: `.engineer-brain/scripts/doctor.sh`
 - Jira script: `.engineer-brain/scripts/jira.sh`
 - Command reference: `.engineer-brain/COMMANDS.md`
 

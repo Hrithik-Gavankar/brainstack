@@ -135,8 +135,10 @@ install_core() {
   mkdir -p "$WORKSPACE/.engineer-brain/scripts"
   cp "$SCRIPT_DIR/core/BRAIN.md" "$WORKSPACE/.engineer-brain/BRAIN.md"
   cp "$SCRIPT_DIR/core/scripts/scan.sh" "$WORKSPACE/.engineer-brain/scripts/scan.sh"
+  cp "$SCRIPT_DIR/core/scripts/doctor.sh" "$WORKSPACE/.engineer-brain/scripts/doctor.sh"
   cp "$SCRIPT_DIR/core/COMMANDS.md" "$WORKSPACE/.engineer-brain/COMMANDS.md"
   chmod +x "$WORKSPACE/.engineer-brain/scripts/scan.sh"
+  chmod +x "$WORKSPACE/.engineer-brain/scripts/doctor.sh"
   success "Core files installed (.engineer-brain/)"
 }
 
@@ -178,7 +180,9 @@ install_cursor() {
   cp "$SCRIPT_DIR/platforms/cursor/skills/engineer-brain/SKILL.md" "$WORKSPACE/.cursor/skills/engineer-brain/"
   cp "$SCRIPT_DIR/core/BRAIN.md" "$WORKSPACE/.cursor/skills/engineer-brain/BRAIN.md"
   cp "$SCRIPT_DIR/core/scripts/scan.sh" "$WORKSPACE/.cursor/skills/engineer-brain/scripts/scan.sh"
+  cp "$SCRIPT_DIR/core/scripts/doctor.sh" "$WORKSPACE/.cursor/skills/engineer-brain/scripts/doctor.sh"
   chmod +x "$WORKSPACE/.cursor/skills/engineer-brain/scripts/scan.sh"
+  chmod +x "$WORKSPACE/.cursor/skills/engineer-brain/scripts/doctor.sh"
   success "Cursor rules and skills installed (.cursor/)"
   configure_scanner "$WORKSPACE/.cursor/skills/engineer-brain/scripts/scan.sh"
 }

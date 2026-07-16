@@ -219,6 +219,7 @@ Engineer Brain works with every major AI coding assistant. Same brain, native fo
 | `engineer-brain quarterly` | Generate structured quarterly review with impact numbers |
 | `engineer-brain reflect` | Pattern analysis: blind spots, habits, recommendations |
 | `engineer-brain scan [days]` | Raw multi-repo git scan output |
+| `engineer-brain doctor` | Brain health check with completeness score and growth suggestions |
 
 ### Intelligence
 
@@ -331,7 +332,7 @@ engineer-brain/
 See **[docs/roadmap.md](docs/roadmap.md)** for the full roadmap.
 
 **Near-term:**
-- [ ] `engineer-brain doctor` — health check and brain completeness score
+- [x] `engineer-brain doctor` — health check and brain completeness score
 - [ ] Web dashboard for visualizing patterns
 - [ ] Team-level brain (aggregate insights)
 

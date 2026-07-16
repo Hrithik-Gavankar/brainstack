@@ -12,7 +12,7 @@ See the full [roadmap on GitHub](https://github.com/Hrithik-Gavankar/engineer-br
 - Core engine with 6 platform adapters
 - Commands: sync, update, quarterly, reflect
 - Pattern detection and auto-expertise classification
-- `engineer-brain doctor` command (coming soon)
+- `engineer-brain doctor` command
 
 ### Next (v1.x)
 - Zed, JetBrains, Neovim support
