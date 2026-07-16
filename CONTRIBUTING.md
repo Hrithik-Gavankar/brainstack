@@ -29,10 +29,16 @@ Thank you for your interest in contributing! Engineer Brain is an open-source pr
 
 ### 1. Fork and clone
 
+Fork this repository on GitHub first, then clone **your** fork:
+
 ```bash
 git clone https://github.com/<your-username>/engineer-brain.git
 cd engineer-brain
+git remote add upstream https://github.com/Hrithik-Gavankar/engineer-brain.git
 ```
+
+- `origin` = your fork (you push here)
+- `upstream` = this project (you fetch updates from here)
 
 ### 2. Create a branch
 
@@ -68,6 +74,48 @@ git push origin feat/your-feature-name
 ```
 
 Then open a Pull Request on GitHub.
+
+---
+
+## First-time contributors
+
+New to open source? This section is for you.
+
+### The basic loop
+
+1. **Fork** the repo on GitHub (your copy under your account).
+2. **Clone your fork**, then add the original project as `upstream` (see Getting Started above).
+3. Create a branch, make one focused change, commit, push to `origin`, open a Pull Request.
+
+### Good first contributions
+
+- Improve documentation (typos, clarity, beginner tips)
+- Add an example `BRAIN.md` profile under `examples/` for a role that isn't covered yet
+- Fix a small bug or improve `scan.sh` output (check open issues)
+
+Larger items (new platforms, new commands, Web UI) are welcome too — just keep the PR focused on one change.
+
+### Try the tool without polluting your clone
+
+If you want to install Engineer Brain while working on a contribution, point the installer at a **separate playground directory**, not this repository's root:
+
+```bash
+mkdir -p /tmp/engineer-brain-playground
+bash install.sh cursor /tmp/engineer-brain-playground
+```
+
+Installing into the clone root creates `.cursor/` (or other platform files) that are easy to commit by mistake.
+
+### Keeping your fork up to date
+
+```bash
+git fetch upstream
+git checkout main
+git merge upstream/main
+git push origin main
+```
+
+Do this before starting a new branch so you're building on the latest code.
 
 ---
 
