@@ -47,10 +47,12 @@ refer to `.engineer-brain/COMMANDS.md` for full command logic.
 - `quarterly` — generate quarterly review content (90-day scan)
 - `reflect` — pattern analysis and recommendations
 - `scan [days]` — raw git scan output
+- `doctor` — brain health check and completeness score
 
 **Data paths:**
 - Living document: `.engineer-brain/BRAIN.md`
 - Scanner: `.engineer-brain/scripts/scan.sh`
+- Doctor: `.engineer-brain/scripts/doctor.sh`
 - Commands: `.engineer-brain/COMMANDS.md`
 
 ## Hard Rules
