@@ -5,6 +5,21 @@
 
 set -uo pipefail
 
+if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
+  echo "Engineer Brain Doctor — health check and completeness score"
+  echo ""
+  echo "Usage: bash doctor.sh [workspace_path] [brain_path]"
+  echo ""
+  echo "Arguments:"
+  echo "  workspace_path   Path to your workspace directory (for live repo scanning)"
+  echo "  brain_path       Path to BRAIN.md (default: ../BRAIN.md relative to script)"
+  echo ""
+  echo "Scores 7 factors: identity completeness, skills freshness, active repos,"
+  echo "sprint context, growth roadmap, velocity consistency, and commit diversity."
+  echo "Outputs an overall health percentage with actionable suggestions."
+  exit 0
+fi
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WORKSPACE="${1:-}"
 BRAIN_PATH="${2:-$SCRIPT_DIR/../BRAIN.md}"
@@ -54,19 +69,19 @@ progress_bar() {
   local bar=""
   local i
   for (( i=0; i<filled; i++ )); do
-    bar="${bar}$(printf '\xe2\x96\x88')"
+    bar="${bar}█"
   done
   for (( i=0; i<empty; i++ )); do
-    bar="${bar}$(printf '\xe2\x96\x91')"
+    bar="${bar}░"
   done
   echo "$bar $score%"
 }
 
 check_mark() {
   if [ "$1" -eq 1 ]; then
-    printf '\xe2\x9c\x93'
+    printf '✓'
   else
-    printf '\xe2\x9c\x97'
+    printf '✗'
   fi
 }
 
@@ -427,7 +442,7 @@ fi
 
 # --- Output Report ---
 
-printf '\xf0\x9f\xa7\xa0 Engineer Brain Health\n'
+echo "🧠 Engineer Brain Health"
 echo ""
 printf "Engineering Context:     %d%%\n" "$OVERALL"
 if [ "$SCAN_AVAILABLE" -eq 1 ]; then
