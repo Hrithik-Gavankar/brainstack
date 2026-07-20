@@ -6,8 +6,14 @@
 set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-WORKSPACE="${1:-$HOME/path/to/your/workspace}"
+WORKSPACE="${1:-}"
 BRAIN_PATH="${2:-$SCRIPT_DIR/../BRAIN.md}"
+
+if [ -z "$WORKSPACE" ]; then
+  echo "Warning: No workspace path provided. Live scan will be skipped."
+  echo "Usage: bash doctor.sh [workspace_path] [brain_path]"
+  echo ""
+fi
 SCAN_SCRIPT="$SCRIPT_DIR/scan.sh"
 
 NOW_EPOCH=$(date +%s 2>/dev/null)
@@ -157,12 +163,7 @@ score_active_repos() {
     echo 0
     return
   fi
-  local target=3
-  if [ "$active" -ge "$target" ]; then
-    echo 100
-  else
-    echo $(( active * 100 / target ))
-  fi
+  echo $(( active * 100 / total ))
 }
 
 score_sprint_context() {
@@ -206,11 +207,17 @@ score_growth_roadmap() {
     echo 0
     return
   fi
+  # Base score from completion (0-80%), bonus for having active goals (+20%)
+  local base=$(( checked * 80 / total ))
+  local bonus=0
   if [ "$unchecked" -gt 0 ]; then
-    echo 100
-  else
-    echo 60
+    bonus=20
   fi
+  local score=$(( base + bonus ))
+  if [ "$score" -gt 100 ]; then
+    score=100
+  fi
+  echo "$score"
 }
 
 score_velocity_consistency() {
@@ -266,7 +273,7 @@ score_commit_diversity() {
     local max_type=""
     while IFS= read -r line; do
       local pct
-      pct=$(echo "$line" | grep -oE '[0-9]+' | tail -1 || true)
+      pct=$(echo "$line" | grep -oE '\([0-9]+%\)' | grep -oE '[0-9]+' || true)
       local typ
       typ=$(echo "$line" | grep -oE '(fix|feat|refactor|test|chore|docs|style|ci|perf|build)' | head -1 || true)
       if [ -n "$pct" ] && [ "$pct" -gt "$max_pct" ]; then
