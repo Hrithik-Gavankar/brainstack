@@ -7,8 +7,9 @@ description: >-
   "daily sync", "standup", "sync up", "quarterly connections", "what did I
   work on", "my progress", "where am I lacking", "what should I focus on",
   "update my brain", "brain scan", "engineering context", or ask about
-  your own work patterns, "doctor", "health check", "brain health".
-argument-hint: <command> — sync | update | quarterly | reflect | scan [days] | doctor
+  your own work patterns, "doctor", "health check", "brain health",
+  "watch PRs", "PR digest", "review queue".
+argument-hint: <command> — sync | update | quarterly | reflect | scan [days] | doctor | watch [--repos ...] [--stale-days N] [--loop N]
 tools: Read, Write, Shell, Glob, Grep
 ---
 
@@ -256,6 +257,32 @@ Check the health and completeness of your engineering brain.
 2. Display the output directly to the user. Do not modify, summarize, or reformat the report.
 3. If the overall score is below 80%, suggest the user run `/engineer-brain update` to improve data freshness.
 
+### `watch` (PR digest across repos)
+
+Scan GitHub repos for open PRs and generate a prioritized digest.
+
+**Scope: All GitHub repos in the workspace (or specified repos).**
+Requires the `gh` CLI to be installed and authenticated (`gh auth login`).
+
+**Usage:** `watch [--repos owner/repo,...] [--stale-days N] [--loop N]`
+
+**Flags:**
+- `--repos` : comma-separated `owner/repo` slugs (default: auto-discover from workspace git remotes)
+- `--stale-days` : days of inactivity before a PR is classified as stale (default: 14)
+- `--loop` : re-run every N minutes (default: run once and exit)
+
+1. Run:
+   ```bash
+   bash "${SKILL_DIR}/scripts/watch.sh" "$HOME/path/to/workspace" [--repos ...] [--stale-days N] [--loop N]
+   ```
+2. Display the output directly.
+
+The script classifies each PR into buckets:
+- **Needs Your Review** : you (or a team you belong to) are a requested reviewer
+- **Your Open PRs** : PRs you authored (stale own PRs go to Stale)
+- **Contributor PRs** : human-authored PRs (bot PRs and drafts excluded)
+- **Stale** : no updates in `--stale-days` days (default 14)
+
 ---
 
 ## Hard Rules
@@ -341,3 +368,4 @@ After each `update`, compare current state against previous state:
 - **Quarterly prep**: Run `quarterly` before performance reviews
 - **Jira context**: If `jira-integration` skill is available, pull sprint data
 - **Session analyzer**: If `session-analyzer` skill is available, pull AI usage stats
+- **PR awareness**: Run `watch` to see review queue, stale PRs, and team activity

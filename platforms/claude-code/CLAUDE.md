@@ -40,6 +40,7 @@ You are assisting **[YOUR NAME]**, a [YOUR ROLE] at [YOUR COMPANY], with [X]+ ye
 
 When the user says "engineer-brain sync", "daily sync", "standup", "update brain",
 "quarterly review", "reflect", "brain scan", "doctor", "health check", "brain health",
+"watch PRs", "PR digest", "review queue",
 or asks about their work patterns, follow the command logic in `.engineer-brain/COMMANDS.md`.
 
 **Available commands:**
@@ -50,12 +51,14 @@ or asks about their work patterns, follow the command logic in `.engineer-brain/
 - `scan [days]` — raw git scan output
 - `doctor` — brain health check and completeness score
 - `jira [filter]` — fetch assigned Jira tasks (all/active/backlog/review/sprint/done/weekly/quarterly)
+- `watch [--repos ...] [--stale-days N] [--loop N]` — PR digest across workspace repos
 
 **Data paths:**
 - Living document: `.engineer-brain/BRAIN.md`
 - Scanner script: `.engineer-brain/scripts/scan.sh`
 - Doctor script: `.engineer-brain/scripts/doctor.sh`
 - Jira script: `.engineer-brain/scripts/jira.sh`
+- Watch script: `.engineer-brain/scripts/watch.sh`
 - Command reference: `.engineer-brain/COMMANDS.md`
 
 ## Hard Rules
