@@ -4,10 +4,11 @@ Thumbs.db
 
 # IDE
 .vscode/
+.cursor/
 *.swp
 *.swo
 
-# Node.js (docs site)
+# Node.js
 node_modules/
 website/build/
 website/.docusaurus/
