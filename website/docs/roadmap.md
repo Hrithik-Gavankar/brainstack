@@ -16,7 +16,7 @@ See the full [roadmap on GitHub](https://github.com/Hrithik-Gavankar/engineer-br
 
 ### Next (v1.x)
 - Zed, JetBrains, Neovim support
-- Web dashboard for pattern visualization
+- Web dashboard MVP shipped (`dashboard/`); local BRAIN.md parser next
 - MCP server integration
 - Team-level brain (opt-in aggregation)
 

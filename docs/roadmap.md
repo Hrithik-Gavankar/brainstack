@@ -29,7 +29,7 @@ Growing beyond individual use into a richer tool.
 - [ ] **Zed editor support** — platform adapter for Zed's AI features
 - [ ] **JetBrains AI Assistant support** — platform adapter for IntelliJ/WebStorm/PyCharm
 - [ ] **Neovim + AI plugin support** — adapter for Neovim-based AI workflows
-- [ ] **Web dashboard** — local web UI for visualizing patterns, velocity, expertise growth
+- [x] **Web dashboard (MVP)** — Vite/React UI with sample data + data-port seam (`dashboard/`); local `BRAIN.md` parser still open
 - [ ] **Team-level brain** — aggregate patterns across a team (opt-in sharing)
 - [ ] **GitLab/Bitbucket support** — scanner support beyond GitHub
 - [ ] **MCP server** — expose brain data as an MCP resource for real-time queries

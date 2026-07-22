@@ -1,3 +1,9 @@
+/** Expertise levels from docs/brain-spec.md (Active Repos / Skills Inventory). */
+export type ExpertiseCategory = "strong" | "growing" | "exposure";
+
+/** Which adapter produced the dashboard payload. */
+export type DataSource = "sample" | "brain";
+
 export interface EngineerProfile {
   name: string;
   role: string;
@@ -16,10 +22,10 @@ export interface RepoActivity {
   commitCount: number;
 }
 
+/** Counts only — chart colors live in the UI layer (`colors.ts`). */
 export interface CommitTypeBreakdown {
   type: string;
   count: number;
-  color: string;
 }
 
 export interface VelocityPoint {
@@ -29,8 +35,9 @@ export interface VelocityPoint {
 
 export interface ExpertiseArea {
   area: string;
-  level: number; // 0-100
-  category: "strong" | "growing" | "dormant";
+  /** 0–100 display scale for the radar chart. */
+  level: number;
+  category: ExpertiseCategory;
 }
 
 export interface GrowthItem {
@@ -53,4 +60,14 @@ export interface DashboardData {
   expertise: ExpertiseArea[];
   growthItems: GrowthItem[];
   lastUpdated: string;
+  /** Adapter that produced this payload. */
+  source: DataSource;
+}
+
+export interface LoadDashboardOptions {
+  /**
+   * Prefer `brain` when a BRAIN.md parser adapter is available.
+   * Defaults to `sample` (demo / Vercel-safe).
+   */
+  source?: DataSource;
 }

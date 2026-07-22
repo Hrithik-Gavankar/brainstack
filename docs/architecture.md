@@ -30,6 +30,11 @@ flowchart TD
         CON[Continue.dev<br/>rules.md]
     end
 
+    subgraph Surfaces["Other Delivery Surfaces"]
+        DASH[Web Dashboard<br/>dashboard/ — local + demo viz]
+        DOCS[Docs Site<br/>website/ — Docusaurus product docs]
+    end
+
     GIT --> SCAN
     JIRA -.->|optional| CMD
     SESS -.->|optional| CMD
@@ -42,6 +47,8 @@ flowchart TD
     BRAIN --> WIN
     BRAIN --> AID
     BRAIN --> CON
+    BRAIN -.->|via data port / future parser| DASH
+    BRAIN -.->|documented by| DOCS
 ```
 
 ---
@@ -136,6 +143,15 @@ Each adapter file contains:
 3. **Command reference** — How to invoke engineer-brain commands in that platform's syntax
 4. **Link to full brain** — Path to BRAIN.md for detailed lookups
 
+### Web dashboard (`dashboard/`) vs docs site (`website/`)
+
+| Path | Role | Data |
+|------|------|------|
+| `dashboard/` | Personal / demo visualization UI (Vite + React) | Consumes brain-shaped data via `loadDashboardData()` — sample fixture today; local `BRAIN.md` parser later |
+| `website/` | Public product documentation (Docusaurus) | Static docs only — not a brain viewer |
+
+The dashboard is a Delivery-layer **consumer** of BRAIN.md, not a second source of truth. Keep presentation (chart colors, layout) in the UI layer; keep taxonomy aligned with [brain-spec.md](brain-spec.md) (Strong / Growing / Exposure).
+
 ---
 
 ## Installation Flow
@@ -180,6 +196,7 @@ sequenceDiagram
 - The scanner reads only git metadata (commits, branches), not file contents
 - No credentials, secrets, or sensitive data are stored in BRAIN.md
 - Engineers can `.gitignore` their BRAIN.md if they prefer not to share it
+- **Dashboard hosting:** public deploys (Vercel, Pages, etc.) may ship the **sample/demo** dashboard only. Do not upload personal `BRAIN.md` to a public host — use local `npm run dev` / `preview` for real brain data (see [dashboard/README.md](../dashboard/README.md))
 
 ---
 
@@ -203,3 +220,10 @@ sequenceDiagram
 1. Define the command in `core/COMMANDS.md`
 2. Specify: trigger, data sources, output format, scope rules
 3. For Cursor: also add to `platforms/cursor/skills/engineer-brain/SKILL.md`
+
+### Extending the web dashboard
+
+1. Add or update a data adapter under `dashboard/src/data/` (do not hard-import fixtures from `App.tsx`)
+2. Keep `DashboardData` aligned with [brain-spec.md](brain-spec.md)
+3. Put chart colors and other presentation details in the UI layer (`colors.ts` / components)
+4. Document hosting/privacy constraints in `dashboard/README.md`

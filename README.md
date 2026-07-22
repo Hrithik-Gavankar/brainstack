@@ -17,6 +17,7 @@
   <a href="#how-it-works">How It Works</a> •
   <a href="docs/brain-spec.md">BRAIN.md Spec</a> •
   <a href="docs/architecture.md">Architecture</a> •
+  <a href="dashboard/README.md">Dashboard</a> •
   <a href="docs/roadmap.md">Roadmap</a> •
   <a href="docs/faq.md">FAQ</a>
 </p>
@@ -309,6 +310,12 @@ engineer-brain/
 │   ├── roadmap.md
 │   └── faq.md
 │
+├── dashboard/                         # Web dashboard (local + demo viz)
+│   ├── README.md                      # Hosting/privacy + data-port docs
+│   └── src/                           # React + Vite app
+│
+├── website/                           # Product docs site (Docusaurus)
+│
 ├── examples/                          # Example BRAIN.md profiles
 │   ├── backend-engineer/
 │   ├── frontend-engineer/
@@ -325,6 +332,16 @@ engineer-brain/
     └── PULL_REQUEST_TEMPLATE.md
 ```
 
+### Web dashboard
+
+Visualize patterns locally (or ship a **sample-data demo** on Vercel/Pages):
+
+```bash
+cd dashboard && npm install && npm run dev
+```
+
+See **[dashboard/README.md](dashboard/README.md)** for the data-port design and hosting rules. Do not deploy personal `BRAIN.md` to a public host.
+
 ---
 
 ## Roadmap
@@ -333,7 +350,7 @@ See **[docs/roadmap.md](docs/roadmap.md)** for the full roadmap.
 
 **Near-term:**
 - [x] `engineer-brain doctor` — health check and brain completeness score
-- [ ] Web dashboard for visualizing patterns
+- [x] Web dashboard MVP (`dashboard/`) — sample data + data-port seam; BRAIN.md parser next
 - [ ] Team-level brain (aggregate insights)
 
 **Mid-term:**
