@@ -11,6 +11,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 - `engineer-brain doctor` command — brain health check with weighted scoring, cooling repo detection, and growth suggestions
 - `core/scripts/doctor.sh` — portable health check script (macOS + Linux)
+- Dashboard data port (`loadDashboardData`) with sample adapter + BRAIN.md stub (#26)
+- Dashboard CI job (`npm ci` / build / lint), favicon, and wired Refresh control
+- Scanner GitHub activity section (`gh`): authored PRs, reviews, optional release checks
+- Configurable `PERSONAL_REPOS`, `GH_OWNERS`, and `RELEASE_REPOS` in `core/scripts/scan.sh`
+- Sync guidance for non-commit signals, prose standup style, and correction → learn feedback loop
+
+### Changed
+- Dashboard expertise taxonomy aligned with brain-spec (**Strong / Growing / Exposure**); chart colors moved to UI layer
+- Documented `dashboard/` vs `website/`, privacy/hosting rules (public deploy = sample only)
+- `platforms/cursor/skills/engineer-brain/SKILL.md` and `core/COMMANDS.md` sync flow no longer rely on authored git commits alone
+- Cursor platform README documents scanner config knobs and install vs live-copy drift
 
 ---
 

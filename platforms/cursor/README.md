@@ -22,9 +22,18 @@ cp core/BRAIN.md /path/to/your/workspace/.cursor/skills/engineer-brain/BRAIN.md
 
 2. Edit `.cursor/rules/engineer-brain.mdc` — fill in your career details.
 
-3. Edit `.cursor/skills/engineer-brain/scripts/scan.sh` — set your workspace path and git author pattern.
+3. Edit `.cursor/skills/engineer-brain/scripts/scan.sh` — configure:
+   - `WORKSPACE` default / author `AUTHOR_PATTERN`
+   - `PERSONAL_REPOS` — side projects to exclude from team standup metrics
+   - `GH_OWNERS` — org names used to filter review results (optional)
+   - `RELEASE_REPOS` — `owner/name` repos to check for recent releases (optional)
 
 4. Run `/engineer-brain update` in Cursor to auto-populate BRAIN.md.
+
+**Note:** Your installed `.cursor/skills/engineer-brain/` copy is independent of this
+repo. Upstream improvements land here; re-copy `SKILL.md` / `scan.sh` (or re-run
+`install.sh`) when you want them in your live workspace. Keep personal `BRAIN.md`
+local — never commit it back to this repository.
 
 ## Usage
 

@@ -65,8 +65,10 @@ The scanner is a bash script that traverses all git repositories in a workspace 
 - **Commit type breakdown** — Conventional commit prefix distribution
 - **Files touched** — Which areas of the codebase are receiving attention
 - **Velocity metrics** — Commits per day/week, trend direction
+- **GitHub activity** (optional, via `gh`) — authored PRs, reviews given, recent releases
+- **Personal-repo filtering** — optional `PERSONAL_REPOS` basenames excluded from team metrics
 
-**Input:** Workspace path, author pattern, lookback period (days)
+**Input:** Workspace path, author pattern, lookback period (days); optional `GH_OWNERS` / `RELEASE_REPOS`
 **Output:** Structured text suitable for AI consumption
 
 ```mermaid

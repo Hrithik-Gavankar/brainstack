@@ -6,10 +6,16 @@ for daily syncs and quarterly reviews.
 
 ## Data Sources
 
-1. **Git history** across all repos in your workspace
-2. **BRAIN.md** — the living document (located in the platform-specific directory or `core/BRAIN.md`)
-3. **Session/conversation history** (platform-specific: Cursor transcripts, Claude projects, etc.)
-4. **Jira / Linear / project tracker** (if integration available)
+1. **Git history** across repos in your workspace
+2. **GitHub activity** via `gh` (authored PRs, reviews, releases/tags) — often more
+   accurate than local commits alone
+3. **BRAIN.md** — the living document (located in the platform-specific directory or `core/BRAIN.md`)
+4. **Session/conversation history** (platform-specific: Cursor transcripts, Claude projects, etc.)
+5. **Jira / Linear / project tracker** (if integration available)
+
+**Critical:** Standup-relevant work is frequently *not* in authored git commits.
+Reviews, releases, demos, meetup/office-hours prep, and design-feedback work must
+be pulled from GitHub/tracker/transcripts/BRAIN — not inferred from `git log --author` alone.
 
 ---
 
@@ -29,8 +35,9 @@ These commands can be invoked differently depending on your platform:
 Generate today's standup notes.
 
 **Scope: Current team and current role only.**
-Only include work from repos in this workspace.
-Never reference past roles or personal projects — this is for your team's standup thread.
+Only include work from team repos / team activities in this workspace.
+Never reference past roles or personal/side projects — this is for your team's standup thread.
+Repos listed in `PERSONAL_REPOS` inside `scan.sh` are excluded from team standup scope.
 
 **Schedule: Workdays only (Monday–Friday).**
 If today is Monday, "yesterday" means last Friday. If today is a
@@ -44,28 +51,32 @@ weekend, skip — standups don't happen on weekends.
    bash <path-to-scripts>/scan.sh "$HOME/path/to/workspace" [1 or 3]
    ```
 
-2. Read `BRAIN.md` for current sprint context and active branches.
+2. **Also gather non-commit signals** (`scan.sh` emits these when `gh` is authenticated
+   and `GH_OWNERS` / `RELEASE_REPOS` are configured):
+   - Authored PRs updated in the window
+   - Reviews given in the window
+   - Recent releases on configured repos
+   - Tracker issues in the open sprint + BRAIN.md upcoming events
 
-3. Generate standup notes in your team's thread format:
+3. Read `BRAIN.md` for sprint context, active tickets, and scheduled team events.
+
+4. Generate standup notes as **concise prose bullets**, not a dump of every commit hash:
    ```
    1. What I worked on yesterday:
-   - [list each commit/PR from yesterday with repo name and concise description]
-   - [include any reviews done, Jira tickets referenced]
+   - [Group related work into 1–3 readable bullets: reviews, features/tickets, releases, demos]
+   - [Prefer impact language: "released X upstream", "got TICKET ready for review"]
 
    2. What I plan on working on today:
-   - [infer from active branches what's in progress]
-   - [check for any open PR reviews needed]
-   - [suggest next logical task based on patterns and BRAIN.md sprint context]
+   - [Carry-forward from open PRs + tracker In Progress/Review + BRAIN events]
+   - [Include release follow-ups, meetup/demo prep, active review queue when relevant]
 
    3. Blockers:
-   - [any branches with merge conflicts]
-   - [any CI failures on active branches]
-   - [any stale branches > 5 days old]
-   - None (if no blockers)
+   - None
    ```
 
-4. If a Jira/Linear integration is available, also check for assigned
-   issues in the current sprint and include them in section 2.
+5. If the user **corrects** a sync (pastes their real standup, etc.), treat that as
+   ground truth: update BRAIN.md sprint context, note missed signal types, and improve
+   scanner config when the gap is systemic. Do not argue with the correction.
 
 ### `update` (refresh the brain)
 
