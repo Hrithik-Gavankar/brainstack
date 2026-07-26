@@ -1,0 +1,34 @@
+version: 1
+
+team:
+  name: "Platform Spike Crew"
+  standup_channel: "#platform-standup"
+
+members:
+  - id: alex
+    name: "Alex"
+    role: "Software Engineer"
+    share_scopes: [research]
+  - id: blair
+    name: "Blair"
+    role: "Software Engineer"
+    share_scopes: [research]
+  - id: casey
+    name: "Casey"
+    role: "Tech Lead"
+    share_scopes: [research, metrics]
+
+repos:
+  - name: example-cli
+    path: "../example-cli"
+  - name: example-schemas
+    path: "../example-schemas"
+
+initiatives:
+  - id: DEMO-EE-1
+    title: "EE decision_environment scaffolding spike"
+    status: active
+    file: initiatives/DEMO-EE-1.md
+
+sync:
+  backend: local

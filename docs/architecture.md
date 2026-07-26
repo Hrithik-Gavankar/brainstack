@@ -1,6 +1,9 @@
 # Architecture
 
-Engineer Brain is composed of three layers: data collection, intelligence, and delivery.
+Brain is composed of three layers: data collection, intelligence, and delivery —
+with two **scopes** (skills): engineer-brain (personal) and team-brain (team/initiative).
+
+See also [scopes.md](scopes.md) and [team-brain.md](team-brain.md).
 
 ---
 
@@ -12,17 +15,24 @@ flowchart TD
         GIT[Git Repositories]
         JIRA[Jira / Linear / Tracker]
         SESS[Session Analytics]
+        HS[[HiveShare — future]]
     end
 
     subgraph Core["Core Engine"]
         SCAN[Multi-Repo Scanner<br/>scan.sh]
         PATTERN[Pattern Detection]
-        BRAIN[BRAIN.md<br/>Living Engineering Profile]
-        CMD[Command Engine<br/>sync / update / quarterly / reflect]
+        BRAIN[BRAIN.md<br/>Personal profile]
+        TEAM[TEAM.md + initiatives/<br/>Team / initiative context]
+        CMD[Command Engine]
+    end
+
+    subgraph Skills["Skills = scopes"]
+        EB[engineer-brain<br/>sync update quarterly …]
+        TB[team-brain<br/>init attach capture …]
     end
 
     subgraph Adapters["Platform Adapters"]
-        CUR[Cursor<br/>.mdc + SKILL.md]
+        CUR[Cursor<br/>.mdc + skills]
         CLA[Claude Code<br/>CLAUDE.md]
         COP[GitHub Copilot<br/>copilot-instructions.md]
         WIN[Windsurf<br/>.windsurfrules]
@@ -38,10 +48,15 @@ flowchart TD
     GIT --> SCAN
     JIRA -.->|optional| CMD
     SESS -.->|optional| CMD
+    HS -.->|future team sync| TB
     SCAN --> PATTERN
     PATTERN --> BRAIN
     CMD --> BRAIN
+    CMD --> TEAM
+    EB --> BRAIN
+    TB --> TEAM
     BRAIN --> CUR
+    TEAM --> CUR
     BRAIN --> CLA
     BRAIN --> COP
     BRAIN --> WIN
@@ -111,14 +126,19 @@ flowchart TD
 
 ### Command Engine
 
-Commands are natural language triggers interpreted by the AI assistant:
+Commands are natural language triggers interpreted by the AI assistant.
+**Skills name the scope; commands are verbs** (do not install `sync` as its own skill).
 
-| Command | Data Flow |
-|---------|-----------|
-| `sync` | Scanner (1-3 days) → BRAIN.md sprint context → Standup output |
-| `update` | Scanner (30 days) → Pattern detection → BRAIN.md rewrite |
-| `quarterly` | Scanner (90 days) → BRAIN.md → Structured review document |
-| `reflect` | Scanner (30 days) → Pattern detection → Recommendations |
+| Skill | Command | Data Flow |
+|-------|---------|-----------|
+| engineer-brain | `sync` | Scanner (1-3 days) → BRAIN.md sprint context → Standup output |
+| engineer-brain | `update` | Scanner (30 days) → Pattern detection → BRAIN.md rewrite |
+| engineer-brain | `quarterly` | Scanner (90 days) → BRAIN.md → Structured review document |
+| engineer-brain | `reflect` | Scanner (30 days) → Pattern detection → Recommendations |
+| team-brain | `attach` / `sync` | TEAM.md + initiatives/*.md → session brief / team status |
+| team-brain | `capture` / `breakdown` | Append findings → initiative file → story draft |
+
+Team Brain v1 sync is **local/git** (`.team-brain/`). HiveShare is a reserved future backend — see roadmap.
 
 ---
 
@@ -128,8 +148,8 @@ Each AI coding assistant has its own native format for loading persistent contex
 
 ```mermaid
 flowchart TD
-    BRAIN[BRAIN.md + COMMANDS.md] --> ADAPTER{Platform Adapter}
-    ADAPTER -->|Cursor| A1[".cursor/rules/engineer-brain.mdc<br/>.cursor/skills/engineer-brain/SKILL.md"]
+    BRAIN[BRAIN.md + TEAM.md + commands] --> ADAPTER{Platform Adapter}
+    ADAPTER -->|Cursor| A1[".cursor/rules/engineer-brain.mdc<br/>skills/engineer-brain + skills/team-brain"]
     ADAPTER -->|Claude Code| A2["CLAUDE.md"]
     ADAPTER -->|Copilot| A3[".github/copilot-instructions.md"]
     ADAPTER -->|Windsurf| A4[".windsurfrules"]

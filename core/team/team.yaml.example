@@ -1,0 +1,35 @@
+# Team Brain config — copy to .team-brain/team.yaml (or team.yaml in a shared repo)
+# Personal BRAIN.md paths are never uploaded; only opt-in initiative captures are shared.
+
+version: 1
+
+team:
+  name: "Example Team"
+  standup_channel: "#team-standup"
+
+# Members — workspace_path is local to each engineer (not committed secrets)
+members:
+  - id: alice
+    name: "Alice Example"
+    role: "Software Engineer"
+    # Optional: path to their engineer-brain install (local only)
+    # brain_path: "~/.cursor/skills/engineer-brain/BRAIN.md"
+    share_scopes: [research] # research | metrics | none
+
+repos:
+  - name: example-service
+    path: "../example-service" # relative to workspace root
+
+# Initiative → local file mapping (v1). Future: hiveshare_id for remote sync.
+initiatives:
+  - id: TICKET-123
+    title: "Example initiative"
+    status: active
+    file: initiatives/TICKET-123.md
+    # hiveshare_id: null  # reserved — HiveShare integration (future)
+
+sync:
+  backend: local # local (v1 demo) | hiveshare (future)
+  # hiveshare:
+  #   base_url: "https://hiveshare.example.com"
+  #   default_hiveshare_env: HIVESHARE_DEFAULT_HIVESHARE

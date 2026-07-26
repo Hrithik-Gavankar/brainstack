@@ -15,7 +15,9 @@
 <p align="center">
   <a href="#quick-start">Quick Start</a> •
   <a href="#how-it-works">How It Works</a> •
+  <a href="#brain-scopes">Scopes</a> •
   <a href="docs/brain-spec.md">BRAIN.md Spec</a> •
+  <a href="docs/scopes.md">Engineer + Team</a> •
   <a href="docs/architecture.md">Architecture</a> •
   <a href="dashboard/README.md">Dashboard</a> •
   <a href="docs/roadmap.md">Roadmap</a> •
@@ -209,9 +211,25 @@ Engineer Brain works with every major AI coding assistant. Same brain, native fo
 
 ---
 
+## Brain scopes
+
+**Brain** is the product umbrella. Two skills = two scopes:
+
+| Skill | For | Living docs |
+|-------|-----|-------------|
+| `engineer-brain` | You — standups, growth, personal patterns | `BRAIN.md` |
+| `team-brain` | Your crew — spikes, epics, shared decisions | `TEAM.md` + `initiatives/*.md` |
+
+Commands (`sync`, `quarterly`, `attach`, …) are **verbs under a skill**, not separate skills.
+
+- Scopes guide: **[docs/scopes.md](docs/scopes.md)**
+- Team Brain (v1 local/git sync): **[docs/team-brain.md](docs/team-brain.md)**
+- Demo fixture: **[examples/team-spike-crew/](examples/team-spike-crew/)**
+- Future realtime sync: HiveShare adapter (tracked in issues) — we do **not** reimplement that server
+
 ## Features
 
-### Commands
+### Engineer Brain commands
 
 | Command | Description |
 |---------|-------------|
@@ -221,6 +239,17 @@ Engineer Brain works with every major AI coding assistant. Same brain, native fo
 | `engineer-brain reflect` | Pattern analysis: blind spots, habits, recommendations |
 | `engineer-brain scan [days]` | Raw multi-repo git scan output |
 | `engineer-brain doctor` | Brain health check with completeness score and growth suggestions |
+
+### Team Brain commands (v1)
+
+| Command | Description |
+|---------|-------------|
+| `team-brain init` | Scaffold `.team-brain/` (local / git-backed) |
+| `team-brain attach <id>` | Load initiative context into the session |
+| `team-brain sync [id]` | Team/initiative status from shared files |
+| `team-brain capture <id>` | Append research or a decision |
+| `team-brain breakdown <id>` | Draft stories/spikes from initiative context |
+| `team-brain status` | Show members, initiatives, sync backend |
 
 ### Intelligence
 
@@ -273,6 +302,23 @@ bash install.sh continue-dev ~/my-workspace
 "engineer-brain reflect"     → Friday afternoons
 "engineer-brain update"      → start of each month
 "engineer-brain quarterly"   → before performance reviews
+
+"team-brain init"            → scaffold shared team context
+"team-brain attach DEMO-EE-1"→ load initiative for the session
+"team-brain capture …"       → write a finding for the crew
+"team-brain breakdown …"     → stories from prior research
+```
+
+### Demo (Cursor) — personal + team
+
+```bash
+bash install.sh cursor ~/my-workspace
+# Personal
+#   /engineer-brain update   then   /engineer-brain sync
+# Team (local sync for the demo)
+cp -r examples/team-spike-crew ~/my-workspace/.team-brain
+#   /team-brain attach DEMO-EE-1
+#   /team-brain breakdown DEMO-EE-1
 ```
 
 ---
@@ -289,14 +335,21 @@ engineer-brain/
 ├── install.sh                         # Universal installer
 │
 ├── core/                              # Platform-agnostic engine
-│   ├── BRAIN.md                       # Living document template
-│   ├── COMMANDS.md                    # Command definitions & logic
+│   ├── BRAIN.md                       # Personal living document template
+│   ├── COMMANDS.md                    # Engineer-brain command definitions
 │   ├── CONTEXT.md                     # Context rule template
+│   ├── team/                          # Team Brain templates + commands
+│   │   ├── TEAM.md
+│   │   ├── team.yaml.example
+│   │   ├── TEAM_COMMANDS.md
+│   │   └── initiatives/_TEMPLATE.md
 │   └── scripts/
-│       └── scan.sh                    # Multi-repo git scanner
+│       ├── scan.sh                    # Multi-repo git scanner
+│       ├── doctor.sh
+│       └── team-init.sh               # Scaffold .team-brain/
 │
 ├── platforms/                         # Platform-specific adapters
-│   ├── cursor/
+│   ├── cursor/                        # rules + skills/engineer-brain + skills/team-brain
 │   ├── claude-code/
 │   ├── vscode-copilot/
 │   ├── windsurf/
@@ -305,6 +358,8 @@ engineer-brain/
 │
 ├── docs/                              # Documentation
 │   ├── architecture.md
+│   ├── scopes.md                      # Umbrella: engineer + team skills
+│   ├── team-brain.md
 │   ├── brain-spec.md
 │   ├── vision.md
 │   ├── roadmap.md
@@ -316,12 +371,10 @@ engineer-brain/
 │
 ├── website/                           # Product docs site (Docusaurus)
 │
-├── examples/                          # Example BRAIN.md profiles
-│   ├── backend-engineer/
-│   ├── frontend-engineer/
-│   ├── devops-engineer/
-│   ├── platform-engineer/
-│   └── oss-maintainer/
+├── examples/                          # Example profiles
+│   ├── backend-engineer/              # Personal BRAIN.md examples
+│   ├── …/
+│   └── team-spike-crew/               # Team Brain demo fixture
 │
 ├── templates/                         # Starter templates
 │   └── BRAIN.md
@@ -351,7 +404,8 @@ See **[docs/roadmap.md](docs/roadmap.md)** for the full roadmap.
 **Near-term:**
 - [x] `engineer-brain doctor` — health check and brain completeness score
 - [x] Web dashboard MVP (`dashboard/`) — sample data + data-port seam; BRAIN.md parser next
-- [ ] Team-level brain (aggregate insights)
+- [x] Team Brain v1 — skills + local/git initiative sync (HiveShare adapter later)
+- [ ] Team aggregation metrics (coverage matrix, workload heatmap)
 
 **Mid-term:**
 - [ ] Zed and JetBrains platform support

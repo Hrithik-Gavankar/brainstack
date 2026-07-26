@@ -17,7 +17,11 @@ bash /path/to/engineer-brain/install.sh cursor
 cp -r platforms/cursor/rules /path/to/your/workspace/.cursor/rules
 cp -r platforms/cursor/skills /path/to/your/workspace/.cursor/skills
 cp core/scripts/scan.sh /path/to/your/workspace/.cursor/skills/engineer-brain/scripts/
+cp core/scripts/doctor.sh /path/to/your/workspace/.cursor/skills/engineer-brain/scripts/
 cp core/BRAIN.md /path/to/your/workspace/.cursor/skills/engineer-brain/BRAIN.md
+mkdir -p /path/to/your/workspace/.cursor/skills/team-brain/scripts
+cp core/scripts/team-init.sh /path/to/your/workspace/.cursor/skills/team-brain/scripts/
+cp core/team/TEAM_COMMANDS.md /path/to/your/workspace/.cursor/skills/team-brain/
 ```
 
 2. Edit `.cursor/rules/engineer-brain.mdc` — fill in your career details.
@@ -30,8 +34,10 @@ cp core/BRAIN.md /path/to/your/workspace/.cursor/skills/engineer-brain/BRAIN.md
 
 4. Run `/engineer-brain update` in Cursor to auto-populate BRAIN.md.
 
-**Note:** Your installed `.cursor/skills/engineer-brain/` copy is independent of this
-repo. Upstream improvements land here; re-copy `SKILL.md` / `scan.sh` (or re-run
+5. (Optional team demo) `bash .cursor/skills/team-brain/scripts/team-init.sh .` or copy `examples/team-spike-crew/` → `.team-brain/`.
+
+**Note:** Your installed `.cursor/skills/` copy is independent of this
+repo. Upstream improvements land here; re-copy skills (or re-run
 `install.sh`) when you want them in your live workspace. Keep personal `BRAIN.md`
 local — never commit it back to this repository.
 
@@ -44,10 +50,15 @@ local — never commit it back to this repository.
 | `/engineer-brain quarterly` | Quarterly review content |
 | `/engineer-brain reflect` | Pattern analysis & recommendations |
 | `/engineer-brain scan [days]` | Raw git scan output |
+| `/team-brain init` | Scaffold `.team-brain/` (local/git sync) |
+| `/team-brain attach <id>` | Load initiative context |
+| `/team-brain capture <id>` | Append research/decision |
+| `/team-brain breakdown <id>` | Draft stories from initiative context |
 
 ## How It Works
 
-- **`engineer-brain.mdc`** — loaded on every AI interaction (always-on context)
-- **`SKILL.md`** — defines the commands with Cursor's skill format
-- **`BRAIN.md`** — your living engineering profile
-- **`scan.sh`** — multi-repo git scanner
+- **`engineer-brain.mdc`** — loaded on every AI interaction (always-on personal context)
+- **`engineer-brain` skill** — personal commands + `BRAIN.md`
+- **`team-brain` skill** — team/initiative commands + `.team-brain/`
+- **`scan.sh`** — multi-repo git scanner (personal metrics)
+- Scopes: [docs/scopes.md](../../docs/scopes.md)

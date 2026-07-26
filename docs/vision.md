@@ -89,7 +89,8 @@ AI coding assistants natively recognize BRAIN.md. They read it automatically, su
 - Importers that bootstrap BRAIN.md from GitHub profiles, LinkedIn, or existing resumes
 - Validators that check BRAIN.md completeness and freshness
 - Visualizers that render growth trajectories and pattern analytics
-- Team-level aggregation for engineering managers
+- Team Brain scope (initiative context) with local/git sync first, then adapters to collaborative memory systems (e.g. HiveShare) — not a second personal brain
+- Team-level aggregation for engineering managers (opt-in metrics)
 
 **Phase 4: Community standard**
 BRAIN.md becomes what package.json is to Node or pyproject.toml is to Python — a universally recognized file that tools expect to find and know how to consume.
