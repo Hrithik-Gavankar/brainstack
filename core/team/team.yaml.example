@@ -20,16 +20,12 @@ repos:
   - name: example-service
     path: "../example-service" # relative to workspace root
 
-# Initiative → local file mapping (v1). Future: hiveshare_id for remote sync.
+# Initiative → local file mapping. Share via git with the crew.
 initiatives:
   - id: TICKET-123
     title: "Example initiative"
     status: active
     file: initiatives/TICKET-123.md
-    # hiveshare_id: null  # reserved — HiveShare integration (future)
 
 sync:
-  backend: local # local (v1 demo) | hiveshare (future)
-  # hiveshare:
-  #   base_url: "https://hiveshare.example.com"
-  #   default_hiveshare_env: HIVESHARE_DEFAULT_HIVESHARE
+  backend: local # file + git (commit/PR/pull)

@@ -26,8 +26,7 @@ flowchart TB
   CORE --> Eng
   CORE --> Team
   PB -.->|never auto-synced| Team
-  IN -->|v1 local/git share| SHARE[Shared checkout / PR]
-  IN -.->|future| HS[HiveShare backend]
+  IN -->|git commit / PR / pull| SHARE[Teammates]
 ```
 
 ## Principles
@@ -35,7 +34,7 @@ flowchart TB
 1. **Skills = scopes; commands = verbs.** Do not promote `sync` / `quarterly` to top-level skills.
 2. **Personal brain stays personal.** Team Brain reads opt-in captures only.
 3. **Initiative-scoped team context.** Prefer `initiatives/<id>.md` over one mega team dump.
-4. **Do not reimplement sync servers.** v1 is file/git-backed; realtime multi-agent memory is a future HiveShare adapter.
+4. **Git sync for the crew.** Initiative files are the shared store; pull to get a teammate’s captures.
 
 ## Session load path
 
@@ -53,4 +52,4 @@ When an engineer attaches to an initiative:
 4. `/team-brain capture DEMO-EE-1` — add a finding  
 5. `/team-brain breakdown DEMO-EE-1` — draft stories from captures  
 
-See [team-brain.md](team-brain.md) and issue tracking for HiveShare integration.
+See [team-brain.md](team-brain.md).

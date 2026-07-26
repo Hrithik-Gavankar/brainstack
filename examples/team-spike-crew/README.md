@@ -1,6 +1,6 @@
 # Example: Team spike crew
 
-Demo fixture for **Team Brain v1** (local/git sync).
+Demo fixture for **Team Brain** (git-backed sync).
 
 ## Use in a walkthrough
 
@@ -18,4 +18,4 @@ Then in Cursor:
 
 Personal standups stay on `/engineer-brain sync` — do not mix personal `BRAIN.md` into these files.
 
-HiveShare realtime sync is **future** work (see repo issues).
+Teammates stay aligned by committing captures under `.team-brain/` and pulling.

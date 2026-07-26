@@ -42,7 +42,7 @@
 
 ## Sync notes
 
-- **v1 (demo):** initiative files in git / local `.team-brain/` — share via PR or shared checkout
-- **Future:** optional HiveShare backend for realtime multi-agent memory (see roadmap)
+- Initiative files live in git / local `.team-brain/`
+- Share with the crew via PR or a shared checkout — pull to pick up new captures
 
 Use `/team-brain attach <id>` to load an initiative. Never copy personal BRAIN.md into Team Brain.

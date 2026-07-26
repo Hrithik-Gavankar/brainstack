@@ -3,8 +3,8 @@
 Team Brain is the **team / initiative scope** of the Brain product.
 Personal identity stays in engineer-brain (`BRAIN.md`). Team Brain never replaces it.
 
-**v1 sync backend:** local files (`.team-brain/` or a shared git checkout).  
-**Future:** optional HiveShare for realtime multi-agent memory — do not reimplement that layer here.
+**Sync backend:** local files (`.team-brain/` or a shared git checkout / PR).  
+Teammates stay aligned by committing initiative captures and pulling.
 
 ---
 
@@ -57,7 +57,7 @@ Compose a team/initiative status update (not a personal standup).
    - What the team learned / decided recently
    - Open questions
    - Suggested next captures
-4. Backend `local`: file + git only. Backend `hiveshare` (future): also search/pull hives
+4. Backend is file + git only for this product version
 
 ### `capture <initiative-id> [note]`
 

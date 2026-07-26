@@ -15,7 +15,6 @@ flowchart TD
         GIT[Git Repositories]
         JIRA[Jira / Linear / Tracker]
         SESS[Session Analytics]
-        HS[[HiveShare — future]]
     end
 
     subgraph Core["Core Engine"]
@@ -48,7 +47,6 @@ flowchart TD
     GIT --> SCAN
     JIRA -.->|optional| CMD
     SESS -.->|optional| CMD
-    HS -.->|future team sync| TB
     SCAN --> PATTERN
     PATTERN --> BRAIN
     CMD --> BRAIN
@@ -138,7 +136,7 @@ Commands are natural language triggers interpreted by the AI assistant.
 | team-brain | `attach` / `sync` | TEAM.md + initiatives/*.md → session brief / team status |
 | team-brain | `capture` / `breakdown` | Append findings → initiative file → story draft |
 
-Team Brain v1 sync is **local/git** (`.team-brain/`). HiveShare is a reserved future backend — see roadmap.
+Team Brain sync is **local/git** (`.team-brain/` shared via commit, PR, and pull).
 
 ---
 

@@ -30,8 +30,7 @@ Growing beyond individual use into a richer tool.
 - [ ] **JetBrains AI Assistant support** — platform adapter for IntelliJ/WebStorm/PyCharm
 - [ ] **Neovim + AI plugin support** — adapter for Neovim-based AI workflows
 - [x] **Web dashboard (MVP)** — Vite/React UI with sample data + data-port seam (`dashboard/`); local `BRAIN.md` parser still open
-- [x] **Team Brain v1 (scopes)** — `team-brain` skill + `.team-brain/` local/git sync; see [scopes.md](scopes.md)
-- [ ] **Team Brain ↔ HiveShare adapter** — use HiveShare for realtime multi-agent memory (do not reimplement)
+- [x] **Team Brain (scopes)** — `team-brain` skill + `.team-brain/` git sync; see [scopes.md](scopes.md)
 - [ ] **Team aggregation metrics** — skill coverage matrix, workload heatmap, collaboration graph
 - [ ] **GitLab/Bitbucket support** — scanner support beyond GitHub
 - [ ] **MCP server** — expose brain data as an MCP resource for real-time queries

@@ -223,9 +223,8 @@ Engineer Brain works with every major AI coding assistant. Same brain, native fo
 Commands (`sync`, `quarterly`, `attach`, …) are **verbs under a skill**, not separate skills.
 
 - Scopes guide: **[docs/scopes.md](docs/scopes.md)**
-- Team Brain (v1 local/git sync): **[docs/team-brain.md](docs/team-brain.md)**
+- Team Brain (git sync for the crew): **[docs/team-brain.md](docs/team-brain.md)**
 - Demo fixture: **[examples/team-spike-crew/](examples/team-spike-crew/)**
-- Future realtime sync: HiveShare adapter (tracked in issues) — we do **not** reimplement that server
 
 ## Features
 
@@ -404,7 +403,7 @@ See **[docs/roadmap.md](docs/roadmap.md)** for the full roadmap.
 **Near-term:**
 - [x] `engineer-brain doctor` — health check and brain completeness score
 - [x] Web dashboard MVP (`dashboard/`) — sample data + data-port seam; BRAIN.md parser next
-- [x] Team Brain v1 — skills + local/git initiative sync (HiveShare adapter later)
+- [x] Team Brain — skills + git-backed initiative sync for crews
 - [ ] Team aggregation metrics (coverage matrix, workload heatmap)
 
 **Mid-term:**

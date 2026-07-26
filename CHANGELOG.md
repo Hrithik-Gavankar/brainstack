@@ -18,7 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Sync guidance for non-commit signals, prose standup style, and correction → learn feedback loop
 - **Brain scopes** — `engineer-brain` + `team-brain` skills ([docs/scopes.md](docs/scopes.md))
 - Team Brain v1: `core/team/` templates, `team-init.sh`, Cursor `team-brain` skill, `examples/team-spike-crew/`
-- Team Brain docs ([docs/team-brain.md](docs/team-brain.md)); HiveShare reserved as future sync backend
+- Team Brain docs ([docs/team-brain.md](docs/team-brain.md)) — git-backed crew sync
 
 ### Changed
 - Dashboard expertise taxonomy aligned with brain-spec (**Strong / Growing / Exposure**); chart colors moved to UI layer

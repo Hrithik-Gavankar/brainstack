@@ -21,8 +21,7 @@ Part of the **Brain** product umbrella:
 
 Personal `BRAIN.md` is never replaced or uploaded by Team Brain.
 
-**v1 sync:** local / git-backed files under `.team-brain/`.  
-**Future:** optional [HiveShare](https://github.com/KB-perByte/hiveshare) backend for realtime multi-agent memory — do not reimplement that server here.
+**Sync (now):** local / git-backed files under `.team-brain/` — teammates share via the same checkout or PRs.
 
 ---
 
@@ -61,8 +60,6 @@ Compose a **team** status (not a personal standup):
 1. Read active initiative file(s)
 2. Optionally scan configured repos for recent shared activity
 3. Output what was learned/decided, open questions, next captures
-4. If `sync.backend` is `hiveshare` but not configured, say so and stay on local files
-
 ### `capture <initiative-id>`
 
 Append user-approved findings/decisions to the initiative file (date + author).
@@ -74,7 +71,7 @@ Draft stories/spikes + AC from the initiative file. Call out context gaps.
 
 ### `status`
 
-Summarize team.yaml: members, initiatives, backend (`local` | future `hiveshare`).
+Summarize team.yaml: members, initiatives, sync backend (`local` / git).
 
 ### `detach`
 
@@ -87,7 +84,7 @@ Stop treating an initiative as the active session focus.
 - Never commit / push without explicit permission
 - Never publish personal `BRAIN.md`
 - Prefer concise captures over chat dumps
-- HiveShare is a **future adapter**, not a v1 dependency
+- Team Brain is part of **this product** alongside engineer-brain — keep the demo story there
 
 ---
 
