@@ -30,11 +30,12 @@ Yes — that's a primary design goal. Install once, and every AI tool gets the s
 
 ### Does Engineer Brain send my data anywhere?
 
-No. Everything is local:
+**Personal engineer-brain:** no. Everything stays local:
 - The scanner reads only your local git history
-- BRAIN.md lives in your workspace
+- `BRAIN.md` lives in your workspace
 - Context files live in your workspace
-- Nothing is transmitted to any server, ever
+
+**Team Brain (opt-in):** initiative memories and membership sync to *your* Supabase project so the crew can `recall` shared findings. Personal `BRAIN.md` is never uploaded. See [team-brain.md](team-brain.md) and [supabase/README.md](../supabase/README.md).
 
 ### What data does the scanner collect?
 
@@ -131,6 +132,32 @@ Or submit a PR — adding a new platform adapter is straightforward (see [archit
 ### If I switch AI tools, do I lose my brain?
 
 No. Your BRAIN.md stays in your workspace. Just run the installer for your new platform and it creates the appropriate context file that references the same brain.
+
+---
+
+## Team Brain
+
+### What is Team Brain?
+
+The **team / initiative scope** of Brain. Crews share collaborative AI memory on a Jira key (Supabase + local cache). It is not a second personal `BRAIN.md`.
+
+### How do I join a crew?
+
+Ask for an **invite code** and a **Jira key**, then:
+
+```bash
+bash core/scripts/team-brain-api.sh onboard <INVITE> "Your Name" AAP-81423
+```
+
+Step-by-step: [team-brain-onboarding.md](team-brain-onboarding.md).
+
+### Do agents sync automatically?
+
+Not by chat alone. Shared memory requires `remember`, then `recall` (or MCP / optional `watch`). In Cursor, the always-on Team Brain rule requires recall-before-research and remember-after-findings.
+
+### Is semantic search required?
+
+No. Default recall is full-text search. Optional embeddings (OpenAI/Ollama) are documented in [team-brain-memory.md](team-brain-memory.md).
 
 ---
 

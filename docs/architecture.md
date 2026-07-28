@@ -21,17 +21,23 @@ flowchart TD
         SCAN[Multi-Repo Scanner<br/>scan.sh]
         PATTERN[Pattern Detection]
         BRAIN[BRAIN.md<br/>Personal profile]
-        TEAM[TEAM.md + initiatives/<br/>Team / initiative context]
+        TEAM[TEAM.md + cache/<br/>Team / initiative context]
+        API[team-brain-api.sh]
         CMD[Command Engine]
+    end
+
+    subgraph Cloud["Team Brain cloud opt-in"]
+        SB[(Supabase memories)]
+        MCP[mcp/team-brain]
     end
 
     subgraph Skills["Skills = scopes"]
         EB[engineer-brain<br/>sync update quarterly …]
-        TB[team-brain<br/>attach remember recall breakdown]
+        TB[team-brain<br/>onboard attach remember recall breakdown]
     end
 
     subgraph Adapters["Platform Adapters"]
-        CUR[Cursor<br/>.mdc + skills]
+        CUR[Cursor<br/>engineer + team rules + skills]
         CLA[Claude Code<br/>CLAUDE.md]
         COP[GitHub Copilot<br/>copilot-instructions.md]
         WIN[Windsurf<br/>.windsurfrules]
@@ -45,14 +51,17 @@ flowchart TD
     end
 
     GIT --> SCAN
-    JIRA -.->|optional| CMD
+    JIRA -->|attach identity| API
     SESS -.->|optional| CMD
     SCAN --> PATTERN
     PATTERN --> BRAIN
     CMD --> BRAIN
     CMD --> TEAM
     EB --> BRAIN
-    TB --> TEAM
+    TB --> API
+    API --> SB
+    API --> TEAM
+    MCP --> API
     BRAIN --> CUR
     TEAM --> CUR
     BRAIN --> CLA
@@ -133,6 +142,7 @@ Commands are natural language triggers interpreted by the AI assistant.
 | engineer-brain | `update` | Scanner (30 days) → Pattern detection → BRAIN.md rewrite |
 | engineer-brain | `quarterly` | Scanner (90 days) → BRAIN.md → Structured review document |
 | engineer-brain | `reflect` | Scanner (30 days) → Pattern detection → Recommendations |
+| team-brain | `onboard` / `register` / `join` | Invite membership; write `credentials.json` |
 | team-brain | `attach` / `recall` | Jira identity + pull memories → cache / session brief |
 | team-brain | `remember` | Append shared memory (dedup by `source_ref` / content hash) |
 | team-brain | `breakdown` | Recall memories → story/spike draft (`*-breakdown.md`) |
@@ -148,6 +158,7 @@ flowchart LR
   SB -->|cache| JSON[".team-brain/cache/KEY.json"]
   SB -->|optional export| MD["initiatives/KEY.md"]
   JSON -->|breakdown| Draft["KEY-breakdown.md"]
+  Rule[Cursor team-brain.mdc] -->|recall before / remember after| EngA
   MCP[team-brain MCP] --> EngA
   MCP --> EngB
 ```
@@ -158,8 +169,10 @@ flowchart LR
 | **Supabase** | Membership + memories (SoT); FTS recall; optional pgvector |
 | **Local cache** | Agent-facing snapshot |
 | **Markdown** | Optional human/git export |
-| **MCP** | `mcp/team-brain/` — attach / remember / recall / breakdown |
+| **Agent loop** | Always-on Cursor rule + skill: recall before research, remember after findings |
+| **MCP** | `mcp/team-brain/` — attach / remember / recall / breakdown / metrics |
 
+Beginner path: [team-brain-onboarding.md](team-brain-onboarding.md).  
 Plan and phases: [team-brain-memory.md](team-brain-memory.md). Setup: [supabase/README.md](../supabase/README.md).
 
 ---
@@ -171,7 +184,7 @@ Each AI coding assistant has its own native format for loading persistent contex
 ```mermaid
 flowchart TD
     BRAIN[BRAIN.md + TEAM.md + commands] --> ADAPTER{Platform Adapter}
-    ADAPTER -->|Cursor| A1[".cursor/rules/engineer-brain.mdc<br/>skills/engineer-brain + skills/team-brain"]
+    ADAPTER -->|Cursor| A1[".cursor/rules/engineer-brain.mdc + team-brain.mdc<br/>skills/engineer-brain + skills/team-brain"]
     ADAPTER -->|Claude Code| A2["CLAUDE.md"]
     ADAPTER -->|Copilot| A3[".github/copilot-instructions.md"]
     ADAPTER -->|Windsurf| A4[".windsurfrules"]
@@ -235,11 +248,10 @@ sequenceDiagram
 
 ## Security & Privacy
 
-- All data stays local — nothing is transmitted to external services
-- BRAIN.md lives in the engineer's workspace, versioned in their git repo
+- **Personal engineer-brain** stays local — scanner and `BRAIN.md` are not uploaded
 - The scanner reads only git metadata (commits, branches), not file contents
-- No credentials, secrets, or sensitive data are stored in BRAIN.md
 - Engineers can `.gitignore` their BRAIN.md if they prefer not to share it
+- **Team Brain (opt-in):** membership + initiative memories sync to your Supabase project via RPC + hashed member API keys. Personal `BRAIN.md` is never sent. Do not commit `credentials.json` or `service_role` keys. See [supabase/README.md](../supabase/README.md) security table.
 - **Dashboard hosting:** public deploys (Vercel, Pages, etc.) may ship the **sample/demo** dashboard only. Do not upload personal `BRAIN.md` to a public host — use local `npm run dev` / `preview` for real brain data (see [dashboard/README.md](../dashboard/README.md))
 
 ---

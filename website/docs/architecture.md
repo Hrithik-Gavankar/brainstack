@@ -4,31 +4,40 @@ sidebar_position: 4
 
 # Architecture
 
-Engineer Brain is composed of three layers: data collection, intelligence, and delivery.
+Engineer Brain has two **scopes** (skills): personal `engineer-brain` and opt-in `team-brain`.
 
-## System Overview
+## System overview
 
 ```mermaid
 flowchart TD
-    A[Git Repositories] -->|scan.sh| B[Multi-Repo Scanner]
-    B --> C{Pattern Detection}
-    C --> D[BRAIN.md]
-    D --> E[Platform Adapters]
-    E --> F[Your AI Assistant]
+    GIT[Git Repositories] -->|scan.sh| PATTERN[Pattern Detection]
+    PATTERN --> BRAIN[BRAIN.md]
+    JIRA[Jira identity] -->|attach| API[team-brain-api.sh]
+    API --> SB[(Supabase memories)]
+    API --> CACHE[".team-brain/cache/"]
+    BRAIN --> ADAPTERS[Platform Adapters]
+    CACHE --> ADAPTERS
+    MCP[team-brain MCP] --> API
 ```
 
-## Layer 1: Data Collection
+## Layers
 
-The **scanner** (`core/scripts/scan.sh`) traverses all git repositories and extracts commits, branches, patterns, and velocity metrics.
+1. **Data collection** — multi-repo git scanner (`scan.sh`)
+2. **Intelligence** — pattern detection + command engine (personal) and collaborative memory RPCs (team)
+3. **Delivery** — platform adapters; Cursor also ships always-on `team-brain.mdc` (recall / remember loop)
 
-## Layer 2: Intelligence
+## Team Brain
 
-**Pattern detection** analyzes scanner output to classify expertise, detect anomalies, and generate recommendations.
+| Layer | Role |
+|-------|------|
+| Jira | Initiative identity |
+| Supabase | Membership + memories (source of truth) |
+| Local cache | Agent-facing snapshot |
+| Markdown | Optional export |
+| MCP | Agent tools without shelling out |
 
-## Layer 3: Delivery
+**Honesty:** shared memory is not automatic chat sync — agents/`remember`, then `recall` (or MCP / `watch`).
 
-**Platform adapters** translate the universal brain into each tool's native context format.
+## Full documentation
 
-## Full Documentation
-
-See the [complete architecture document](https://github.com/Hrithik-Gavankar/engineer-brain/blob/main/docs/architecture.md) for detailed diagrams and data flow explanations.
+See the [complete architecture document](https://github.com/Hrithik-Gavankar/engineer-brain/blob/main/docs/architecture.md) for detailed diagrams, security notes, and extensibility.

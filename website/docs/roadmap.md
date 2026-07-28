@@ -10,15 +10,15 @@ See the full [roadmap on GitHub](https://github.com/Hrithik-Gavankar/engineer-br
 
 ### Now (v1.0)
 - Core engine with 6 platform adapters
-- Commands: sync, update, quarterly, reflect
+- Commands: sync, update, quarterly, reflect, doctor
 - Pattern detection and auto-expertise classification
-- `engineer-brain doctor` command
 
 ### Next (v1.x)
 - Zed, JetBrains, Neovim support
 - Web dashboard MVP shipped (`dashboard/`); local BRAIN.md parser next
-- MCP server integration
-- Team-level brain (opt-in aggregation)
+- **Team Brain collaborative memory shipped** — remember/recall, cache, MCP, agent loop, onboard
+- Team aggregation metrics (coverage matrix, workload heatmap) still open
+- Engineer-brain personal MCP next
 
 ### Later (v2.0)
 - BRAIN.md as an open standard

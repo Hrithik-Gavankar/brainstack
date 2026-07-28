@@ -19,11 +19,13 @@ Engineer Brain creates a **versioned engineering profile** — stored as a simpl
 
 It's not another AI tool. It's a **context layer** that makes every AI tool better.
 
+**Team Brain** (opt-in) adds collaborative AI memory for a crew on the same Jira initiative — Supabase as source of truth, local cache for agents, MCP + Cursor agent loop.
+
 ## Key Principles
 
 - **Portable** — Same brain across 6+ platforms
 - **Self-updating** — Refreshes from your git history
-- **Private** — Everything stays local, nothing transmitted
+- **Private by default** — Personal `BRAIN.md` stays local; Team Brain is explicit opt-in
 - **Open** — MIT licensed, community-driven
 
 ## What You Get
@@ -34,9 +36,12 @@ It's not another AI tool. It's a **context layer** that makes every AI tool bett
 | `engineer-brain update` | Refreshed BRAIN.md with latest data |
 | `engineer-brain quarterly` | Structured quarterly review |
 | `engineer-brain reflect` | Pattern analysis and recommendations |
+| `team-brain onboard` / `remember` / `recall` | Join crew + shared initiative memory |
+| `team-brain breakdown` | Story/spike draft from recalled memories |
 
 ## Next Steps
 
 - [Quick Start](./quick-start.md) — Install in 5 minutes
+- [Brain scopes](./scopes.md) — Personal vs team
 - [BRAIN.md Spec](./concepts/brain-spec.md) — Understand the format
 - [Architecture](./architecture.md) — How it works under the hood

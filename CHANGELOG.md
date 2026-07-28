@@ -32,6 +32,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - P4 `metrics` — local reuse stats (`.team-brain/metrics.json`); MCP tools `breakdown` / `metrics`
 - Security follow-up: unique member names, 16-char invites, `updated_at` trigger (`…_security.sql`)
 - Mandatory Team Brain **agent loop**: always-on `team-brain.mdc` + skill — recall before research, remember after findings
+- Team Brain beginner onboarding guide ([docs/team-brain-onboarding.md](docs/team-brain-onboarding.md))
+- CLI `onboard` — join + optional attach + recall in one command
 
 ### Changed
 - Jira site defaults use `https://your-org.atlassian.net` (no hardcoded company host)
@@ -41,8 +43,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Documented `dashboard/` vs `website/`, privacy/hosting rules (public deploy = sample only)
 - `platforms/cursor/skills/engineer-brain/SKILL.md` and `core/COMMANDS.md` sync flow no longer rely on authored git commits alone
 - Cursor platform README documents scanner config knobs and install vs live-copy drift
-- Architecture / README / roadmap describe Brain umbrella (personal + team scopes)
-- Team Brain: one `initiatives/<JIRA-KEY>.md` per initiative; Supabase for multi-engineer captures
+- Architecture / README / roadmap / FAQ / website docs aligned with collaborative memory + agent loop
+- Team Brain: Supabase memories as SoT; local `cache/<KEY>.json` for agents; md optional export
 
 ---
 

@@ -11,6 +11,7 @@ This directory contains realistic BRAIN.md profiles for different engineering ro
 | `devops-engineer/` | DevOps Engineer | Terraform, Kubernetes, AWS, GitHub Actions |
 | `platform-engineer/` | Platform Engineer | Python, Go, Backstage, Crossplane |
 | `oss-maintainer/` | OSS Maintainer + Day Job | Go, Rust, Community Management |
+| `team-spike-crew/` | Team Brain local fixture | `TEAM.md` + initiative md (not personal BRAIN) |
 
 ## How to use
 
@@ -20,3 +21,5 @@ This directory contains realistic BRAIN.md profiles for different engineering ro
 4. Run `engineer-brain update` to auto-populate from your git history
 
 These examples demonstrate the depth and structure of a well-configured BRAIN.md.
+
+For **Team Brain**, copy `team-spike-crew/` only as a local layout demo — live sync uses Supabase + [team-brain-onboarding.md](../docs/team-brain-onboarding.md).

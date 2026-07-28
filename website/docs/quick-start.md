@@ -60,6 +60,17 @@ This scans your git history and auto-populates BRAIN.md with your expertise, pat
 "engineer-brain quarterly"   → before performance reviews
 ```
 
+### Optional — Team Brain
+
+If your crew already has an invite code + Jira key:
+
+```bash
+bash core/scripts/team-brain-api.sh onboard <INVITE> "Your Name" AAP-81423
+```
+
+Then agents/`remember` and `recall` share initiative memory.  
+Junior guide: [team-brain-onboarding.md](https://github.com/Hrithik-Gavankar/engineer-brain/blob/main/docs/team-brain-onboarding.md).
+
 ## Verify it works
 
 After running `engineer-brain update`, ask your AI assistant:

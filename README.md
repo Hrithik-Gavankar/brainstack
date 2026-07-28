@@ -18,6 +18,7 @@
   <a href="#brain-scopes">Scopes</a> •
   <a href="docs/brain-spec.md">BRAIN.md Spec</a> •
   <a href="docs/scopes.md">Engineer + Team</a> •
+  <a href="docs/team-brain-onboarding.md">Team Brain Onboard</a> •
   <a href="docs/architecture.md">Architecture</a> •
   <a href="dashboard/README.md">Dashboard</a> •
   <a href="docs/roadmap.md">Roadmap</a> •
@@ -352,10 +353,9 @@ engineer-brain/
 │
 ├── supabase/                          # Team Brain cloud (migrations + public env)
 ├── mcp/team-brain/                    # Team Brain MCP (attach / remember / recall / breakdown)
-├── docs/team-brain-memory.md          # Collaborative memory plan (P0–P4)
 │
 ├── platforms/                         # Platform-specific adapters
-│   ├── cursor/                        # rules + skills/engineer-brain + skills/team-brain
+│   ├── cursor/                        # engineer + team rules/skills (agent loop)
 │   ├── claude-code/
 │   ├── vscode-copilot/
 │   ├── windsurf/
@@ -365,7 +365,9 @@ engineer-brain/
 ├── docs/                              # Documentation
 │   ├── architecture.md
 │   ├── scopes.md                      # Umbrella: engineer + team skills
-│   ├── team-brain.md
+│   ├── team-brain.md                  # Team Brain overview
+│   ├── team-brain-onboarding.md       # Junior join path
+│   ├── team-brain-memory.md           # Collaborative memory plan (P0–P4)
 │   ├── brain-spec.md
 │   ├── vision.md
 │   ├── roadmap.md
@@ -410,14 +412,15 @@ See **[docs/roadmap.md](docs/roadmap.md)** for the full roadmap.
 **Near-term:**
 - [x] `engineer-brain doctor` — health check and brain completeness score
 - [x] Web dashboard MVP (`dashboard/`) — sample data + data-port seam; BRAIN.md parser next
-- [x] Team Brain — skills + per-initiative md + Jira/Supabase hybrid sync
+- [x] Team Brain collaborative memory — Jira + Supabase SoT + cache + MCP + agent loop
+- [x] Team Brain onboarding — invite + Jira key (`onboard`)
 - [ ] Team aggregation metrics (coverage matrix, workload heatmap)
 
 **Mid-term:**
 - [ ] Zed and JetBrains platform support
 - [ ] GitLab/Bitbucket integration
 - [ ] Weekly email digest mode
-- [x] Team Brain MCP (`mcp/team-brain/`) — remember / recall / attach
+- [x] Team Brain MCP (`mcp/team-brain/`) — remember / recall / attach / breakdown
 - [ ] Engineer-brain personal MCP (BRAIN.md / sync)
 
 **Long-term:**

@@ -11,4 +11,8 @@
 Apply in timestamp order (`supabase db push` or SQL Editor).  
 Joiners do **not** run migrations. Existing projects: apply any new files once.
 
-Plan: [docs/team-brain-memory.md](../../docs/team-brain-memory.md)
+| Doc | Link |
+|-----|------|
+| Setup + security | [../README.md](../README.md) |
+| Beginner onboard | [../../docs/team-brain-onboarding.md](../../docs/team-brain-onboarding.md) |
+| Memory plan | [../../docs/team-brain-memory.md](../../docs/team-brain-memory.md) |

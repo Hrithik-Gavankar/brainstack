@@ -52,11 +52,21 @@ local — never commit it back to this repository.
 | `/engineer-brain quarterly` | Quarterly review content |
 | `/engineer-brain reflect` | Pattern analysis & recommendations |
 | `/engineer-brain scan [days]` | Raw git scan output |
-| `/team-brain register` / `join` | Supabase team membership |
-| `/team-brain attach <JIRA-KEY>` | Jira + Supabase + `initiatives/<KEY>.md` |
+| `/team-brain onboard` / `register` / `join` | Invite join or create team |
+| `/team-brain attach <JIRA-KEY>` | Jira identity + pull memories → cache |
 | `/team-brain remember` / `recall` / `sync` | Shared memories (Supabase → cache) |
-| `/team-brain breakdown <KEY>` | Draft stories from initiative context |
+| `/team-brain breakdown <KEY>` | Draft stories from recalled memories |
+| `/team-brain watch` / `metrics` | Near-realtime poll; local reuse stats |
 | `/team-brain init` | Local scaffold only |
+
+### Team Brain agent loop (always-on)
+
+`team-brain.mdc` is installed with Cursor rules. On any Jira-key / initiative work:
+
+1. **`recall` before research** (sync crew memory)
+2. **`remember` after durable findings** (`source_ref` for dedup)
+
+Beginner path: [docs/team-brain-onboarding.md](../../docs/team-brain-onboarding.md).
 
 ### Team Brain MCP (optional)
 
@@ -84,7 +94,9 @@ Reload MCP servers in Cursor after editing.
 ## How It Works
 
 - **`engineer-brain.mdc`** — loaded on every AI interaction (always-on personal context)
+- **`team-brain.mdc`** — always-on collaborative memory loop (recall / remember)
 - **`engineer-brain` skill** — personal commands + `BRAIN.md`
 - **`team-brain` skill** — team/initiative commands + `.team-brain/`
 - **`scan.sh`** — multi-repo git scanner (personal metrics)
+- **Optional MCP** — `mcp/team-brain/` tools for the same verbs without shelling out
 - Scopes: [docs/scopes.md](../../docs/scopes.md)

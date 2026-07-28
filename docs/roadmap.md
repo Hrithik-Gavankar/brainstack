@@ -30,11 +30,12 @@ Growing beyond individual use into a richer tool.
 - [ ] **JetBrains AI Assistant support** — platform adapter for IntelliJ/WebStorm/PyCharm
 - [ ] **Neovim + AI plugin support** — adapter for Neovim-based AI workflows
 - [x] **Web dashboard (MVP)** — Vite/React UI with sample data + data-port seam (`dashboard/`); local `BRAIN.md` parser still open
-- [x] **Team Brain (scopes)** — `team-brain` skill + per-initiative markdown; see [scopes.md](scopes.md)
-- [x] **Team Brain hybrid sync** — Jira identity + Supabase captures (`supabase/`, `team-brain-api.sh`)
-- [ ] **Team Brain collaborative memory** — remember/recall, cache, realtime, pgvector; see [team-brain-memory.md](team-brain-memory.md)
-- [x] **Team Brain MCP (P3)** — `mcp/team-brain/` tools: attach / remember / recall / list_recent
-- [x] **Team Brain breakdown (P4)** — recall → story/spike draft + local reuse metrics
+- [x] **Team Brain (scopes)** — `team-brain` skill + cache / optional md; see [scopes.md](scopes.md)
+- [x] **Team Brain collaborative memory (P0–P4)** — `remember` / `recall`, cache, `watch` poll, optional pgvector, MCP, breakdown + metrics; see [team-brain-memory.md](team-brain-memory.md)
+- [x] **Team Brain agent loop** — Cursor always-on `team-brain.mdc` + skill: recall before research, remember after findings
+- [x] **Team Brain onboarding** — invite + Jira key via `onboard`; beginner guide [team-brain-onboarding.md](team-brain-onboarding.md)
+- [ ] **Team Brain Realtime push** — private broadcast into other agents (v1 uses poll `watch` / next `recall`)
+- [ ] **Anon register/join rate limits** — Edge Function / Auth hardening (documented gap)
 - [ ] **Team aggregation metrics** — skill coverage matrix, workload heatmap, collaboration graph
 - [ ] **GitLab/Bitbucket support** — scanner support beyond GitHub
 - [ ] **Engineer-brain MCP** — personal BRAIN.md / sync as MCP resources (team-brain MCP ships first)

@@ -67,6 +67,15 @@ bash core/scripts/team-brain-api.sh recall AAP-81423 "decision environment"
 | `sync` | Pull → cache (+ md export) |
 | `list` / `status` | Initiatives / config |
 
-## Cursor skill
+## Agent loop (Cursor)
 
-`/team-brain` — see `platforms/cursor/skills/team-brain/SKILL.md`
+Always-on rule `platforms/cursor/rules/team-brain.mdc`:
+
+1. `recall` before research on a Jira key  
+2. `remember` after durable findings (`source_ref`)
+
+## Cursor skill / MCP
+
+- Skill: `/team-brain` — `platforms/cursor/skills/team-brain/SKILL.md`
+- MCP: `mcp/team-brain/` — same verbs for agents without shelling out
+- Beginner guide: [docs/team-brain-onboarding.md](../../docs/team-brain-onboarding.md)

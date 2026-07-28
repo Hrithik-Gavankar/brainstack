@@ -20,7 +20,7 @@
 - [How you review PRs]
 - [How you break down epics]
 - [Definition of done / quality bar]
-- [How AI context is shared — what is OK to capture into initiatives]
+- [How AI context is shared — what is OK to `remember` into initiative memory]
 
 ---
 

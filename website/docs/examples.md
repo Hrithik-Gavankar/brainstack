@@ -15,6 +15,7 @@ See how Engineer Brain adapts to different engineering profiles.
 | [DevOps Engineer](https://github.com/Hrithik-Gavankar/engineer-brain/blob/main/examples/devops-engineer/BRAIN.md) | DevOps engineer, platform team, Terraform/Kubernetes/AWS |
 | [Platform Engineer](https://github.com/Hrithik-Gavankar/engineer-brain/blob/main/examples/platform-engineer/BRAIN.md) | Platform engineer, developer experience, Backstage/Go/Python |
 | [OSS Maintainer](https://github.com/Hrithik-Gavankar/engineer-brain/blob/main/examples/oss-maintainer/BRAIN.md) | Software engineer + open source maintainer, Go/Rust |
+| [Team spike crew](https://github.com/Hrithik-Gavankar/engineer-brain/blob/main/examples/team-spike-crew/README.md) | Team Brain local fixture (`TEAM.md` + initiative md) |
 
 ## Using Examples
 
@@ -23,5 +24,6 @@ These examples demonstrate:
 - What a realistic Skills Inventory looks like
 - How Work Patterns vary by engineering discipline
 - What Growth Roadmaps look like for different career paths
+- How Team Brain layouts look for a shared initiative
 
-Copy the example closest to your role and customize it as a starting point.
+Copy the personal example closest to your role and customize it as a starting point. For crew memory, follow [team-brain-onboarding.md](https://github.com/Hrithik-Gavankar/engineer-brain/blob/main/docs/team-brain-onboarding.md).

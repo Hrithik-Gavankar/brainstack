@@ -1,4 +1,4 @@
-# Team Brain sync
+# Team Brain (Supabase)
 
 Collaborative **AI memory** for a crew on the same Jira initiative:
 

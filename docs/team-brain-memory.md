@@ -1,9 +1,9 @@
 # Team Brain — Collaborative AI Memory (plan)
 
-Status: **active build**  
-Related: [#2](https://github.com/Hrithik-Gavankar/engineer-brain/issues/2), [team-brain.md](team-brain.md), [scopes.md](scopes.md)
+Status: **P0–P4 shipped** (Realtime push + anon rate limits still open)  
+Related: [#2](https://github.com/Hrithik-Gavankar/engineer-brain/issues/2), [team-brain.md](team-brain.md), [team-brain-onboarding.md](team-brain-onboarding.md), [scopes.md](scopes.md)
 
-This document captures the original Team Brain intent, what we shipped for the demo, and the Supabase-only path to **collaborative AI memory** (realtime + semantic recall) — without depending on external memory products.
+This document captures the original Team Brain intent, what shipped for collaborative AI memory (FTS + optional semantic recall + agent loop), and remaining gaps — without depending on external memory products.
 
 ---
 
@@ -22,13 +22,13 @@ When engineer-brain was personal-only, Team Brain meant:
 
 Markdown was always a **portable surface**. The outcome was **agents reusing team memory** — not a shared wiki.
 
-### Demo slice we already shipped
+### Early demo slice (superseded)
 
 - Invite / register / join on Supabase
 - Jira key as initiative identity
 - `capture` + pull `sync` → rewrite `## Capture log` in `initiatives/<KEY>.md`
 
-That is a thin storage + human-readable log. It is **not** yet automatic collaborative memory.
+That thin log is kept as **compat aliases**. Current product: `remember` / `recall` → Supabase SoT + `cache/<KEY>.json`, MCP, Cursor agent loop, `breakdown` / `metrics`.
 
 ---
 
@@ -89,7 +89,7 @@ Later polish: version/rollback, snapshots, richer metrics.
 
 ## 4. Phased build
 
-### P0 — Stop being a notebook *(in progress)*
+### P0 — Stop being a notebook *(done)*
 
 - [x] Plan doc (this file)
 - [x] Schema: `source_ref`, `content_hash`, FTS column; soft dedup on remember  
@@ -99,7 +99,7 @@ Later polish: version/rollback, snapshots, richer metrics.
 - [x] Skill + docs: memories are SoT; md is optional export
 - [x] Keep existing `capture` / `sync` as compatibility aliases
 
-### P1 — Near-realtime watch *(in progress)*
+### P1 — Near-realtime watch *(done — poll; push later)*
 
 **Decision:** use authenticated **polling** (`list_recent` + `p_since`), not `postgres_changes`.
 
@@ -235,6 +235,9 @@ Use this as the build board (check off in PRs):
 ## References
 
 - Issue: feat Team Brain — [#2](https://github.com/Hrithik-Gavankar/engineer-brain/issues/2)
-- Hybrid sync (current): [team-brain.md](team-brain.md)
+- Overview: [team-brain.md](team-brain.md)
+- Beginner onboarding: [team-brain-onboarding.md](team-brain-onboarding.md)
+- Architecture: [architecture.md](architecture.md)
 - Schema: [../supabase/migrations/](../supabase/migrations/)
 - Client: [../core/scripts/team-brain-api.sh](../core/scripts/team-brain-api.sh)
+- MCP: [../mcp/team-brain/README.md](../mcp/team-brain/README.md)
