@@ -27,7 +27,7 @@ flowchart TD
 
     subgraph Skills["Skills = scopes"]
         EB[engineer-brain<br/>sync update quarterly …]
-        TB[team-brain<br/>init attach capture …]
+        TB[team-brain<br/>attach remember recall breakdown]
     end
 
     subgraph Adapters["Platform Adapters"]
@@ -133,10 +133,34 @@ Commands are natural language triggers interpreted by the AI assistant.
 | engineer-brain | `update` | Scanner (30 days) → Pattern detection → BRAIN.md rewrite |
 | engineer-brain | `quarterly` | Scanner (90 days) → BRAIN.md → Structured review document |
 | engineer-brain | `reflect` | Scanner (30 days) → Pattern detection → Recommendations |
-| team-brain | `attach` / `sync` | TEAM.md + initiatives/*.md → session brief / team status |
-| team-brain | `capture` / `breakdown` | Append findings → initiative file → story draft |
+| team-brain | `attach` / `recall` | Jira identity + pull memories → cache / session brief |
+| team-brain | `remember` | Append shared memory (dedup by `source_ref` / content hash) |
+| team-brain | `breakdown` | Recall memories → story/spike draft (`*-breakdown.md`) |
+| team-brain | `watch` / `metrics` | Near-realtime poll; local reuse stats |
 
-Team Brain sync is **hybrid**: Jira for initiative identity, **Supabase** for team membership + captures, and local `initiatives/<JIRA-KEY>.md` mirrors (one file per initiative). See [team-brain.md](team-brain.md) and [supabase/README.md](../supabase/README.md).
+### Team Brain collaborative memory
+
+```mermaid
+flowchart LR
+  Jira -->|attach key title status| Init[initiatives]
+  EngA -->|remember| SB[(Supabase memories)]
+  EngB -->|recall / watch| SB
+  SB -->|cache| JSON[".team-brain/cache/KEY.json"]
+  SB -->|optional export| MD["initiatives/KEY.md"]
+  JSON -->|breakdown| Draft["KEY-breakdown.md"]
+  MCP[team-brain MCP] --> EngA
+  MCP --> EngB
+```
+
+| Layer | Responsibility |
+|-------|----------------|
+| **Jira** | Initiative identity |
+| **Supabase** | Membership + memories (SoT); FTS recall; optional pgvector |
+| **Local cache** | Agent-facing snapshot |
+| **Markdown** | Optional human/git export |
+| **MCP** | `mcp/team-brain/` — attach / remember / recall / breakdown |
+
+Plan and phases: [team-brain-memory.md](team-brain-memory.md). Setup: [supabase/README.md](../supabase/README.md).
 
 ---
 

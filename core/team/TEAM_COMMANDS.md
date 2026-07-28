@@ -1,7 +1,9 @@
 # Team Brain — Command Reference
 
-Team Brain is the **team / initiative scope** of the Brain product.
+Team Brain is the **team / initiative scope** of the Brain product — collaborative AI memory on a Jira key.  
 Personal identity stays in engineer-brain (`BRAIN.md`).
+
+Plan: [docs/team-brain-memory.md](../../docs/team-brain-memory.md)
 
 ## Layout
 
@@ -10,22 +12,24 @@ Personal identity stays in engineer-brain (`BRAIN.md`).
 ├── team.yaml              # sync backend, jira site, initiative index
 ├── credentials.json       # api_key — gitignored, never commit
 ├── TEAM.md                # one per team
+├── cache/
+│   └── AAP-81423.json     # agent SoT (written on sync/remember)
 └── initiatives/
-    └── AAP-81423.md       # one markdown file PER initiative (Jira key)
+    └── AAP-81423.md       # optional human/git export
 ```
 
 ## Sync model
 
 | Backend | Behavior |
 |---------|----------|
-| `supabase` (default for demos) | Register/join team; captures sync via Supabase RPCs; mirror into initiative `.md` |
-| `local` | File/git only — no multi-machine sync unless you share the folder |
+| `supabase` (default) | Memories in Supabase; local `cache/<KEY>.json` for agents; md export optional |
+| `local` | File/git only — no multi-engineer sync |
 
-Jira provides initiative **identity** only (key, title, status, URL). Captures live in Supabase.
+Jira = initiative **identity**. Memories = Supabase (+ cache).
 
 ## Client
 
-**New teammate (invite only):**
+**New teammate:**
 
 ```bash
 bash core/scripts/team-brain-api.sh onboard INVITECODE "Bob" AAP-81423
@@ -40,36 +44,29 @@ bash core/scripts/team-brain-api.sh register "Crew" "Alice"   # share invite_cod
 **Day to day:**
 
 ```bash
-bash core/scripts/team-brain-api.sh capture AAP-81423 research "Finding…"
-bash core/scripts/team-brain-api.sh sync AAP-81423
+bash core/scripts/team-brain-api.sh remember AAP-81423 research "Finding…"
+bash core/scripts/team-brain-api.sh recall AAP-81423
+bash core/scripts/team-brain-api.sh recall AAP-81423 "decision environment"
 ```
 
-Public project config: `supabase/project.public.env`. See `supabase/README.md`.
+`capture` / `sync` remain aliases. Public config: `supabase/project.public.env`.
 
 ## Commands
 
-### `register` / `join` / `whoami`
+| Command | Purpose |
+|---------|---------|
+| `onboard` | Join + optional attach + recall |
+| `register` / `join` / `whoami` | Membership |
+| `attach` | Upsert Jira initiative + pull recent memories |
+| `remember` | Write memory (`--source-ref` for dedup; embeds if provider set) |
+| `recall` | List recent, or vector/FTS search |
+| `reembed` | Backfill embeddings for an initiative |
+| `watch` | Near-realtime poll |
+| `breakdown` | Recall → draft stories/spikes markdown |
+| `metrics` | Reuse stats (recall / remember / breakdown) |
+| `sync` | Pull → cache (+ md export) |
+| `list` / `status` | Initiatives / config |
 
-Cloud team membership. Required before Supabase attach/capture.
+## Cursor skill
 
-### `init`
-
-Local scaffold only (`team-init.sh`).
-
-### `attach <JIRA-KEY>`
-
-Fetch Jira → upsert Supabase initiative → ensure `initiatives/<KEY>.md` → session brief.
-
-### `capture` / `sync`
-
-Write/read captures via Supabase; refresh the initiative markdown Capture log.
-
-### `breakdown` / `status` / `detach`
-
-Story drafting, config summary, clear session focus.
-
-## Hard rules
-
-- Never commit or push without explicit user permission
-- Never sync or publish personal `BRAIN.md`
-- Never commit `credentials.json`
+`/team-brain` — see `platforms/cursor/skills/team-brain/SKILL.md`

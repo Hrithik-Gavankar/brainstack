@@ -218,13 +218,13 @@ Engineer Brain works with every major AI coding assistant. Same brain, native fo
 | Skill | For | Living docs |
 |-------|-----|-------------|
 | `engineer-brain` | You — standups, growth, personal patterns | `BRAIN.md` |
-| `team-brain` | Your crew — spikes, epics, shared decisions | `TEAM.md` + `initiatives/*.md` |
+| `team-brain` | Crew — collaborative AI memory on a Jira key | Supabase + `cache/<KEY>.json` (+ optional md) |
 
 Commands (`sync`, `quarterly`, `attach`, …) are **verbs under a skill**, not separate skills.
 
 - Scopes guide: **[docs/scopes.md](docs/scopes.md)**
-- Team Brain (Jira + Supabase + per-initiative md): **[docs/team-brain.md](docs/team-brain.md)**
-- Supabase setup: **[supabase/README.md](supabase/README.md)**
+- Team Brain: **[docs/team-brain.md](docs/team-brain.md)** · Memory plan: **[docs/team-brain-memory.md](docs/team-brain-memory.md)**
+- Supabase setup: **[supabase/README.md](supabase/README.md)** · MCP: **[mcp/team-brain/](mcp/team-brain/)**
 - Demo fixture: **[examples/team-spike-crew/](examples/team-spike-crew/)**
 
 ## Features
@@ -244,11 +244,12 @@ Commands (`sync`, `quarterly`, `attach`, …) are **verbs under a skill**, not s
 
 | Command | Description |
 |---------|-------------|
-| `team-brain register` / `join` | Create or join a team (Supabase) |
-| `team-brain attach <JIRA-KEY>` | Jira identity → Supabase initiative + `initiatives/<KEY>.md` |
-| `team-brain capture` / `sync` | Shared captures via Supabase; mirror into initiative md |
-| `team-brain breakdown <KEY>` | Draft stories/spikes from initiative context |
-| `team-brain init` | Local scaffold only (no cloud) |
+| `team-brain onboard` / `register` / `join` | Invite join or create a team (Supabase) |
+| `team-brain attach <JIRA-KEY>` | Jira identity → initiative + pull memories into cache |
+| `team-brain remember` / `recall` | Write / search shared memories (FTS; optional vectors) |
+| `team-brain breakdown <KEY>` | Recall → story/spike draft (`*-breakdown.md`) |
+| `team-brain watch` / `metrics` | Near-realtime poll; local reuse stats |
+| `team-brain sync` / `capture` | Compat aliases for recall-recent / remember |
 | `team-brain status` / `whoami` | Config + membership |
 
 ### Intelligence
@@ -305,9 +306,10 @@ bash install.sh continue-dev ~/my-workspace
 
 "team-brain onboard <invite> Name KEY" → new joiner (one command)
 "team-brain register …"                → admin creates team once
-"team-brain capture / sync"            → shared captures
-"team-brain breakdown …"               → stories from prior research
+"team-brain remember / recall"         → shared collaborative memory
+"team-brain breakdown …"               → stories from recalled memories
 ```
+
 
 ### Demo (Cursor) — personal + team
 
@@ -347,7 +349,9 @@ engineer-brain/
 │       ├── team-init.sh               # Scaffold .team-brain/
 │       └── team-brain-api.sh          # Supabase RPC client
 │
-├── supabase/                          # Team Brain cloud sync (migrations)
+├── supabase/                          # Team Brain cloud (migrations + public env)
+├── mcp/team-brain/                    # Team Brain MCP (attach / remember / recall / breakdown)
+├── docs/team-brain-memory.md          # Collaborative memory plan (P0–P4)
 │
 ├── platforms/                         # Platform-specific adapters
 │   ├── cursor/                        # rules + skills/engineer-brain + skills/team-brain
@@ -412,7 +416,8 @@ See **[docs/roadmap.md](docs/roadmap.md)** for the full roadmap.
 - [ ] Zed and JetBrains platform support
 - [ ] GitLab/Bitbucket integration
 - [ ] Weekly email digest mode
-- [ ] MCP server for real-time brain queries
+- [x] Team Brain MCP (`mcp/team-brain/`) — remember / recall / attach
+- [ ] Engineer-brain personal MCP (BRAIN.md / sync)
 
 **Long-term:**
 - [ ] BRAIN.md ecosystem — importers, exporters, validators

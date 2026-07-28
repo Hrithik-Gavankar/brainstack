@@ -30,7 +30,8 @@ create table if not exists public.members (
   display_name text not null,
   role text not null default 'member' check (role in ('admin', 'member')),
   api_key_hash text not null,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  unique (team_id, display_name)
 );
 
 create index if not exists members_team_id_idx on public.members (team_id);
@@ -89,7 +90,8 @@ returns text
 language sql
 volatile
 as $$
-  select upper(substr(encode(extensions.gen_random_bytes(6), 'hex'), 1, 8));
+  -- 16 hex chars (~64 bits) — short codes are too easy to brute-force with anon join
+  select upper(substr(encode(extensions.gen_random_bytes(12), 'hex'), 1, 16));
 $$;
 
 create or replace function public.tb_resolve_member(p_api_key text)
@@ -186,6 +188,13 @@ begin
   limit 1;
   if not found then
     raise exception 'invalid invite code';
+  end if;
+
+  if exists (
+    select 1 from public.members
+    where team_id = v_team.id and display_name = trim(p_display_name)
+  ) then
+    raise exception 'member already exists — use a different display name';
   end if;
 
   v_api_key := public.tb_new_api_key();
@@ -415,8 +424,26 @@ begin
 end;
 $$;
 
+-- Keep initiatives.updated_at fresh on any UPDATE path
+create or replace function public.tb_set_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists initiatives_updated_at on public.initiatives;
+create trigger initiatives_updated_at
+  before update on public.initiatives
+  for each row execute function public.tb_set_updated_at();
+
 -- ---------------------------------------------------------------------------
 -- Grants: anon + authenticated can call RPCs; no direct table access
+-- NOTE: register_team / join_team have no app-level rate limit in v1.
+-- See supabase/README.md (Security) for mitigations / follow-ups.
 -- ---------------------------------------------------------------------------
 
 alter table public.teams enable row level security;

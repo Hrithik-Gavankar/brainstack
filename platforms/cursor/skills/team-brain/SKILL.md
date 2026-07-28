@@ -1,41 +1,52 @@
 ---
 name: team-brain
 description: >-
-  Team / initiative scope of Brain — shared context for spikes, epics, and
-  crews. Register a team, attach Jira initiatives, capture findings to
-  Supabase, and mirror into per-initiative markdown. Invoke for "team brain",
-  "team-brain", "register team", "join team", "attach initiative", "capture
-  for the team", "team sync", "initiative breakdown", or shared spike context
+  Team / initiative scope of Brain — collaborative AI memory for spikes, epics,
+  and crews. Register a team, attach Jira initiatives, remember findings to
+  Supabase, recall into the session. Invoke for "team brain", "team-brain",
+  "register team", "join team", "attach initiative", "remember for the team",
+  "recall", "team sync", "initiative breakdown", or shared spike context
   (not personal standups).
 argument-hint: >-
-  <command> — onboard | register | join | whoami | init | attach | sync |
-  capture | breakdown | status | detach
+  <command> — onboard | register | join | whoami | init | attach | remember |
+  recall | capture | sync | watch | breakdown | status | detach
 tools: Read, Write, Shell, Glob, Grep
 ---
 
-# Team Brain — Shared Initiative Context
+# Team Brain — Collaborative AI Memory
 
 Part of the **Brain** product umbrella:
 
 | Skill | Scope | Living docs |
 |-------|--------|-------------|
 | `engineer-brain` | Personal identity, standups, growth | `BRAIN.md` |
-| `team-brain` | Team + initiatives | `TEAM.md` + **one `initiatives/<JIRA-KEY>.md` per initiative** |
+| `team-brain` | Team + initiative **memories** | Supabase SoT + `cache/<KEY>.json` |
 
 Personal `BRAIN.md` is never uploaded to Supabase.
 
-## Sync model (hybrid)
+**Plan:** `docs/team-brain-memory.md`  
+**MCP (agent tools):** `mcp/team-brain/` — prefer MCP tools when the `team-brain` server is connected; otherwise use the CLI below.
+
+## Agent defaults (P3)
+
+Follow these without waiting for the user to ask:
+
+1. **On attach / starting work on a Jira key** → always `recall` / `list_recent` (or CLI `sync`) and summarize memories into the session brief.
+2. **After durable research or a decision** → `remember` with a stable `source_ref` (e.g. `AAP-81423#tox-paths`). Dedup makes retries safe.
+3. **Before planning stories** → run `breakdown` (it recalls first). Do not invent an epic breakdown without memories.
+4. Prefer **cache** `/.team-brain/cache/<KEY>.json` over re-reading chat history.
+5. Never copy personal career/growth notes from `BRAIN.md` into team memory.
+
+## Sync model
 
 | Layer | Role |
 |-------|------|
-| **Jira** | Initiative identity (key, title, status, URL) |
-| **Supabase** | Team membership + shared captures (multi-engineer sync) |
-| **Local `.team-brain/`** | `TEAM.md` + per-initiative `.md` mirrors for demo/git export |
+| **Jira** | Initiative identity |
+| **Supabase** | Shared memories (SoT) |
+| **Local cache** | Agent-facing snapshot |
+| **Markdown export** | Optional human/git mirror |
 
-Prefer Supabase when `sync.backend: supabase` and credentials exist.
-Fall back to local files only when backend is `local` or API is unset.
-
-Client script (from engineer-brain repo or skill scripts):
+Client (CLI fallback):
 
 ```bash
 bash "${SKILL_DIR}/scripts/team-brain-api.sh" <command> ...
@@ -43,87 +54,54 @@ bash "${SKILL_DIR}/scripts/team-brain-api.sh" <command> ...
 bash "<repo>/core/scripts/team-brain-api.sh" <command> ...
 ```
 
-Setup: see `supabase/README.md`.
+MCP setup: `mcp/team-brain/README.md`.
 
 ---
 
 ## Commands
 
-### `onboard <invite-code> "Name" [JIRA-KEY]` (preferred for new joiners)
-
-One command — uses committed `supabase/project.public.env` (no dashboard, no copying keys).
+### `onboard <invite-code> "Name" [JIRA-KEY]`
 
 ```bash
 bash …/team-brain-api.sh onboard 9F7AC910 "Ada Engineer" AAP-81423
 ```
 
-Seeds `.team-brain/`, joins the team, attaches + syncs the initiative.
+### `register` / `join` / `whoami` / `init`
 
-### `register <team-name> [display-name]`
-
-Create a team in Supabase (admin, once). Uses `project.public.env` or `team.yaml`.
-
-```bash
-bash …/team-brain-api.sh register "DevTools Spike Crew" "Hrithik"
-```
-
-Saves `.team-brain/credentials.json` (gitignored). Share only the **invite_code**.
-
-### `join <invite-code> [display-name]`
-
-Join an existing team; saves credentials for this engineer.
-
-### `whoami`
-
-Show current member + team via Supabase.
-
-### `init`
-
-Scaffold local layout only (no cloud):
-
-```bash
-bash "${SKILL_DIR}/scripts/team-init.sh" "$HOME/path/to/workspace"
-```
-
-Still useful for `TEAM.md` templates; for sync demos prefer `register`.
+Membership + local scaffold. Prefer `register` / `onboard` for sync demos.
 
 ### `attach <JIRA-KEY>`
 
-1. **Jira (required for hybrid):** fetch issue via Atlassian MCP / tools  
-   (`getJiraIssue` or equivalent) — collect `key`, `summary`, `status`, browse URL.  
-   If Jira is unavailable, ask the user for title/status and continue with a warning.
-2. **Supabase:**  
-   `team-brain-api.sh attach <KEY> "<summary>" "<status>" "<jira_url>"`  
-   Creates/updates the initiative row and ensures `initiatives/<KEY>.md`.
-3. **Local brief:** read `TEAM.md` + that initiative md; summarize goal, decisions, latest captures.
-4. Never mix personal `BRAIN.md` into the initiative file.
+1. Fetch Jira via Atlassian MCP when available.
+2. MCP `attach` **or** `team-brain-api.sh attach …` (pulls recent memories into cache).
+3. **Always** load `cache/<KEY>.json` and summarize for the session.
+4. Never mix personal `BRAIN.md` into team memory.
 
-### `capture <JIRA-KEY> [research|decision|note]`
+### `remember <JIRA-KEY> [research|decision|note]`
 
-1. Confirm body with the user (or summarize from the conversation if they ask).
-2. If Supabase configured:  
-   `team-brain-api.sh capture <KEY> <kind> <body>`  
-   (auto-mirrors Capture log into `initiatives/<KEY>.md`).
-3. Else append to the local initiative markdown only.
-4. Never copy personal career/growth notes from `BRAIN.md`.
+1. Summarize the durable finding; confirm with the user if ambiguous.
+2. MCP `remember` **or** CLI with `--source-ref` when the same crunch might repeat.
+3. `capture` remains a compat alias.
 
-### `sync <JIRA-KEY>`
+### `recall <JIRA-KEY> [query…]`
 
-1. If Supabase: `team-brain-api.sh sync <KEY>` (pull + mirror md).
-2. Present team status: new captures, open questions, suggested next captures.
-3. This is **not** a personal standup (`/engineer-brain sync`).
+1. MCP `recall` / `list_recent` **or** CLI.
+2. With query: FTS (default) or vector if embed provider configured.
+3. Without query: recent list / sync.
 
-### `breakdown <JIRA-KEY>`
+### `breakdown <JIRA-KEY> [query]`
 
-Draft stories/spikes + AC from initiative md + latest synced captures. Flag gaps.
+1. MCP `breakdown` **or** `team-brain-api.sh breakdown <KEY> [query]`.
+2. Always recalls team memories first, then writes `initiatives/<KEY>-breakdown.md` (stories from decisions, spikes from research, AC drafts, gaps).
+3. Summarize the draft for the user; refine with the crew before filing Jira.
+4. Check `metrics <KEY>` for recall/reuse signal.
 
-### `status`
+### `sync` / `watch` / `metrics` / `status` / `detach`
 
-Run `team-brain-api.sh status` when available; also summarize `team.yaml` (backend, initiatives, jira site).
-
-### `detach`
-
-Clear active initiative focus from the session; keep team credentials.
+- `sync` — refresh cache  
+- `watch` — side-terminal near-realtime poll  
+- `metrics` — local reuse stats (gitignored `metrics.json`)  
+- `status` / `detach` — config / clear session focus  
 
 ---
 
@@ -132,14 +110,14 @@ Clear active initiative focus from the session; keep team credentials.
 - Never commit / push without explicit permission
 - Never commit `credentials.json` or service-role keys
 - Never publish personal `BRAIN.md` to Supabase
-- Prefer concise captures over chat dumps
-- One markdown file **per initiative** (`initiatives/<JIRA-KEY>.md`)
+- Prefer concise memories over chat dumps
+- Cache/JSON is agent SoT; markdown is export
 
 ---
 
 ## Related
 
+- Plan: `docs/team-brain-memory.md`
+- MCP: `mcp/team-brain/README.md`
 - Engineer skill: `/engineer-brain`
-- Supabase setup: `supabase/README.md`
-- Commands detail: `core/team/TEAM_COMMANDS.md`
 - Client: `core/scripts/team-brain-api.sh`

@@ -1,39 +1,39 @@
 # Team Brain sync
 
-Team Brain keeps initiative context shared across a crew:
+Collaborative **AI memory** for a crew on the same Jira initiative:
 
-- **Jira** identifies the work (`AAP-81423`, …)
-- **Supabase** syncs membership and captures
-- **Local markdown** mirrors each initiative under `.team-brain/initiatives/<KEY>.md`
+| Layer | Role |
+|-------|------|
+| **Jira** | Initiative identity (`AAP-81423`, …) |
+| **Supabase** | Membership + shared memories (SoT) |
+| **Local cache** | `.team-brain/cache/<KEY>.json` for agents |
+| **Markdown** | Optional export under `initiatives/<KEY>.md` |
 
-Project connection details ship in the repo ([`project.public.env`](project.public.env)).  
-Each engineer gets a personal `credentials.json` after they join — never commit that file.
+Project connection details ship in [`project.public.env`](project.public.env) (URL + **anon** key only).  
+Each engineer gets a personal `credentials.json` after join — **never commit** that file.
+
+Full plan: [docs/team-brain-memory.md](../docs/team-brain-memory.md) · MCP: [mcp/team-brain/](../mcp/team-brain/)
 
 ---
 
 ## Join a team
-
-Ask a teammate for an **invite code** (and the Jira key you are working on).
 
 ```bash
 cd engineer-brain
 bash core/scripts/team-brain-api.sh onboard <INVITE> "Your Name" AAP-81423
 ```
 
-You are ready when that command finishes — no dashboard, no API keys to copy.
-
 **Day to day**
 
 ```bash
-bash core/scripts/team-brain-api.sh capture AAP-81423 research "What I learned…"
-bash core/scripts/team-brain-api.sh sync AAP-81423
+bash core/scripts/team-brain-api.sh remember AAP-81423 research "What I learned…"
+bash core/scripts/team-brain-api.sh recall AAP-81423
+bash core/scripts/team-brain-api.sh breakdown AAP-81423
 ```
 
 ---
 
 ## Start a team
-
-Run once as the person creating the crew, then share the printed **invite code** (not your personal API key):
 
 ```bash
 bash core/scripts/team-brain-api.sh register "Team Atlas" "Your Name"
@@ -41,27 +41,32 @@ bash core/scripts/team-brain-api.sh register "Team Atlas" "Your Name"
 
 | Share with the crew | Keep private |
 |---------------------|--------------|
-| Invite code | Your `credentials.json` / `api_key` |
-| Jira key for the initiative | Supabase `service_role` key |
+| Invite code | `credentials.json` / `api_key` |
+| Jira key | Supabase `service_role` key |
 
 ---
 
-## Useful commands
+## Security (v1)
 
-```bash
-bash core/scripts/team-brain-api.sh whoami
-bash core/scripts/team-brain-api.sh sync AAP-81423
-bash core/scripts/team-brain-api.sh list
-bash core/scripts/team-brain-api.sh status
-```
+| Control | Status |
+|---------|--------|
+| API keys hashed (SHA-256); never stored plaintext | ✅ |
+| Direct table access revoked; RPCs security-definer | ✅ |
+| Unique `(team_id, display_name)` — no unlimited join spam | ✅ |
+| Invite codes 16 hex chars | ✅ |
+| Anon `register_team` / `join_team` **rate limiting** | ⚠️ known gap — use Edge Function / plan limits / Auth for register in a follow-up |
+
+Do not commit `service_role` keys. Rotate invite codes if leaked.
 
 ---
 
 ## Appendix — provision a new Supabase project
 
-Only when standing up sync on a **new** project (not required to join an existing team).
-
 1. Create a project at [supabase.com](https://supabase.com).
-2. Put the Project URL and **anon** key in [`project.public.env`](project.public.env).
-3. Apply [`migrations/20260727000001_team_brain.sql`](migrations/20260727000001_team_brain.sql) (SQL Editor or `supabase db push`).
-4. `register` a team and share invite codes with the crew.
+2. Put Project URL + **anon** key in [`project.public.env`](project.public.env). Set `TEAM_BRAIN_JIRA_SITE` to your org (placeholder: `https://your-org.atlassian.net`).
+3. Apply migrations in order (SQL Editor or `supabase db push`) — see [`migrations/README.md`](migrations/README.md).
+4. `register` a team and share invite codes.
+
+**Existing demo projects:** apply any new migration files once (memory → embeddings → security).
+
+**Semantic recall (optional):** `TEAM_BRAIN_EMBED_PROVIDER=openai|ollama` — otherwise `recall` uses FTS.

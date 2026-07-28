@@ -32,9 +32,12 @@ Growing beyond individual use into a richer tool.
 - [x] **Web dashboard (MVP)** — Vite/React UI with sample data + data-port seam (`dashboard/`); local `BRAIN.md` parser still open
 - [x] **Team Brain (scopes)** — `team-brain` skill + per-initiative markdown; see [scopes.md](scopes.md)
 - [x] **Team Brain hybrid sync** — Jira identity + Supabase captures (`supabase/`, `team-brain-api.sh`)
+- [ ] **Team Brain collaborative memory** — remember/recall, cache, realtime, pgvector; see [team-brain-memory.md](team-brain-memory.md)
+- [x] **Team Brain MCP (P3)** — `mcp/team-brain/` tools: attach / remember / recall / list_recent
+- [x] **Team Brain breakdown (P4)** — recall → story/spike draft + local reuse metrics
 - [ ] **Team aggregation metrics** — skill coverage matrix, workload heatmap, collaboration graph
 - [ ] **GitLab/Bitbucket support** — scanner support beyond GitHub
-- [ ] **MCP server** — expose brain data as an MCP resource for real-time queries
+- [ ] **Engineer-brain MCP** — personal BRAIN.md / sync as MCP resources (team-brain MCP ships first)
 - [ ] **Weekly email digest** — scheduled summary of patterns and recommendations
 - [ ] **BRAIN.md validator** — CLI tool to check completeness and freshness
 - [ ] **Import from LinkedIn/GitHub** — bootstrap BRAIN.md from existing profiles

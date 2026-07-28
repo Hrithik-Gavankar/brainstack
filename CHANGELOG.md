@@ -21,8 +21,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Team Brain docs ([docs/team-brain.md](docs/team-brain.md)) — hybrid Jira + Supabase sync
 - Supabase schema + RPCs (`supabase/migrations`) for teams, members, initiatives, captures
 - `core/scripts/team-brain-api.sh` — register/join/attach/capture/sync + md mirror
+- Team Brain collaborative memory plan ([docs/team-brain-memory.md](docs/team-brain-memory.md))
+- P0 memory migration: `source_ref`, FTS, `remember` / `search_memories` / `list_recent`
+- CLI `remember` / `recall` + `.team-brain/cache/<KEY>.json` (md remains optional export)
+- CLI `watch <JIRA-KEY>` — near-realtime authenticated poll; updates memory cache
+- P2 semantic recall: pgvector(768), optional OpenAI/Ollama embed on `remember`/`recall`, `reembed` backfill
+- P3 Team Brain MCP server (`mcp/team-brain/`) — attach / remember / recall / list_recent for agents
+- Team-brain skill agent defaults: recall on attach, remember after durable research
+- P4 `breakdown` — recalls memories → `initiatives/<KEY>-breakdown.md` (stories/spikes/AC)
+- P4 `metrics` — local reuse stats (`.team-brain/metrics.json`); MCP tools `breakdown` / `metrics`
+- Security follow-up: unique member names, 16-char invites, `updated_at` trigger (`…_security.sql`)
 
 ### Changed
+- Jira site defaults use `https://your-org.atlassian.net` (no hardcoded company host)
+- `.gitignore` scopes Team Brain credentials to `.team-brain/` only
+- `team-brain-api.sh`: yq-aware YAML load; RPC `payload`/`resp_body` naming
 - Dashboard expertise taxonomy aligned with brain-spec (**Strong / Growing / Exposure**); chart colors moved to UI layer
 - Documented `dashboard/` vs `website/`, privacy/hosting rules (public deploy = sample only)
 - `platforms/cursor/skills/engineer-brain/SKILL.md` and `core/COMMANDS.md` sync flow no longer rely on authored git commits alone

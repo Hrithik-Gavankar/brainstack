@@ -25,11 +25,20 @@ initiatives:
     file: initiatives/AAP-81423.md
 
 sync:
-  # supabase = multi-engineer capture sync | local = files/git only
+  # supabase = multi-engineer memory sync | local = files/git only
   backend: supabase
   supabase_url: https://YOUR_PROJECT.supabase.co
   supabase_anon_key: YOUR_ANON_KEY
   # Member api_key lives in credentials.json (from register/join) — do not put it here
 
+# Optional semantic recall (P2). Prefer env vars over committing keys:
+#   TEAM_BRAIN_EMBED_PROVIDER=openai|ollama
+#   TEAM_BRAIN_EMBED_API_KEY=...   # openai
+#   TEAM_BRAIN_EMBED_MODEL=text-embedding-3-small
+# Vectors are 768-d. Omit provider → FTS-only recall.
+#
+# Parsing: install `yq` for robust YAML; without yq, keep sync.* values
+# flat, unquoted, single-line.
+
 jira:
-  site: https://redhat.atlassian.net
+  site: https://your-org.atlassian.net

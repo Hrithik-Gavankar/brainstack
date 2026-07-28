@@ -15,9 +15,9 @@ website/.docusaurus/
 .env
 .env.local
 
-# Team Brain secrets (per-workspace)
+# Team Brain secrets (per-workspace only — do not blanket-ignore all credentials.json)
 .team-brain/credentials.json
-**/credentials.json
+.team-brain/**/credentials.json
 !.team-brain/**/.gitkeep
 
 # Personal data (uncomment if you fork and add your own data)

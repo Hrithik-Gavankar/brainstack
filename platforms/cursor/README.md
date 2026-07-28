@@ -52,9 +52,32 @@ local — never commit it back to this repository.
 | `/engineer-brain scan [days]` | Raw git scan output |
 | `/team-brain register` / `join` | Supabase team membership |
 | `/team-brain attach <JIRA-KEY>` | Jira + Supabase + `initiatives/<KEY>.md` |
-| `/team-brain capture` / `sync` | Shared captures (Supabase → md mirror) |
+| `/team-brain remember` / `recall` / `sync` | Shared memories (Supabase → cache) |
 | `/team-brain breakdown <KEY>` | Draft stories from initiative context |
 | `/team-brain init` | Local scaffold only |
+
+### Team Brain MCP (optional)
+
+Agent tools without shelling out manually — see [`mcp/team-brain/README.md`](../../mcp/team-brain/README.md).
+
+```bash
+cd /path/to/engineer-brain/mcp/team-brain
+python3 -m venv .venv && source .venv/bin/activate && pip install -e .
+```
+
+Wire Cursor — add under `mcpServers` in `~/.cursor/mcp.json`:
+
+```json
+"team-brain": {
+  "command": "<engineer-brain>/mcp/team-brain/.venv/bin/python",
+  "args": ["<engineer-brain>/mcp/team-brain/server.py"],
+  "env": {
+    "TEAM_BRAIN_DIR": "<workspace>/.team-brain"
+  }
+}
+```
+
+Reload MCP servers in Cursor after editing.
 
 ## How It Works
 

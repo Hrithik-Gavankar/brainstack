@@ -1,8 +1,11 @@
 # Team Brain
 
-Shared, opt-in context for crews on the same spike, epic, or initiative.
+Shared, opt-in **collaborative AI memory** for crews on the same spike, epic, or initiative.
 
 Part of **Brain** alongside [engineer-brain](scopes.md). See also [#2](https://github.com/Hrithik-Gavankar/engineer-brain/issues/2).
+
+**Memory roadmap:** [team-brain-memory.md](team-brain-memory.md)  
+**MCP (P3):** [mcp/team-brain/README.md](../mcp/team-brain/README.md)
 
 ## Layout (one markdown file per initiative)
 
@@ -21,8 +24,9 @@ Part of **Brain** alongside [engineer-brain](scopes.md). See also [#2](https://g
 | Layer | Responsibility |
 |-------|----------------|
 | **Jira** | Initiative identity — key, summary, status, browse URL |
-| **Supabase** | Team register/join + shared **captures** across engineers |
-| **Local `.md`** | Human-readable mirror (Capture log refreshed on `sync` / `capture`) |
+| **Supabase** | Team register/join + shared **memories** (source of truth) |
+| **Local cache** | `.team-brain/cache/<KEY>.json` for agents (written on sync/remember) |
+| **Local `.md`** | Optional human/git **export** (not the sync bus) |
 
 ```mermaid
 flowchart LR
@@ -44,16 +48,27 @@ bash core/scripts/team-brain-api.sh onboard 9F7AC910 "Bob" AAP-81423
 
 Admin creates the team once: `register "Team Atlas" "Alice"` → share `invite_code`.
 
-## Attach (Jira) → capture → sync
+## Attach (Jira) → remember → recall
 
-1. `/team-brain attach AAP-81423` — skill fetches Jira (Atlassian MCP), then:
+1. `/team-brain attach AAP-81423` — skill fetches Jira, upserts initiative, **pulls recent memories into cache**.
 
 ```bash
-bash core/scripts/team-brain-api.sh attach AAP-81423 "Summary" "Review" "https://redhat.atlassian.net/browse/AAP-81423"
+bash core/scripts/team-brain-api.sh attach AAP-81423 "Summary" "Review" "https://your-org.atlassian.net/browse/AAP-81423"
 ```
 
-2. `/team-brain capture AAP-81423` — writes capture to Supabase + mirrors `initiatives/AAP-81423.md`.
-3. Teammate: `/team-brain sync AAP-81423` — pulls their captures into the same md file.
+2. `/team-brain remember AAP-81423 research "…"` — writes memory (dedup by `source_ref` / content hash).
+3. Teammate: `/team-brain recall AAP-81423` or `recall AAP-81423 auth flow` — list recent or FTS search.
+
+`capture` / `sync` remain as aliases.
+
+## Breakdown (P4)
+
+```bash
+bash core/scripts/team-brain-api.sh breakdown AAP-81423
+bash core/scripts/team-brain-api.sh metrics AAP-81423
+```
+
+Recalls team memories first, writes `initiatives/<KEY>-breakdown.md` (stories/spikes/AC drafts), and tracks reuse in gitignored `metrics.json`.
 
 ## Fallback
 
