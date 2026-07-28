@@ -1,6 +1,6 @@
 # DEMO-EE-1: EE decision_environment scaffolding spike
 
-**Tracker:** https://example.com/browse/DEMO-EE-1  
+**Tracker:** `DEMO-EE-1` (demo placeholder — replace with your Jira browse URL)  
 **Status:** active  
 **Owners:** Alex, Blair  
 **Attached:** Alex, Blair
