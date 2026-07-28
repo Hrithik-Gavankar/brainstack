@@ -65,25 +65,25 @@ Re-running sync must **not** duplicate rows. Local cache/log is rebuilt or merge
 
 ---
 
-## 3. HiveShare-level bar (Supabase-only)
+## 3. Core memory bar (Supabase-only)
 
-Reach parity on the **core memory loop** with these five:
+The product must deliver this **core memory loop**:
 
-1. **Write once, reuse by others** — `remember` (today: `add_capture`)
-2. **Retrieve by meaning** — `recall` / `search_memories` (FTS → pgvector)
-3. **Live awareness** — Supabase Realtime on `captures` (or `memories`)
+1. **Write once, reuse by others** — `remember`
+2. **Retrieve by meaning** — `recall` / `search_memories` (FTS → optional pgvector)
+3. **Live awareness** — near-realtime updates for attached initiatives (`watch` today; push later)
 4. **Agent-native surface** — MCP / skill tools: `remember`, `recall`, `list_recent`
 5. **Dedup / source identity** — `source_ref` (+ content hash) unique per initiative
 
-**Beat** on product fit (not by cloning their server):
+**Product fit (Brain umbrella):**
 
-- Jira-native attach (no separate space UUID ritual)
-- Zero self-host (invite + committed anon project)
-- Brain umbrella (same install as engineer-brain; clear personal vs team privacy)
-- Skill defaults: auto-`recall` on attach, auto-`remember` after research
-- `breakdown` consumes `recall` — workflow differentiator
+- Jira-native attach
+- Zero self-host for joiners (invite + committed anon project)
+- Clear personal vs team privacy
+- Agent loop: `recall` before research, `remember` after findings
+- `breakdown` consumes `recall`
 
-Later polish (not the win condition): version/rollback, snapshots, rich metrics.
+Later polish: version/rollback, snapshots, richer metrics.
 
 ---
 
@@ -140,7 +140,7 @@ bash core/scripts/team-brain-api.sh recall AAP-81423 "where is decision_environm
 - [x] `source_ref` / content-hash dedup (P0 RPCs; documented on MCP `remember`)
 - [x] **Mandatory agent loop** — recall *before* research; remember *immediately after* findings  
       (`platforms/cursor/rules/team-brain.mdc` + skill + MCP instructions)
-- [ ] Optional long-lived push into the other agent session (HiveShare-style SSE) — still open
+- [ ] Optional long-lived push into the other agent session (beyond poll/`watch`) — still open
 
 ### Agent loop (what makes it a shared brain)
 
@@ -212,24 +212,21 @@ Use this as the build board (check off in PRs):
 
 ---
 
-## 8. Still missing vs HiveShare (honest gap list)
+## 8. Future hardening (roadmap)
 
-| Capability | Team Brain now | HiveShare-class |
-|------------|----------------|-----------------|
-| Recall before research | ✅ Enforced in rule/skill/MCP instructions | ✅ MCP habit |
-| Remember after findings | ✅ Enforced (direct save) | ✅ MCP habit |
-| Dedup (`source_ref`) | ✅ | ✅ |
-| Semantic search | Optional (embeddings); FTS default | ✅ Core |
-| Live push into other agent’s context | ❌ Poll `watch` / next `recall` only | ✅ SSE stream |
-| Guaranteed model compliance | Soft (rules/skills — model can still skip) | Soft too, but product is MCP-first |
-| Version/history/snapshots | ❌ | ✅ |
-| Metrics dashboard | Local `metrics.json` only | Richer reuse metrics |
-
-**Closing the remaining gap:** keep the agent loop mandatory; add optional background cache refresh; turn on embeddings for semantic “did someone already crunch this?”; later private Realtime/Broadcast if we link auth.
+| Capability | Today | Next |
+|------------|-------|------|
+| Recall before research | ✅ Rule/skill/MCP | Keep mandatory |
+| Remember after findings | ✅ Direct save | Keep mandatory |
+| Dedup (`source_ref`) | ✅ | — |
+| Semantic search | Optional embeddings; FTS default | Enable when crews want it |
+| Live push into other agent context | Poll `watch` / next `recall` | Private Realtime/Broadcast if auth allows |
+| Model compliance | Soft (rules/skills) | Stronger MCP-first defaults |
+| Version/history/snapshots | — | Evaluate later |
+| Metrics | Local `metrics.json` | Optional team dashboard |
 
 ## 9. Out of scope (for now)
 
-- Integrating or depending on third-party collaborative memory servers
 - Replacing personal engineer-brain commands
 - Full org-wide brain (v2 roadmap)
 
