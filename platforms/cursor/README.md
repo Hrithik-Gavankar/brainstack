@@ -15,12 +15,14 @@ bash /path/to/engineer-brain/install.sh cursor
 
 ```bash
 cp -r platforms/cursor/rules /path/to/your/workspace/.cursor/rules
+# includes engineer-brain.mdc + team-brain.mdc (mandatory recall/remember loop)
 cp -r platforms/cursor/skills /path/to/your/workspace/.cursor/skills
 cp core/scripts/scan.sh /path/to/your/workspace/.cursor/skills/engineer-brain/scripts/
 cp core/scripts/doctor.sh /path/to/your/workspace/.cursor/skills/engineer-brain/scripts/
 cp core/BRAIN.md /path/to/your/workspace/.cursor/skills/engineer-brain/BRAIN.md
 mkdir -p /path/to/your/workspace/.cursor/skills/team-brain/scripts
 cp core/scripts/team-init.sh /path/to/your/workspace/.cursor/skills/team-brain/scripts/
+cp core/scripts/team-brain-api.sh /path/to/your/workspace/.cursor/skills/team-brain/scripts/
 cp core/team/TEAM_COMMANDS.md /path/to/your/workspace/.cursor/skills/team-brain/
 ```
 

@@ -31,6 +31,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - P4 `breakdown` — recalls memories → `initiatives/<KEY>-breakdown.md` (stories/spikes/AC)
 - P4 `metrics` — local reuse stats (`.team-brain/metrics.json`); MCP tools `breakdown` / `metrics`
 - Security follow-up: unique member names, 16-char invites, `updated_at` trigger (`…_security.sql`)
+- Mandatory Team Brain **agent loop**: always-on `team-brain.mdc` + skill — recall before research, remember after findings
 
 ### Changed
 - Jira site defaults use `https://your-org.atlassian.net` (no hardcoded company host)

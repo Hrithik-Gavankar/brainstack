@@ -1,123 +1,120 @@
 ---
 name: team-brain
 description: >-
-  Team / initiative scope of Brain — collaborative AI memory for spikes, epics,
-  and crews. Register a team, attach Jira initiatives, remember findings to
-  Supabase, recall into the session. Invoke for "team brain", "team-brain",
-  "register team", "join team", "attach initiative", "remember for the team",
-  "recall", "team sync", "initiative breakdown", or shared spike context
-  (not personal standups).
+  Team / initiative shared AI memory. MUST run before research on a Jira key
+  (recall/sync crew memory) and after findings (remember for teammates).
+  Invoke for team-brain, shared spike, initiative context, Jira crew work,
+  "what does the team know", remember, recall, breakdown, or when exploring
+  code for an attached ticket (not personal standups).
 argument-hint: >-
   <command> — onboard | register | join | whoami | init | attach | remember |
   recall | capture | sync | watch | breakdown | status | detach
 tools: Read, Write, Shell, Glob, Grep
 ---
 
-# Team Brain — Collaborative AI Memory
+# Team Brain — Shared AI Memory (agent loop)
 
-Part of the **Brain** product umbrella:
+Part of **Brain**: personal=`engineer-brain`, crew=`team-brain`.
 
-| Skill | Scope | Living docs |
-|-------|--------|-------------|
-| `engineer-brain` | Personal identity, standups, growth | `BRAIN.md` |
-| `team-brain` | Team + initiative **memories** | Supabase SoT + `cache/<KEY>.json` |
+| Prefer | Fallback |
+|--------|----------|
+| MCP tools `team-brain_*` / `recall` / `remember` | `bash …/team-brain-api.sh …` |
 
-Personal `BRAIN.md` is never uploaded to Supabase.
-
-**Plan:** `docs/team-brain-memory.md`  
-**MCP (agent tools):** `mcp/team-brain/` — prefer MCP tools when the `team-brain` server is connected; otherwise use the CLI below.
-
-## Agent defaults (P3)
-
-Follow these without waiting for the user to ask:
-
-1. **On attach / starting work on a Jira key** → always `recall` / `list_recent` (or CLI `sync`) and summarize memories into the session brief.
-2. **After durable research or a decision** → `remember` with a stable `source_ref` (e.g. `AAP-81423#tox-paths`). Dedup makes retries safe.
-3. **Before planning stories** → run `breakdown` (it recalls first). Do not invent an epic breakdown without memories.
-4. Prefer **cache** `/.team-brain/cache/<KEY>.json` over re-reading chat history.
-5. Never copy personal career/growth notes from `BRAIN.md` into team memory.
-
-## Sync model
-
-| Layer | Role |
-|-------|------|
-| **Jira** | Initiative identity |
-| **Supabase** | Shared memories (SoT) |
-| **Local cache** | Agent-facing snapshot |
-| **Markdown export** | Optional human/git mirror |
-
-Client (CLI fallback):
+Scripts:
 
 ```bash
-bash "${SKILL_DIR}/scripts/team-brain-api.sh" <command> ...
-# or
-bash "<repo>/core/scripts/team-brain-api.sh" <command> ...
+API="${SKILL_DIR}/scripts/team-brain-api.sh"
+# or: <engineer-brain-repo>/core/scripts/team-brain-api.sh
 ```
-
-MCP setup: `mcp/team-brain/README.md`.
 
 ---
 
-## Commands
+## THE AGENT LOOP (non-negotiable)
 
-### `onboard <invite-code> "Name" [JIRA-KEY]`
+This is the product. Manual CLI is the escape hatch — **agents must run this loop**.
+
+### 1) BEFORE researching (sync memory)
+
+When the user starts work on a Jira key, asks you to explore/implement for an initiative, or you are about to search the codebase for that work:
+
+1. Resolve the active key (from user, `.team-brain/team.yaml`, or ask once).
+2. **Sync first** — do not explore yet:
 
 ```bash
-bash …/team-brain-api.sh onboard 9F7AC910 "Ada Engineer" AAP-81423
+bash "$API" recall <JIRA-KEY>
+# If they named a topic, also:
+bash "$API" recall <JIRA-KEY> "<topic keywords>"
 ```
 
-### `register` / `join` / `whoami` / `init`
+3. Read `.team-brain/cache/<JIRA-KEY>.json` if present.
+4. Tell the user in 2–5 bullets: what the crew already knows / decided / left open.
+5. **Only then** dig into the repo. Reuse paths and decisions from memory.
 
-Membership + local scaffold. Prefer `register` / `onboard` for sync demos.
+If `recall` fails (not onboarded), say so and offer `onboard` / `attach` — do not silently skip.
 
-### `attach <JIRA-KEY>`
+### 2) AFTER researching (direct save)
 
-1. Fetch Jira via Atlassian MCP when available.
-2. MCP `attach` **or** `team-brain-api.sh attach …` (pulls recent memories into cache).
-3. **Always** load `cache/<KEY>.json` and summarize for the session.
-4. Never mix personal `BRAIN.md` into team memory.
+As soon as you have a durable finding (entrypoint, constraint, decision, “start here”, failed approach):
 
-### `remember <JIRA-KEY> [research|decision|note]`
+1. **Save immediately** — do not wait for “please remember this”:
 
-1. Summarize the durable finding; confirm with the user if ambiguous.
-2. MCP `remember` **or** CLI with `--source-ref` when the same crunch might repeat.
-3. `capture` remains a compat alias.
+```bash
+bash "$API" remember <JIRA-KEY> research --source-ref "<JIRA-KEY>#<short-slug>" "<one or two sentence finding>"
+# decisions:
+bash "$API" remember <JIRA-KEY> decision --source-ref "<JIRA-KEY>#dec-<slug>" "<what we decided and why>"
+```
 
-### `recall <JIRA-KEY> [query…]`
+2. Use a stable `source_ref` so Ada and Bob do not double-write the same crunch.
+3. Confirm briefly: “Saved to Team Brain for the crew.”
 
-1. MCP `recall` / `list_recent` **or** CLI.
-2. With query: FTS (default) or vector if embed provider configured.
-3. Without query: recent list / sync.
+Save **during** the turn you learned it — not in a later cleanup pass.
 
-### `breakdown <JIRA-KEY> [query]`
+### 3) Planning / breakdown
 
-1. MCP `breakdown` **or** `team-brain-api.sh breakdown <KEY> [query]`.
-2. Always recalls team memories first, then writes `initiatives/<KEY>-breakdown.md` (stories from decisions, spikes from research, AC drafts, gaps).
-3. Summarize the draft for the user; refine with the crew before filing Jira.
-4. Check `metrics <KEY>` for recall/reuse signal.
+```bash
+bash "$API" breakdown <JIRA-KEY>
+```
 
-### `sync` / `watch` / `metrics` / `status` / `detach`
+Never invent an epic breakdown without recalled memories.
 
-- `sync` — refresh cache  
-- `watch` — side-terminal near-realtime poll  
-- `metrics` — local reuse stats (gitignored `metrics.json`)  
-- `status` / `detach` — config / clear session focus  
+---
+
+## Parallel laptops (why this exists)
+
+| Without the loop | With the loop |
+|------------------|---------------|
+| Both engineers re-research; nothing shared | First finding is `remember`’d; second agent `recall`s before digging |
+| Chat-only context dies with the session | Supabase + cache survive across machines |
+
+`watch` (optional second terminal) keeps cache fresh; the **loop** is still required inside the agent.
+
+---
+
+## Commands (human / fallback)
+
+| Command | Purpose |
+|---------|---------|
+| `onboard` / `register` / `join` | Membership |
+| `attach` | Bind Jira key (also pulls recent memories) |
+| `recall` | **Sync before research** |
+| `remember` | **Save after research** |
+| `breakdown` | Stories from memories |
+| `watch` / `metrics` / `status` | Live poll / stats / config |
+
+Beginner guide: `docs/team-brain-onboarding.md`
 
 ---
 
 ## Hard rules
 
-- Never commit / push without explicit permission
-- Never commit `credentials.json` or service-role keys
-- Never publish personal `BRAIN.md` to Supabase
-- Prefer concise memories over chat dumps
+- **Recall before research** on a known Jira key
+- **Remember after findings** with `source_ref`
+- Never commit `credentials.json` or publish personal `BRAIN.md`
+- Concise professional memories only
 - Cache/JSON is agent SoT; markdown is export
-
----
 
 ## Related
 
+- Always-on rule: `platforms/cursor/rules/team-brain.mdc`
 - Plan: `docs/team-brain-memory.md`
 - MCP: `mcp/team-brain/README.md`
-- Engineer skill: `/engineer-brain`
-- Client: `core/scripts/team-brain-api.sh`

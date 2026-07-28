@@ -4,8 +4,9 @@ Shared, opt-in **collaborative AI memory** for crews on the same spike, epic, or
 
 Part of **Brain** alongside [engineer-brain](scopes.md). See also [#2](https://github.com/Hrithik-Gavankar/engineer-brain/issues/2).
 
+**New here?** Start with the beginner guide: **[team-brain-onboarding.md](team-brain-onboarding.md)**  
 **Memory roadmap:** [team-brain-memory.md](team-brain-memory.md)  
-**MCP (P3):** [mcp/team-brain/README.md](../mcp/team-brain/README.md)
+**MCP:** [mcp/team-brain/README.md](../mcp/team-brain/README.md)
 
 ## Layout (one markdown file per initiative)
 
@@ -48,6 +49,15 @@ bash core/scripts/team-brain-api.sh onboard 9F7AC910 "Bob" AAP-81423
 
 Admin creates the team once: `register "Team Atlas" "Alice"` → share `invite_code`.
 
+## Agent loop (shared brain)
+
+Cursor ships an always-on rule + skill so agents **must**:
+
+1. **`recall` before research** on a Jira key (sync crew memory)  
+2. **`remember` immediately after** durable findings (`source_ref` for dedup)
+
+Humans can still run CLI; juniors see [team-brain-onboarding.md](team-brain-onboarding.md).
+
 ## Attach (Jira) → remember → recall
 
 1. `/team-brain attach AAP-81423` — skill fetches Jira, upserts initiative, **pulls recent memories into cache**.
@@ -56,8 +66,8 @@ Admin creates the team once: `register "Team Atlas" "Alice"` → share `invite_c
 bash core/scripts/team-brain-api.sh attach AAP-81423 "Summary" "Review" "https://your-org.atlassian.net/browse/AAP-81423"
 ```
 
-2. `/team-brain remember AAP-81423 research "…"` — writes memory (dedup by `source_ref` / content hash).
-3. Teammate: `/team-brain recall AAP-81423` or `recall AAP-81423 auth flow` — list recent or FTS search.
+2. Agents/`remember` — write memory (dedup by `source_ref` / content hash).
+3. Teammates/`recall` — list recent or search before they dig.
 
 `capture` / `sync` remain as aliases.
 

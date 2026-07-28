@@ -1,0 +1,54 @@
+---
+description: >-
+  Team Brain agent loop — shared initiative memory. Before researching a Jira
+  ticket, sync crew memory; after findings, save for teammates. Always-on when
+  .team-brain exists or work mentions an initiative/Jira key.
+globs:
+alwaysApply: true
+---
+
+# Team Brain — shared agent memory (mandatory loop)
+
+If this workspace has `.team-brain/` (credentials / cache) **or** the user is working on a shared Jira initiative / spike / epic, you MUST treat Team Brain as the crew’s shared memory.
+
+Personal `BRAIN.md` / engineer-brain stay private — never upload those.
+
+## Mandatory loop (do not skip)
+
+```text
+BEFORE deep research / exploration on a Jira key
+  → recall (sync) team memories for that key
+  → prefer .team-brain/cache/<KEY>.json
+  → summarize what the crew already knows
+  → only then dig into the codebase
+
+AFTER you learn something durable (path, decision, constraint, “start here”)
+  → remember it immediately with a stable source_ref
+  → do not wait for the user to say “save this”
+```
+
+### How to run (prefer MCP `team-brain` tools if connected)
+
+```bash
+# Before research — sync
+bash <engineer-brain>/core/scripts/team-brain-api.sh recall <JIRA-KEY>
+bash <engineer-brain>/core/scripts/team-brain-api.sh recall <JIRA-KEY> "<topic>"
+
+# After research — save (source_ref avoids dupes across laptops)
+bash <engineer-brain>/core/scripts/team-brain-api.sh remember <JIRA-KEY> research --source-ref "<JIRA-KEY>#<short-slug>" "<finding>"
+```
+
+If the skill scripts are installed under `.cursor/skills/team-brain/scripts/`, use that path instead.
+
+## Parallel engineers (two laptops)
+
+- Ada’s `remember` only helps Bob after Bob’s agent runs `recall` (or `watch` refreshed cache).
+- Your job on Bob’s machine: **recall first** so you do not re-research Ada’s work.
+- Your job after you find something: **remember immediately** so Ada does not re-research yours.
+
+## Never
+
+- Start a large exploratory pass on a known Jira key without `recall`
+- Leave durable findings only in chat
+- Put personal career / performance notes into Team Brain
+- Commit or paste `credentials.json` / `api_key`

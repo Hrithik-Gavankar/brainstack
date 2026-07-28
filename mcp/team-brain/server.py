@@ -18,10 +18,13 @@ from mcp.server.fastmcp import FastMCP
 mcp = FastMCP(
     "team-brain",
     instructions=(
-        "Team Brain: shared AI memory for a crew on a Jira initiative. "
-        "On attach or session start call recall/list_recent. "
-        "After durable research call remember with a stable source_ref. "
-        "Never upload personal BRAIN.md or credentials."
+        "Team Brain = shared AI memory for a crew on one Jira key. "
+        "MANDATORY LOOP: (1) BEFORE any deep research/exploration on a Jira key, "
+        "call recall (and recall with topic keywords). Summarize crew memory first. "
+        "(2) AFTER each durable finding or decision, call remember immediately "
+        "with a stable source_ref like KEY#short-slug — do not wait for the user. "
+        "This is how two engineers on two laptops avoid duplicate research. "
+        "Never upload personal BRAIN.md or credentials.json."
     ),
 )
 
@@ -120,10 +123,11 @@ def remember(
     kind: str = "research",
     source_ref: str = "",
 ) -> str:
-    """Write a durable shared memory for the initiative (research | decision | note).
+    """Save a finding for the crew — call IMMEDIATELY after durable research (do not wait).
 
-    Use source_ref for idempotency (e.g. AAP-81423#cli-schema). Duplicate source_ref
-    or identical body returns the existing row (deduped=true) — safe to retry.
+    kind: research | decision | note.
+    Always pass source_ref for idempotency across laptops (e.g. AAP-81423#cli-schema).
+    Duplicate source_ref or identical body returns deduped=true — safe to retry.
     """
     key = jira_key.strip().upper()
     kind_n = (kind or "research").strip().lower()
@@ -141,10 +145,11 @@ def remember(
 
 @mcp.tool()
 def recall(jira_key: str, query: str = "") -> str:
-    """Recall shared memories for an initiative.
+    """Sync crew memory — call BEFORE deep research on this Jira key.
 
-    With query: FTS search (or vector if TEAM_BRAIN_EMBED_PROVIDER is configured).
-    Without query: list recent memories (session sync).
+    Without query: list recent (session sync). With query: search by topic.
+    Summarize hits for the user, then explore the codebase. Skipping this causes
+    duplicate work when a teammate already remembered findings.
     """
     key = jira_key.strip().upper()
     if query.strip():

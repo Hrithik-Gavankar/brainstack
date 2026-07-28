@@ -138,8 +138,24 @@ bash core/scripts/team-brain-api.sh recall AAP-81423 "where is decision_environm
 
 - [x] MCP tools: `remember`, `recall`, `list_recent`, `attach`, `whoami`, … (`mcp/team-brain/`)
 - [x] `source_ref` / content-hash dedup (P0 RPCs; documented on MCP `remember`)
-- [x] Skill defaults: auto-`recall` on attach; auto-`remember` after durable research
-- [ ] Optional long-lived `subscribe` — deferred (`watch` CLI covers near-realtime)
+- [x] **Mandatory agent loop** — recall *before* research; remember *immediately after* findings  
+      (`platforms/cursor/rules/team-brain.mdc` + skill + MCP instructions)
+- [ ] Optional long-lived push into the other agent session (HiveShare-style SSE) — still open
+
+### Agent loop (what makes it a shared brain)
+
+```text
+Engineer A laptop                         Supabase                         Engineer B laptop
+     |                                       |                                    |
+     |-- recall(KEY) ----------------------->|                                    |
+     |<-- crew memories ---------------------|                                    |
+     |-- (research) --- remember(KEY, ref) ->|                                    |
+     |                                       |<-- recall(KEY) --------------------|
+     |                                       |--- memories (incl. A's) ---------->|
+     |                                       |                                    |-- (reuse, then research)
+```
+
+Humans can still run CLI manually; **agents must not skip the loop**.
 
 ### P4 — Beat on workflow
 
@@ -196,7 +212,22 @@ Use this as the build board (check off in PRs):
 
 ---
 
-## 8. Out of scope (for now)
+## 8. Still missing vs HiveShare (honest gap list)
+
+| Capability | Team Brain now | HiveShare-class |
+|------------|----------------|-----------------|
+| Recall before research | ✅ Enforced in rule/skill/MCP instructions | ✅ MCP habit |
+| Remember after findings | ✅ Enforced (direct save) | ✅ MCP habit |
+| Dedup (`source_ref`) | ✅ | ✅ |
+| Semantic search | Optional (embeddings); FTS default | ✅ Core |
+| Live push into other agent’s context | ❌ Poll `watch` / next `recall` only | ✅ SSE stream |
+| Guaranteed model compliance | Soft (rules/skills — model can still skip) | Soft too, but product is MCP-first |
+| Version/history/snapshots | ❌ | ✅ |
+| Metrics dashboard | Local `metrics.json` only | Richer reuse metrics |
+
+**Closing the remaining gap:** keep the agent loop mandatory; add optional background cache refresh; turn on embeddings for semantic “did someone already crunch this?”; later private Realtime/Broadcast if we link auth.
+
+## 9. Out of scope (for now)
 
 - Integrating or depending on third-party collaborative memory servers
 - Replacing personal engineer-brain commands

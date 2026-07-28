@@ -47,4 +47,5 @@ flowchart TB
 5. Optional: wire [mcp/team-brain](../mcp/team-brain/README.md)
 6. `/engineer-brain sync` still personal-only
 
+Beginner guide: [team-brain-onboarding.md](team-brain-onboarding.md) ·  
 Details: [team-brain.md](team-brain.md) · Memory plan: [team-brain-memory.md](team-brain-memory.md).

@@ -178,6 +178,7 @@ install_cursor() {
   mkdir -p "$WORKSPACE/.cursor/skills/engineer-brain/scripts"
   mkdir -p "$WORKSPACE/.cursor/skills/team-brain/scripts"
   cp "$SCRIPT_DIR/platforms/cursor/rules/engineer-brain.mdc" "$WORKSPACE/.cursor/rules/"
+  cp "$SCRIPT_DIR/platforms/cursor/rules/team-brain.mdc" "$WORKSPACE/.cursor/rules/"
   cp "$SCRIPT_DIR/platforms/cursor/skills/engineer-brain/SKILL.md" "$WORKSPACE/.cursor/skills/engineer-brain/"
   cp "$SCRIPT_DIR/core/BRAIN.md" "$WORKSPACE/.cursor/skills/engineer-brain/BRAIN.md"
   cp "$SCRIPT_DIR/core/scripts/scan.sh" "$WORKSPACE/.cursor/skills/engineer-brain/scripts/scan.sh"
@@ -190,7 +191,7 @@ install_cursor() {
   chmod +x "$WORKSPACE/.cursor/skills/engineer-brain/scripts/doctor.sh"
   chmod +x "$WORKSPACE/.cursor/skills/team-brain/scripts/team-init.sh"
   chmod +x "$WORKSPACE/.cursor/skills/team-brain/scripts/team-brain-api.sh"
-  success "Cursor rules and skills installed (.cursor/) — engineer-brain + team-brain"
+  success "Cursor rules and skills installed (.cursor/) — engineer-brain + team-brain (agent loop)"
   configure_scanner "$WORKSPACE/.cursor/skills/engineer-brain/scripts/scan.sh"
 }
 

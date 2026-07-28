@@ -53,10 +53,17 @@ export TEAM_BRAIN_API_SCRIPT=/path/to/engineer-brain/core/scripts/team-brain-api
 
 Add the same command/args/env under MCP servers in your Claude config.
 
-## Agent habits
+## Mandatory agent loop
 
-1. **Start of work on a key** → `attach` or `list_recent` / `recall` (no query)
-2. **After durable research** → `remember` with a stable `source_ref`
-3. **Before breakdown** → `recall` with a short query or list recent
+```text
+BEFORE research on a Jira key  →  recall (sync)  →  summarize crew memory
+AFTER each durable finding     →  remember + source_ref  →  (do not wait for user)
+```
+
+1. Start / focus on a key → `attach` or `recall` (no query), plus `recall` with topic words  
+2. After each finding → `remember` with `source_ref` like `AAP-81423#cli-schema`  
+3. Before planning → `breakdown`
+
+Cursor also ships always-on rule `platforms/cursor/rules/team-brain.mdc` and skill defaults.
 
 See [docs/team-brain-memory.md](../../docs/team-brain-memory.md).

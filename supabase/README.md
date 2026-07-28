@@ -12,6 +12,7 @@ Collaborative **AI memory** for a crew on the same Jira initiative:
 Project connection details ship in [`project.public.env`](project.public.env) (URL + **anon** key only).  
 Each engineer gets a personal `credentials.json` after join — **never commit** that file.
 
+**Junior onboarding (step-by-step):** [docs/team-brain-onboarding.md](../docs/team-brain-onboarding.md)  
 Full plan: [docs/team-brain-memory.md](../docs/team-brain-memory.md) · MCP: [mcp/team-brain/](../mcp/team-brain/)
 
 ---
