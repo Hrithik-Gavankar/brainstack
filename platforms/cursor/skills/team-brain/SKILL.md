@@ -2,11 +2,14 @@
 name: team-brain
 description: >-
   Team / initiative scope of Brain — shared context for spikes, epics, and
-  crews so teammates stop re-researching the same work. Invoke when you say
-  "team brain", "team-brain", "attach initiative", "capture for the team",
-  "team sync", "initiative breakdown", "shared spike context", or ask about
-  team-level context (not personal standups or quarterly reviews).
-argument-hint: <command> — init | attach | sync | capture | breakdown | status | detach
+  crews. Register a team, attach Jira initiatives, capture findings to
+  Supabase, and mirror into per-initiative markdown. Invoke for "team brain",
+  "team-brain", "register team", "join team", "attach initiative", "capture
+  for the team", "team sync", "initiative breakdown", or shared spike context
+  (not personal standups).
+argument-hint: >-
+  <command> — onboard | register | join | whoami | init | attach | sync |
+  capture | breakdown | status | detach
 tools: Read, Write, Shell, Glob, Grep
 ---
 
@@ -17,79 +20,126 @@ Part of the **Brain** product umbrella:
 | Skill | Scope | Living docs |
 |-------|--------|-------------|
 | `engineer-brain` | Personal identity, standups, growth | `BRAIN.md` |
-| `team-brain` | Team norms + initiative context | `TEAM.md` + `initiatives/*.md` |
+| `team-brain` | Team + initiatives | `TEAM.md` + **one `initiatives/<JIRA-KEY>.md` per initiative** |
 
-Personal `BRAIN.md` is never replaced or uploaded by Team Brain.
+Personal `BRAIN.md` is never uploaded to Supabase.
 
-**Sync (now):** local / git-backed files under `.team-brain/` — teammates share via the same checkout or PRs.
+## Sync model (hybrid)
+
+| Layer | Role |
+|-------|------|
+| **Jira** | Initiative identity (key, title, status, URL) |
+| **Supabase** | Team membership + shared captures (multi-engineer sync) |
+| **Local `.team-brain/`** | `TEAM.md` + per-initiative `.md` mirrors for demo/git export |
+
+Prefer Supabase when `sync.backend: supabase` and credentials exist.
+Fall back to local files only when backend is `local` or API is unset.
+
+Client script (from engineer-brain repo or skill scripts):
+
+```bash
+bash "${SKILL_DIR}/scripts/team-brain-api.sh" <command> ...
+# or
+bash "<repo>/core/scripts/team-brain-api.sh" <command> ...
+```
+
+Setup: see `supabase/README.md`.
 
 ---
 
 ## Commands
 
-Parse the user request and run one of:
+### `onboard <invite-code> "Name" [JIRA-KEY]` (preferred for new joiners)
+
+One command — uses committed `supabase/project.public.env` (no dashboard, no copying keys).
+
+```bash
+bash …/team-brain-api.sh onboard 9F7AC910 "Ada Engineer" AAP-81423
+```
+
+Seeds `.team-brain/`, joins the team, attaches + syncs the initiative.
+
+### `register <team-name> [display-name]`
+
+Create a team in Supabase (admin, once). Uses `project.public.env` or `team.yaml`.
+
+```bash
+bash …/team-brain-api.sh register "DevTools Spike Crew" "Hrithik"
+```
+
+Saves `.team-brain/credentials.json` (gitignored). Share only the **invite_code**.
+
+### `join <invite-code> [display-name]`
+
+Join an existing team; saves credentials for this engineer.
+
+### `whoami`
+
+Show current member + team via Supabase.
 
 ### `init`
 
-Scaffold Team Brain:
+Scaffold local layout only (no cloud):
 
 ```bash
 bash "${SKILL_DIR}/scripts/team-init.sh" "$HOME/path/to/workspace"
 ```
 
-If `team-init.sh` is not beside this skill, use:
+Still useful for `TEAM.md` templates; for sync demos prefer `register`.
 
-```bash
-bash "<repo>/core/scripts/team-init.sh" "$HOME/path/to/workspace"
-```
+### `attach <JIRA-KEY>`
 
-Then help the user fill `TEAM.md` and `team.yaml`.
+1. **Jira (required for hybrid):** fetch issue via Atlassian MCP / tools  
+   (`getJiraIssue` or equivalent) — collect `key`, `summary`, `status`, browse URL.  
+   If Jira is unavailable, ask the user for title/status and continue with a warning.
+2. **Supabase:**  
+   `team-brain-api.sh attach <KEY> "<summary>" "<status>" "<jira_url>"`  
+   Creates/updates the initiative row and ensures `initiatives/<KEY>.md`.
+3. **Local brief:** read `TEAM.md` + that initiative md; summarize goal, decisions, latest captures.
+4. Never mix personal `BRAIN.md` into the initiative file.
 
-### `attach <initiative-id>`
+### `capture <JIRA-KEY> [research|decision|note]`
 
-1. Find `.team-brain/team.yaml` (or ask for path)
-2. Resolve initiative → markdown file
-3. Read `TEAM.md` + initiative file
-4. Present a short brief: goal, decisions, open questions, latest findings
-5. Keep personal engineer-brain context separate
+1. Confirm body with the user (or summarize from the conversation if they ask).
+2. If Supabase configured:  
+   `team-brain-api.sh capture <KEY> <kind> <body>`  
+   (auto-mirrors Capture log into `initiatives/<KEY>.md`).
+3. Else append to the local initiative markdown only.
+4. Never copy personal career/growth notes from `BRAIN.md`.
 
-### `sync [initiative-id]`
+### `sync <JIRA-KEY>`
 
-Compose a **team** status (not a personal standup):
+1. If Supabase: `team-brain-api.sh sync <KEY>` (pull + mirror md).
+2. Present team status: new captures, open questions, suggested next captures.
+3. This is **not** a personal standup (`/engineer-brain sync`).
 
-1. Read active initiative file(s)
-2. Optionally scan configured repos for recent shared activity
-3. Output what was learned/decided, open questions, next captures
-### `capture <initiative-id>`
+### `breakdown <JIRA-KEY>`
 
-Append user-approved findings/decisions to the initiative file (date + author).
-Never copy personal growth notes from `BRAIN.md`.
-
-### `breakdown <initiative-id>`
-
-Draft stories/spikes + AC from the initiative file. Call out context gaps.
+Draft stories/spikes + AC from initiative md + latest synced captures. Flag gaps.
 
 ### `status`
 
-Summarize team.yaml: members, initiatives, sync backend (`local` / git).
+Run `team-brain-api.sh status` when available; also summarize `team.yaml` (backend, initiatives, jira site).
 
 ### `detach`
 
-Stop treating an initiative as the active session focus.
+Clear active initiative focus from the session; keep team credentials.
 
 ---
 
 ## Hard rules
 
 - Never commit / push without explicit permission
-- Never publish personal `BRAIN.md`
+- Never commit `credentials.json` or service-role keys
+- Never publish personal `BRAIN.md` to Supabase
 - Prefer concise captures over chat dumps
-- Team Brain is part of **this product** alongside engineer-brain — keep the demo story there
+- One markdown file **per initiative** (`initiatives/<JIRA-KEY>.md`)
 
 ---
 
 ## Related
 
-- Engineer (personal) skill: `/engineer-brain`
-- Templates: `core/team/`
+- Engineer skill: `/engineer-brain`
+- Supabase setup: `supabase/README.md`
 - Commands detail: `core/team/TEAM_COMMANDS.md`
+- Client: `core/scripts/team-brain-api.sh`

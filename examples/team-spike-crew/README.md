@@ -1,21 +1,34 @@
 # Example: Team spike crew
 
-Demo fixture for **Team Brain** (git-backed sync).
+Demo fixture for **Team Brain** layout (one markdown file per initiative).
 
-## Use in a walkthrough
+For **live multi-engineer sync**, use Supabase (`supabase/README.md`) + `team-brain-api.sh` — this folder is the local shape only.
+
+## Layout
+
+```
+TEAM.md
+team.yaml
+initiatives/DEMO-EE-1.md    ← one file per initiative
+```
+
+## Walkthrough (local files)
 
 ```bash
 cp -r examples/team-spike-crew /path/to/workspace/.team-brain
 ```
 
-Then in Cursor:
-
 ```
 /team-brain attach DEMO-EE-1
-/team-brain sync DEMO-EE-1
 /team-brain breakdown DEMO-EE-1
 ```
 
-Personal standups stay on `/engineer-brain sync` — do not mix personal `BRAIN.md` into these files.
+## Walkthrough (Supabase hybrid)
 
-Teammates stay aligned by committing captures under `.team-brain/` and pulling.
+1. Apply migrations from `supabase/`
+2. Put `supabase_url` + `supabase_anon_key` in `.team-brain/team.yaml`
+3. `/team-brain register "Spike Crew"`
+4. `/team-brain attach AAP-81423` (real Jira key)
+5. Capture → teammate sync
+
+Personal standups: `/engineer-brain sync` only.

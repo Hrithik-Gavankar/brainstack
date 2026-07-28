@@ -1,5 +1,5 @@
-# Team Brain config — copy to .team-brain/team.yaml (or team.yaml in a shared repo)
-# Personal BRAIN.md paths are never uploaded; only opt-in initiative captures are shared.
+# Team Brain config — copy to .team-brain/team.yaml
+# Personal BRAIN.md is never uploaded. credentials.json is gitignored.
 
 version: 1
 
@@ -7,25 +7,29 @@ team:
   name: "Example Team"
   standup_channel: "#team-standup"
 
-# Members — workspace_path is local to each engineer (not committed secrets)
 members:
   - id: alice
     name: "Alice Example"
     role: "Software Engineer"
-    # Optional: path to their engineer-brain install (local only)
-    # brain_path: "~/.cursor/skills/engineer-brain/BRAIN.md"
-    share_scopes: [research] # research | metrics | none
+    share_scopes: [research]
 
 repos:
   - name: example-service
-    path: "../example-service" # relative to workspace root
+    path: "../example-service"
 
-# Initiative → local file mapping. Share via git with the crew.
+# One markdown file per initiative under initiatives/<id>.md
 initiatives:
-  - id: TICKET-123
-    title: "Example initiative"
+  - id: AAP-81423
+    title: "Port and improve Ansible Tox integration"
     status: active
-    file: initiatives/TICKET-123.md
+    file: initiatives/AAP-81423.md
 
 sync:
-  backend: local # file + git (commit/PR/pull)
+  # supabase = multi-engineer capture sync | local = files/git only
+  backend: supabase
+  supabase_url: https://YOUR_PROJECT.supabase.co
+  supabase_anon_key: YOUR_ANON_KEY
+  # Member api_key lives in credentials.json (from register/join) — do not put it here
+
+jira:
+  site: https://redhat.atlassian.net

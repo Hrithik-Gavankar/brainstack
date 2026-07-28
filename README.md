@@ -223,7 +223,8 @@ Engineer Brain works with every major AI coding assistant. Same brain, native fo
 Commands (`sync`, `quarterly`, `attach`, …) are **verbs under a skill**, not separate skills.
 
 - Scopes guide: **[docs/scopes.md](docs/scopes.md)**
-- Team Brain (git sync for the crew): **[docs/team-brain.md](docs/team-brain.md)**
+- Team Brain (Jira + Supabase + per-initiative md): **[docs/team-brain.md](docs/team-brain.md)**
+- Supabase setup: **[supabase/README.md](supabase/README.md)**
 - Demo fixture: **[examples/team-spike-crew/](examples/team-spike-crew/)**
 
 ## Features
@@ -239,16 +240,16 @@ Commands (`sync`, `quarterly`, `attach`, …) are **verbs under a skill**, not s
 | `engineer-brain scan [days]` | Raw multi-repo git scan output |
 | `engineer-brain doctor` | Brain health check with completeness score and growth suggestions |
 
-### Team Brain commands (v1)
+### Team Brain commands
 
 | Command | Description |
 |---------|-------------|
-| `team-brain init` | Scaffold `.team-brain/` (local / git-backed) |
-| `team-brain attach <id>` | Load initiative context into the session |
-| `team-brain sync [id]` | Team/initiative status from shared files |
-| `team-brain capture <id>` | Append research or a decision |
-| `team-brain breakdown <id>` | Draft stories/spikes from initiative context |
-| `team-brain status` | Show members, initiatives, sync backend |
+| `team-brain register` / `join` | Create or join a team (Supabase) |
+| `team-brain attach <JIRA-KEY>` | Jira identity → Supabase initiative + `initiatives/<KEY>.md` |
+| `team-brain capture` / `sync` | Shared captures via Supabase; mirror into initiative md |
+| `team-brain breakdown <KEY>` | Draft stories/spikes from initiative context |
+| `team-brain init` | Local scaffold only (no cloud) |
+| `team-brain status` / `whoami` | Config + membership |
 
 ### Intelligence
 
@@ -302,22 +303,20 @@ bash install.sh continue-dev ~/my-workspace
 "engineer-brain update"      → start of each month
 "engineer-brain quarterly"   → before performance reviews
 
-"team-brain init"            → scaffold shared team context
-"team-brain attach DEMO-EE-1"→ load initiative for the session
-"team-brain capture …"       → write a finding for the crew
-"team-brain breakdown …"     → stories from prior research
+"team-brain onboard <invite> Name KEY" → new joiner (one command)
+"team-brain register …"                → admin creates team once
+"team-brain capture / sync"            → shared captures
+"team-brain breakdown …"               → stories from prior research
 ```
 
 ### Demo (Cursor) — personal + team
 
 ```bash
 bash install.sh cursor ~/my-workspace
-# Personal
-#   /engineer-brain update   then   /engineer-brain sync
-# Team (local sync for the demo)
-cp -r examples/team-spike-crew ~/my-workspace/.team-brain
-#   /team-brain attach DEMO-EE-1
-#   /team-brain breakdown DEMO-EE-1
+# Personal: /engineer-brain sync
+# Admin once: bash core/scripts/team-brain-api.sh register "Team Atlas" "You"
+# Teammate:   bash core/scripts/team-brain-api.sh onboard <INVITE> "Name" AAP-81423
+# (URL + anon key ship in supabase/project.public.env — no dashboard for joiners)
 ```
 
 ---
@@ -345,7 +344,10 @@ engineer-brain/
 │   └── scripts/
 │       ├── scan.sh                    # Multi-repo git scanner
 │       ├── doctor.sh
-│       └── team-init.sh               # Scaffold .team-brain/
+│       ├── team-init.sh               # Scaffold .team-brain/
+│       └── team-brain-api.sh          # Supabase RPC client
+│
+├── supabase/                          # Team Brain cloud sync (migrations)
 │
 ├── platforms/                         # Platform-specific adapters
 │   ├── cursor/                        # rules + skills/engineer-brain + skills/team-brain
@@ -403,7 +405,7 @@ See **[docs/roadmap.md](docs/roadmap.md)** for the full roadmap.
 **Near-term:**
 - [x] `engineer-brain doctor` — health check and brain completeness score
 - [x] Web dashboard MVP (`dashboard/`) — sample data + data-port seam; BRAIN.md parser next
-- [x] Team Brain — skills + git-backed initiative sync for crews
+- [x] Team Brain — skills + per-initiative md + Jira/Supabase hybrid sync
 - [ ] Team aggregation metrics (coverage matrix, workload heatmap)
 
 **Mid-term:**

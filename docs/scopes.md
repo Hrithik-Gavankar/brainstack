@@ -5,51 +5,43 @@ Brain is the **product umbrella**. Two scopes ship as skills:
 | Scope | Skill | Living documents | Typical commands |
 |-------|-------|------------------|------------------|
 | **Engineer** | `engineer-brain` | `BRAIN.md` | `sync`, `update`, `quarterly`, `reflect`, `scan`, `doctor` |
-| **Team** | `team-brain` | `TEAM.md` + `initiatives/*.md` + `team.yaml` | `init`, `attach`, `sync`, `capture`, `breakdown`, `status` |
+| **Team** | `team-brain` | `TEAM.md` + **`initiatives/<JIRA-KEY>.md` (one per initiative)** | `register`, `join`, `attach`, `capture`, `sync`, `breakdown` |
 
 ```mermaid
 flowchart TB
-  subgraph Product["Brain (product)"]
-    CORE[Shared core<br/>scan.sh · privacy · adapters]
-    subgraph Eng["engineer-brain skill"]
+  subgraph Product["Brain product"]
+    CORE[Shared core]
+    subgraph Eng["engineer-brain"]
       PB[BRAIN.md]
-      EC[Personal commands]
     end
-    subgraph Team["team-brain skill"]
+    subgraph Team["team-brain"]
       TB[TEAM.md]
-      IN[initiatives/*.md]
-      TY[team.yaml]
-      TC[Team commands]
+      IN["initiatives/KEY.md"]
+      SB[(Supabase captures)]
+      J[(Jira identity)]
     end
   end
-
   CORE --> Eng
   CORE --> Team
-  PB -.->|never auto-synced| Team
-  IN -->|git commit / PR / pull| SHARE[Teammates]
+  PB -.->|never uploaded| Team
+  J --> IN
+  SB --> IN
 ```
 
 ## Principles
 
-1. **Skills = scopes; commands = verbs.** Do not promote `sync` / `quarterly` to top-level skills.
-2. **Personal brain stays personal.** Team Brain reads opt-in captures only.
-3. **Initiative-scoped team context.** Prefer `initiatives/<id>.md` over one mega team dump.
-4. **Git sync for the crew.** Initiative files are the shared store; pull to get a teammate’s captures.
-
-## Session load path
-
-When an engineer attaches to an initiative:
-
-1. Personal `BRAIN.md` (always — calibrate to the human)
-2. `TEAM.md` (norms, repos, members)
-3. `initiatives/<id>.md` (goal, decisions, findings)
+1. Skills = scopes; commands = verbs.
+2. Personal brain stays personal.
+3. **One initiative → one markdown file** named by Jira key.
+4. Hybrid sync: Jira identity + Supabase captures + local md mirror.
 
 ## Demo walkthrough
 
-1. `/engineer-brain sync` — personal standup  
-2. `/team-brain init` — scaffold `.team-brain/` (or copy `examples/team-spike-crew/`)  
-3. `/team-brain attach DEMO-EE-1` — load shared spike context  
-4. `/team-brain capture DEMO-EE-1` — add a finding  
-5. `/team-brain breakdown DEMO-EE-1` — draft stories from captures  
+1. Apply `supabase/migrations` (see [supabase/README.md](../supabase/README.md))
+2. `/team-brain register "Spike Crew"`
+3. Teammate `/team-brain join <invite>`
+4. `/team-brain attach AAP-81423` (Jira + Supabase + md)
+5. `/team-brain capture` → teammate `/team-brain sync`
+6. `/engineer-brain sync` still personal-only
 
-See [team-brain.md](team-brain.md).
+Details: [team-brain.md](team-brain.md).

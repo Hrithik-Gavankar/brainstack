@@ -136,7 +136,7 @@ Commands are natural language triggers interpreted by the AI assistant.
 | team-brain | `attach` / `sync` | TEAM.md + initiatives/*.md → session brief / team status |
 | team-brain | `capture` / `breakdown` | Append findings → initiative file → story draft |
 
-Team Brain sync is **local/git** (`.team-brain/` shared via commit, PR, and pull).
+Team Brain sync is **hybrid**: Jira for initiative identity, **Supabase** for team membership + captures, and local `initiatives/<JIRA-KEY>.md` mirrors (one file per initiative). See [team-brain.md](team-brain.md) and [supabase/README.md](../supabase/README.md).
 
 ---
 

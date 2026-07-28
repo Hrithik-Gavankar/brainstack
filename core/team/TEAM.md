@@ -42,7 +42,8 @@
 
 ## Sync notes
 
-- Initiative files live in git / local `.team-brain/`
-- Share with the crew via PR or a shared checkout — pull to pick up new captures
+- **Preferred:** `sync.backend: supabase` — register/join once; captures sync for the whole team; each initiative mirrors to `initiatives/<JIRA-KEY>.md`
+- **Fallback:** `local` — share `.team-brain/` via git commit/PR/pull
+- Jira keys identify initiatives; do not dump personal `BRAIN.md` into team files
 
-Use `/team-brain attach <id>` to load an initiative. Never copy personal BRAIN.md into Team Brain.
+Use `/team-brain register` then `/team-brain attach <JIRA-KEY>`.

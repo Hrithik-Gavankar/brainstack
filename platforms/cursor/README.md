@@ -50,10 +50,11 @@ local — never commit it back to this repository.
 | `/engineer-brain quarterly` | Quarterly review content |
 | `/engineer-brain reflect` | Pattern analysis & recommendations |
 | `/engineer-brain scan [days]` | Raw git scan output |
-| `/team-brain init` | Scaffold `.team-brain/` (local/git sync) |
-| `/team-brain attach <id>` | Load initiative context |
-| `/team-brain capture <id>` | Append research/decision |
-| `/team-brain breakdown <id>` | Draft stories from initiative context |
+| `/team-brain register` / `join` | Supabase team membership |
+| `/team-brain attach <JIRA-KEY>` | Jira + Supabase + `initiatives/<KEY>.md` |
+| `/team-brain capture` / `sync` | Shared captures (Supabase → md mirror) |
+| `/team-brain breakdown <KEY>` | Draft stories from initiative context |
+| `/team-brain init` | Local scaffold only |
 
 ## How It Works
 

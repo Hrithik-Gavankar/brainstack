@@ -89,7 +89,7 @@ AI coding assistants natively recognize BRAIN.md. They read it automatically, su
 - Importers that bootstrap BRAIN.md from GitHub profiles, LinkedIn, or existing resumes
 - Validators that check BRAIN.md completeness and freshness
 - Visualizers that render growth trajectories and pattern analytics
-- Team Brain scope (initiative context) shared via git — not a second personal brain
+- Team Brain scope — per-initiative markdown, Jira identity, Supabase capture sync — not a second personal brain
 - Team-level aggregation for engineering managers (opt-in metrics)
 
 **Phase 4: Community standard**

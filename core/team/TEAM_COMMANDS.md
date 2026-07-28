@@ -1,94 +1,75 @@
 # Team Brain — Command Reference
 
 Team Brain is the **team / initiative scope** of the Brain product.
-Personal identity stays in engineer-brain (`BRAIN.md`). Team Brain never replaces it.
+Personal identity stays in engineer-brain (`BRAIN.md`).
 
-**Sync backend:** local files (`.team-brain/` or a shared git checkout / PR).  
-Teammates stay aligned by committing initiative captures and pulling.
-
----
-
-## Data layout
+## Layout
 
 ```
-.team-brain/                    # or shared team repo root
-├── team.yaml                   # members, repos, initiative index
-├── TEAM.md                     # team identity + norms
+.team-brain/
+├── team.yaml              # sync backend, jira site, initiative index
+├── credentials.json       # api_key — gitignored, never commit
+├── TEAM.md                # one per team
 └── initiatives/
-    └── TICKET-123.md           # initiative living context
+    └── AAP-81423.md       # one markdown file PER initiative (Jira key)
 ```
 
-Load path for a session:
+## Sync model
 
-`personal BRAIN.md` + `TEAM.md` + `initiatives/<id>.md` (when attached)
+| Backend | Behavior |
+|---------|----------|
+| `supabase` (default for demos) | Register/join team; captures sync via Supabase RPCs; mirror into initiative `.md` |
+| `local` | File/git only — no multi-machine sync unless you share the folder |
 
----
+Jira provides initiative **identity** only (key, title, status, URL). Captures live in Supabase.
+
+## Client
+
+**New teammate (invite only):**
+
+```bash
+bash core/scripts/team-brain-api.sh onboard INVITECODE "Bob" AAP-81423
+```
+
+**Admin (once):**
+
+```bash
+bash core/scripts/team-brain-api.sh register "Crew" "Alice"   # share invite_code
+```
+
+**Day to day:**
+
+```bash
+bash core/scripts/team-brain-api.sh capture AAP-81423 research "Finding…"
+bash core/scripts/team-brain-api.sh sync AAP-81423
+```
+
+Public project config: `supabase/project.public.env`. See `supabase/README.md`.
 
 ## Commands
 
+### `register` / `join` / `whoami`
+
+Cloud team membership. Required before Supabase attach/capture.
+
 ### `init`
 
-Scaffold Team Brain in the workspace.
+Local scaffold only (`team-init.sh`).
 
-```bash
-bash <path-to-scripts>/team-init.sh "$HOME/path/to/workspace"
-```
+### `attach <JIRA-KEY>`
 
-Or manually copy `core/team/*` into `.team-brain/`.
+Fetch Jira → upsert Supabase initiative → ensure `initiatives/<KEY>.md` → session brief.
 
-Fill `team.yaml` + `TEAM.md` before using other commands.
+### `capture` / `sync`
 
-### `attach <initiative-id>`
+Write/read captures via Supabase; refresh the initiative markdown Capture log.
 
-Load initiative context into the current session:
+### `breakdown` / `status` / `detach`
 
-1. Resolve `id` via `team.yaml` → initiative file
-2. Read `TEAM.md` + that initiative file
-3. Summarize goal, decisions, open questions, latest findings for the user
-4. Remind: personal BRAIN.md stays local; do not paste growth notes into the initiative
-
-### `sync [initiative-id]`
-
-Compose a team/initiative status update (not a personal standup).
-
-1. If `initiative-id` given — sync that initiative; else all `active` ones
-2. Read initiative files + optional git activity on configured `repos`
-3. Output:
-   - What the team learned / decided recently
-   - Open questions
-   - Suggested next captures
-4. Backend is file + git only for this product version
-
-### `capture <initiative-id> [note]`
-
-Append a research/decision note to the initiative file.
-
-1. Require explicit user content (or summarize from the current conversation if they ask)
-2. Append under **Research & findings** or **Capture log** with date + author
-3. If it is a decision, also add a row to the **Decisions** table
-4. Never write personal career/growth content from BRAIN.md
-
-### `breakdown <initiative-id>`
-
-Draft epic/story breakdown from initiative context.
-
-1. Read initiative goal, decisions, findings, open questions
-2. Propose ordered stories/spikes with acceptance criteria
-3. Flag gaps that need more `/team-brain capture` before committing the plan
-
-### `status`
-
-Show team.yaml summary: members, active initiatives, sync backend, missing files.
-
-### `detach`
-
-Clear the active initiative from session guidance; keep TEAM.md norms if useful.
-
----
+Story drafting, config summary, clear session focus.
 
 ## Hard rules
 
 - Never commit or push without explicit user permission
 - Never sync or publish personal `BRAIN.md`
-- Opt-in only — respect `share_scopes` in `team.yaml`
-- Prefer impactful captures over dumping chat logs
+- Never commit `credentials.json`

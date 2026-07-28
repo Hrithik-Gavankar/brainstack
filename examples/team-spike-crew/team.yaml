@@ -31,4 +31,10 @@ initiatives:
     file: initiatives/DEMO-EE-1.md
 
 sync:
+  # Use supabase + credentials.json for multi-engineer demos
   backend: local
+  # supabase_url: https://YOUR_PROJECT.supabase.co
+  # supabase_anon_key: YOUR_ANON_KEY
+
+jira:
+  site: https://redhat.atlassian.net

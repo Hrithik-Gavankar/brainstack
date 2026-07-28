@@ -18,7 +18,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Sync guidance for non-commit signals, prose standup style, and correction → learn feedback loop
 - **Brain scopes** — `engineer-brain` + `team-brain` skills ([docs/scopes.md](docs/scopes.md))
 - Team Brain v1: `core/team/` templates, `team-init.sh`, Cursor `team-brain` skill, `examples/team-spike-crew/`
-- Team Brain docs ([docs/team-brain.md](docs/team-brain.md)) — git-backed crew sync
+- Team Brain docs ([docs/team-brain.md](docs/team-brain.md)) — hybrid Jira + Supabase sync
+- Supabase schema + RPCs (`supabase/migrations`) for teams, members, initiatives, captures
+- `core/scripts/team-brain-api.sh` — register/join/attach/capture/sync + md mirror
 
 ### Changed
 - Dashboard expertise taxonomy aligned with brain-spec (**Strong / Growing / Exposure**); chart colors moved to UI layer
@@ -26,6 +28,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `platforms/cursor/skills/engineer-brain/SKILL.md` and `core/COMMANDS.md` sync flow no longer rely on authored git commits alone
 - Cursor platform README documents scanner config knobs and install vs live-copy drift
 - Architecture / README / roadmap describe Brain umbrella (personal + team scopes)
+- Team Brain: one `initiatives/<JIRA-KEY>.md` per initiative; Supabase for multi-engineer captures
 
 ---
 
