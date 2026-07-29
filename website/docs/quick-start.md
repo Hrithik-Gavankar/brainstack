@@ -68,7 +68,16 @@ If your crew already has an invite code + Jira key:
 bash core/scripts/team-brain-api.sh onboard <INVITE> "Your Name" AAP-81423
 ```
 
-Then agents/`remember` and `recall` share initiative memory.  
+Then in Cursor (one line to start crew work):
+
+```text
+I'm starting on AAP-81423 — start Team Brain sync.
+```
+
+```text
+I'm starting on AAP-81423 — start Team Brain sync, summarize crew memory, then help me.
+```
+
 Junior guide: [team-brain-onboarding.md](https://github.com/Hrithik-Gavankar/engineer-brain/blob/main/docs/team-brain-onboarding.md).
 
 ## Verify it works

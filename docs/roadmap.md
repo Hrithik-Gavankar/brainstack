@@ -34,7 +34,8 @@ Growing beyond individual use into a richer tool.
 - [x] **Team Brain collaborative memory (P0–P4)** — `remember` / `recall`, cache, `watch` poll, optional pgvector, MCP, breakdown + metrics; see [team-brain-memory.md](team-brain-memory.md)
 - [x] **Team Brain agent loop** — Cursor always-on `team-brain.mdc` + skill: recall before research, remember after findings
 - [x] **Team Brain onboarding** — invite + Jira key via `onboard`; beginner guide [team-brain-onboarding.md](team-brain-onboarding.md)
-- [ ] **Team Brain Realtime push** — private broadcast into other agents (v1 uses poll `watch` / next `recall`)
+- [x] **Team Brain sync mode** — `start` / `stop` / `wake` / idle sleep; merge-safe `source_ref` updates
+- [ ] **Team Brain Realtime push** — private broadcast into other agents (v1 uses sync-mode poll)
 - [ ] **Anon register/join rate limits** — Edge Function / Auth hardening (documented gap)
 - [ ] **Team aggregation metrics** — skill coverage matrix, workload heatmap, collaboration graph
 - [ ] **GitLab/Bitbucket support** — scanner support beyond GitHub

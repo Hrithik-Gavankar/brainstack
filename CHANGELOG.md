@@ -34,6 +34,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Mandatory Team Brain **agent loop**: always-on `team-brain.mdc` + skill — recall before research, remember after findings
 - Team Brain beginner onboarding guide ([docs/team-brain-onboarding.md](docs/team-brain-onboarding.md))
 - CLI `onboard` — join + optional attach + recall in one command
+- **Sync mode** — `start` / `stop` / `wake` / `touch` / `sync-status`: one manual entry, background merge-safe pull, idle sleep (~1h) with warning
+- Migration `…_sync_mode.sql` — `remember` updates same `source_ref` when body changes; `list_recent` includes updated rows
+- MCP + Cursor rule/skill wired for sync mode lifecycle
 
 ### Changed
 - Jira site defaults use `https://your-org.atlassian.net` (no hardcoded company host)

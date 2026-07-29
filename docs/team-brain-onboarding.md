@@ -12,13 +12,27 @@ You and your teammates work on the **same Jira ticket** (for example `AAP-81423`
 
 Without Team Brain, each person’s AI starts cold and re-researches the same things.
 
-With Team Brain:
+With Team Brain, the intended loop is:
 
-1. Someone saves a finding once (`remember`)
-2. Everyone else can load it (`recall`)
-3. You can turn findings into a story draft (`breakdown`)
+1. **You trigger once** — `start <JIRA-KEY>` (enter **sync mode**)  
+2. **Crew memory loads** — cache fills; your AI summarizes, *then* digs into code  
+3. **While sync is active** — background pull stays merge-safe; AI `remember`s findings  
+4. **Idle ~1h** — sync goes to **sleep** (you’ll be prompted); `wake` to resume  
+5. **Planning** — `breakdown` turns shared memory into story drafts  
 
 Your personal career notes (`BRAIN.md` / engineer-brain) stay **private**. Team Brain only shares work on the initiative.
+
+### Context-first (what you should feel)
+
+| Moment | What should happen |
+|--------|--------------------|
+| You start team work on a ticket | You run **`start`** once → memory loads + sync mode on |
+| You (or AI) learn something durable | AI **saves immediately** (`remember` + `source_ref`) |
+| Same topic, updated finding | **Updates** that memory (no duplicate / no clobber of other refs) |
+| Teammate saved something | Background sync merges into your `cache/` |
+| You step away ~1h | Sync **sleeps** — AI should ask you to `wake` |
+
+Enforced strongest in **Cursor** (`team-brain.mdc` + skill + optional MCP).
 
 ---
 
@@ -109,17 +123,30 @@ Team Brain created a folder next to your work (often the parent workspace), for 
 
 ---
 
-## Your first day — three commands
+## Your first day — sync mode
 
 Use the **same Jira key** your crew is on.
 
-### 1) Load what the team already knows
+### 1) Start sync (the only manual step before work)
 
 ```bash
-bash core/scripts/team-brain-api.sh recall AAP-81423
+bash core/scripts/team-brain-api.sh start AAP-81423
 ```
 
-Optional — search for a topic:
+This:
+
+- Loads crew memories into `.team-brain/cache/AAP-81423.json`
+- Starts **background sync** (merge-safe pull)
+- Stays awake while you/`touch`/`remember`/`recall` stay active
+- **Sleeps after 1 hour** of no local activity (warning ~5 min before)
+
+Check:
+
+```bash
+bash core/scripts/team-brain-api.sh sync-status AAP-81423
+```
+
+Optional topic search anytime:
 
 ```bash
 bash core/scripts/team-brain-api.sh recall AAP-81423 "scaffold"
@@ -127,13 +154,11 @@ bash core/scripts/team-brain-api.sh recall AAP-81423 "scaffold"
 
 ### 2) Save something useful you learned
 
-Keep it short and professional (a teammate’s AI will see this):
+Keep it short and professional (a teammate’s AI will see this). Prefer a stable `--source-ref`:
 
 ```bash
-bash core/scripts/team-brain-api.sh remember AAP-81423 research "Found CLI entrypoint in pkg/scaffold — start there for EE schema."
+bash core/scripts/team-brain-api.sh remember AAP-81423 research --source-ref "AAP-81423#cli-entrypoint" "Found CLI entrypoint in pkg/scaffold — start there for EE schema."
 ```
-
-Kinds you can use:
 
 | Kind | When to use |
 |------|-------------|
@@ -141,23 +166,20 @@ Kinds you can use:
 | `decision` | What the team agreed |
 | `note` | Small reminder / link / open question |
 
-Optional — avoid duplicates if you might save the same thing twice:
+Merge rules:
 
-```bash
-bash core/scripts/team-brain-api.sh remember AAP-81423 research --source-ref "AAP-81423#cli-entrypoint" "Found CLI entrypoint in pkg/scaffold."
-```
+- Same text again → no-op (`deduped`)
+- Same `source_ref`, **new** text → **update** that memory (`updated`)
+- New `source_ref` → insert
 
-### 3) Draft stories from team memory (optional)
+### 3) Draft stories / stop when done
 
 ```bash
 bash core/scripts/team-brain-api.sh breakdown AAP-81423
+bash core/scripts/team-brain-api.sh stop AAP-81423
 ```
 
-Open the file it prints, usually:
-
-` .team-brain/initiatives/AAP-81423-breakdown.md `
-
-Edit with the crew before filing real Jira stories.
+If sync slept: `wake AAP-81423` (or `start` again).
 
 ---
 
@@ -186,56 +208,80 @@ Tell juniors to use **Path A** with your invite code + Jira key.
 
 ## How sync actually works (read this)
 
-Team Brain is **not** magic chat sync. Shared memory appears when:
+**Goal:** one trigger → live merge-safe shared AI context for the ticket → sleep when idle.
 
-1. Someone (or their AI) runs **`remember`** after a finding  
-2. Someone else (or their AI) runs **`recall`** before researching  
+| Behavior | Status |
+|----------|--------|
+| **`start`** — one manual entry; load memory + background pull | ✅ |
+| **Merge-safe writes** — dedupe identical; update same `source_ref` | ✅ (apply sync-mode migration) |
+| **Cache merge** — no blind wipe of other memories on pull | ✅ |
+| **Idle sleep + warn** — default 1h; `wake` to resume | ✅ |
+| **Agent prompts on sleep** | ✅ Cursor rule/skill |
+| **Push into open chat with zero `start`** | ❌ Still needs you (or the agent) to enter sync mode once |
 
-If both of you forget, you will duplicate work — same as unused Slack notes.
-
-**Good news:** with Cursor, Team Brain installs an **always-on rule** + skill that tells the AI:
-
-- **Before researching** a Jira key → `recall` (sync crew memory first)  
-- **After a finding** → `remember` immediately (direct save, don’t wait for you)
-
-So you should not have to babysit every command — but if the AI skips a step, run the CLI yourself.
+**Cursor:** say *“I’m starting on AAP-81423 — start Team Brain sync.”*  
+The always-on rule expects `start` → summarize cache → work → `remember` / `touch`.
 
 ## Daily habits (keep it simple)
 
 | When | What happens |
 |------|----------------|
-| Starting work on the ticket | AI should `recall` first (or you run it) |
-| You / AI learned something durable | AI should `remember` immediately |
-| Teammate saved a finding | Your next `recall` (or AI loop) picks it up |
+| **Starting work on the ticket** | `start JIRA-KEY` (once) |
+| You / AI learned something durable | `remember` with `source_ref` |
+| Keep sync awake | automatic via recall/remember; or `touch` |
+| Sync slept | Prompt → `wake JIRA-KEY` |
+| Done for the day | `stop JIRA-KEY` |
 | Planning stories / spikes | `breakdown JIRA-KEY` |
-| “Am I connected?” | `whoami` or `status` |
-
-Optional while collaborating live (second terminal) — refreshes cache as others save:
-
-```bash
-bash core/scripts/team-brain-api.sh watch AAP-81423 5
-```
-
-Stop with `Ctrl+C`.
+| “Am I connected?” | `whoami` / `sync-status` |
 
 ---
 
-## Using Cursor (optional)
+## Using Cursor (recommended for the context-first loop)
 
-### Skill (chat)
+Install into your workspace once:
 
-If Team Brain is installed in your workspace (via `install.sh cursor`):
+```bash
+bash install.sh cursor /path/to/your/workspace
+```
 
-- `/team-brain attach AAP-81423`
-- `/team-brain remember …`
-- `/team-brain recall …`
-- `/team-brain breakdown …`
+That installs:
+
+- `team-brain.mdc` — always-on: **recall before research**, **remember after findings**
+- `team-brain` skill — chat commands
+
+### Start-of-ticket (do this every time)
+
+Paste into Cursor chat / Composer (pick one):
+
+```text
+I'm starting on AAP-81423 — start Team Brain sync.
+```
+
+```text
+I'm starting on AAP-81423 — start Team Brain sync, summarize crew memory, then help me.
+```
+
+```text
+/team-brain start AAP-81423
+```
+
+Other useful lines:
+
+| When | Say this |
+|------|----------|
+| Keep working after a break | `Wake Team Brain sync for AAP-81423 and continue.` |
+| Done for the day | `Stop Team Brain sync for AAP-81423.` |
+| Check state | `What's my Team Brain sync-status for AAP-81423?` |
+| Plan stories | `Breakdown AAP-81423 from Team Brain memory.` |
+
+Then work. After findings the AI should `remember` (and `touch`) without you asking.  
+If sync sleeps, it should ask before continuing.
 
 ### MCP tools (advanced)
 
 If your team wired the `team-brain` MCP server, your agent can call `attach` / `remember` / `recall` / `breakdown` as tools.  
-Setup details: [mcp/team-brain/README.md](../mcp/team-brain/README.md).  
-Juniors can ignore MCP and use the bash commands above.
+Setup: [mcp/team-brain/README.md](../mcp/team-brain/README.md).  
+Juniors can ignore MCP and use the bash commands or Cursor skill.
 
 ---
 
@@ -272,14 +318,22 @@ bash core/scripts/team-brain-api.sh onboard <INVITE> "Your Name" <JIRA-KEY>
 bash core/scripts/team-brain-api.sh whoami
 bash core/scripts/team-brain-api.sh status
 
-# Work
-bash core/scripts/team-brain-api.sh recall <JIRA-KEY>
-bash core/scripts/team-brain-api.sh remember <JIRA-KEY> research "Finding…"
+# Work session (CLI)
+bash core/scripts/team-brain-api.sh start <JIRA-KEY>
+bash core/scripts/team-brain-api.sh sync-status <JIRA-KEY>
+bash core/scripts/team-brain-api.sh remember <JIRA-KEY> research --source-ref "<KEY>#slug" "Finding…"
 bash core/scripts/team-brain-api.sh breakdown <JIRA-KEY>
+bash core/scripts/team-brain-api.sh stop <JIRA-KEY>
 
-# Optional
-bash core/scripts/team-brain-api.sh watch <JIRA-KEY> 5
+# Sleep / wake
+bash core/scripts/team-brain-api.sh wake <JIRA-KEY>
+bash core/scripts/team-brain-api.sh touch <JIRA-KEY>
 bash core/scripts/team-brain-api.sh metrics <JIRA-KEY>
+
+# Or in Cursor chat:
+#   I'm starting on AAP-81423 — start Team Brain sync.
+#   Wake Team Brain sync for AAP-81423 and continue.
+#   Stop Team Brain sync for AAP-81423.
 ```
 
 ---

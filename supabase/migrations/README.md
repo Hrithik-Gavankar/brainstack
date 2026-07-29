@@ -7,6 +7,7 @@
 | [`20260728000002_team_brain_watch_notes.sql`](20260728000002_team_brain_watch_notes.sql) | P1 — asserts memory RPCs exist (watch is CLI poll) |
 | [`20260729000001_team_brain_embeddings.sql`](20260729000001_team_brain_embeddings.sql) | P2 — pgvector(768), vector search, `set_memory_embedding` |
 | [`20260729000002_team_brain_security.sql`](20260729000002_team_brain_security.sql) | **PR review** — unique members, stronger invites, `updated_at` trigger |
+| [`20260729000003_team_brain_sync_mode.sql`](20260729000003_team_brain_sync_mode.sql) | **Sync mode** — `remember` merge-on-`source_ref`; `list_recent` includes updates; enables `vector` if missing |
 
 Apply in timestamp order (`supabase db push` or SQL Editor).  
 Joiners do **not** run migrations. Existing projects: apply any new files once.

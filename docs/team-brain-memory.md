@@ -1,6 +1,6 @@
 # Team Brain — Collaborative AI Memory (plan)
 
-Status: **P0–P4 shipped** (Realtime push + anon rate limits still open)  
+Status: **P0–P4 + sync mode shipped** (Realtime push into open chat + anon rate limits still open)  
 Related: [#2](https://github.com/Hrithik-Gavankar/engineer-brain/issues/2), [team-brain.md](team-brain.md), [team-brain-onboarding.md](team-brain-onboarding.md), [scopes.md](scopes.md)
 
 This document captures the original Team Brain intent, what shipped for collaborative AI memory (FTS + optional semantic recall + agent loop), and remaining gaps — without depending on external memory products.

@@ -59,33 +59,58 @@ bash core/scripts/team-brain-api.sh onboard <INVITE> "Bob" AAP-81423
 
 Admin creates the team once: `register "Team Atlas" "Alice"` → share `invite_code` (16 hex chars on new teams).
 
-## Agent loop (shared brain)
+## Sync mode (product loop)
 
-Cursor ships an always-on rule (`platforms/cursor/rules/team-brain.mdc`) + skill so agents **must**:
+One manual step when you start team work on a ticket.
 
-1. **`recall` before research** on a Jira key (sync crew memory)
-2. **`remember` immediately after** durable findings (`source_ref` for dedup)
+**In Cursor / chat (preferred):**
 
-Humans can still run CLI; juniors see [team-brain-onboarding.md](team-brain-onboarding.md).
-
-## Attach → remember → recall → breakdown
-
-1. `/team-brain attach AAP-81423` — skill fetches Jira, upserts initiative, **pulls recent memories into cache**.
-
-```bash
-bash core/scripts/team-brain-api.sh attach AAP-81423 "Summary" "Review" "https://your-org.atlassian.net/browse/AAP-81423"
+```text
+I'm starting on AAP-81423 — start Team Brain sync.
 ```
 
-2. Agents/`remember` — write memory (dedup by `source_ref` / content hash).
-3. Teammates/`recall` — list recent or search before they dig.
-4. `breakdown` / `metrics` — draft stories from recall; track reuse locally.
+```text
+I'm starting on AAP-81423 — start Team Brain sync, summarize crew memory, then help me.
+```
+
+```text
+/team-brain start AAP-81423
+```
+
+| Later | Say |
+|-------|-----|
+| After idle sleep | `Wake Team Brain sync for AAP-81423 and continue.` |
+| Done | `Stop Team Brain sync for AAP-81423.` |
+
+**CLI equivalent:**
+
+```bash
+bash core/scripts/team-brain-api.sh start AAP-81423
+```
+
+| While active | Behavior |
+|--------------|----------|
+| Pull | Background merge-safe poll → `cache/<KEY>.json` |
+| Push | `remember` — identical no-op; same `source_ref` + new body → **update** |
+| Awake | `touch` / recall / remember refresh activity |
+| Idle ~1h | **sleep** (warn ~5m before); `wake` or `start` to resume |
+| Done | `stop` |
+
+Cursor rule/skill: summarize cache after `start`; prompt user if mode is `sleep`.
+
+## Attach → start → remember → breakdown
+
+1. Attach (or let `start` attach) the Jira key.
+2. `start` — load crew memory + enter sync mode.
+3. Agents/`remember` with `source_ref`.
+4. `breakdown` / `metrics` when planning.
 
 ```bash
 bash core/scripts/team-brain-api.sh breakdown AAP-81423
 bash core/scripts/team-brain-api.sh metrics AAP-81423
 ```
 
-`capture` / `sync` remain as aliases for remember / recall-recent.
+`capture` / `sync` / `watch` remain as lower-level aliases.
 
 ## Fallback
 

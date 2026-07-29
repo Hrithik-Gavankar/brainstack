@@ -247,11 +247,12 @@ Commands (`sync`, `quarterly`, `attach`, …) are **verbs under a skill**, not s
 | Command | Description |
 |---------|-------------|
 | `team-brain onboard` / `register` / `join` | Invite join or create a team (Supabase) |
+| `team-brain start` / `stop` / `wake` / `touch` | **Sync mode** — one entry, background pull, idle sleep |
 | `team-brain attach <JIRA-KEY>` | Jira identity → initiative + pull memories into cache |
-| `team-brain remember` / `recall` | Write / search shared memories (FTS; optional vectors) |
+| `team-brain remember` / `recall` | Write / search shared memories (merge-safe `source_ref`) |
 | `team-brain breakdown <KEY>` | Recall → story/spike draft (`*-breakdown.md`) |
-| `team-brain watch` / `metrics` | Near-realtime poll; local reuse stats |
-| `team-brain sync` / `capture` | Compat aliases for recall-recent / remember |
+| `team-brain sync-status` / `metrics` | Session state; local reuse stats |
+| `team-brain sync` / `capture` / `watch` | Lower-level pull / aliases |
 | `team-brain status` / `whoami` | Config + membership |
 
 ### Intelligence
@@ -308,8 +309,12 @@ bash install.sh continue-dev ~/my-workspace
 
 "team-brain onboard <invite> Name KEY" → new joiner (one command)
 "team-brain register …"                → admin creates team once
-"team-brain remember / recall"         → shared collaborative memory
-"team-brain breakdown …"               → stories from recalled memories
+
+# Sync mode (Cursor chat — one line to start crew work):
+"I'm starting on AAP-81423 — start Team Brain sync."
+"Wake Team Brain sync for AAP-81423 and continue."
+"Stop Team Brain sync for AAP-81423."
+"Breakdown AAP-81423 from Team Brain memory."
 ```
 
 
@@ -321,6 +326,7 @@ bash install.sh cursor ~/my-workspace
 # Admin once: bash core/scripts/team-brain-api.sh register "Team Atlas" "You"
 # Teammate:   bash core/scripts/team-brain-api.sh onboard <INVITE> "Name" AAP-81423
 # (URL + anon key ship in supabase/project.public.env — no dashboard for joiners)
+# Then in Cursor: I'm starting on AAP-81423 — start Team Brain sync.
 ```
 
 ---

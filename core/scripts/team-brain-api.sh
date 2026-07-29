@@ -6,8 +6,9 @@
 #   export TEAM_BRAIN_API_KEY=tb_...   # after register/join (or use credentials file)
 #   bash team-brain-api.sh <command> [args...]
 #
-# Commands: onboard | register | join | whoami | attach | remember | recall |
-#           capture | sync | watch | breakdown | metrics | list | mirror | status
+# Commands: onboard | register | join | whoami | attach | start | stop | wake |
+#           remember | recall | capture | sync | watch | breakdown | metrics |
+#           list | mirror | status | sync-status | touch
 # Plan: docs/team-brain-memory.md — memories are SoT; md is optional export.
 
 set -euo pipefail
@@ -315,10 +316,10 @@ EOF
 ensure_team_gitignore() {
   mkdir -p "$TEAM_DIR"
   if [ ! -f "$TEAM_DIR/.gitignore" ]; then
-    printf '%s\n' 'credentials.json' 'cache/' 'metrics.json' >"$TEAM_DIR/.gitignore"
+    printf '%s\n' 'credentials.json' 'cache/' 'metrics.json' 'sync/' >"$TEAM_DIR/.gitignore"
     return
   fi
-  for entry in cache/ metrics.json; do
+  for entry in cache/ metrics.json sync/; do
     grep -qx "$entry" "$TEAM_DIR/.gitignore" 2>/dev/null || echo "$entry" >>"$TEAM_DIR/.gitignore"
   done
 }
@@ -340,6 +341,427 @@ write_memory_cache() {
     }
   ' <<<"$payload" >"$path"
   echo "Memory cache → $path" >&2
+}
+
+# ---------------------------------------------------------------------------
+# Sync mode — one manual start; background pull; merge-safe; idle sleep
+# State: .team-brain/sync/<KEY>.json  pid/log alongside
+# ---------------------------------------------------------------------------
+
+SYNC_DIR() { echo "$TEAM_DIR/sync"; }
+sync_state_path() { echo "$(SYNC_DIR)/${1}.json"; }
+sync_pid_path() { echo "$(SYNC_DIR)/${1}.pid"; }
+sync_log_path() { echo "$(SYNC_DIR)/${1}.log"; }
+
+iso_now() { date -u +%Y-%m-%dT%H:%M:%SZ; }
+epoch_now() { date -u +%s; }
+
+# Merge incoming memories into cache by id (prefer newer updated_at/created_at).
+# Never drops local rows that server didn't send in a partial delta.
+merge_memory_cache() {
+  local key="$1"
+  local incoming="$2"
+  local path="$TEAM_DIR/cache/${key}.json"
+  mkdir -p "$TEAM_DIR/cache"
+  ensure_team_gitignore
+  local synced
+  synced=$(iso_now)
+  if [ ! -f "$path" ]; then
+    write_memory_cache "$key" "$incoming"
+    return 0
+  fi
+  local tmp
+  tmp=$(mktemp)
+  jq -n --slurpfile old "$path" --argjson inc "$incoming" --arg synced "$synced" --arg key "$key" '
+    def ts($m): ($m.updated_at // $m.created_at // "");
+    ($old[0].memories // []) as $a |
+    ($inc.memories // $inc.captures // []) as $b |
+    (reduce $a[] as $m ({}; . + {($m.id|tostring): $m})) as $base |
+    (reduce $b[] as $m ($base;
+      ($m.id|tostring) as $id |
+      if .[$id] == null then .[$id] = $m
+      elif (ts($m) >= ts(.[$id])) then .[$id] = $m
+      else .
+      end
+    )) as $map |
+    {
+      jira_key: ($inc.initiative.jira_key // $old[0].jira_key // $key),
+      synced_at: $synced,
+      initiative: ($inc.initiative // $old[0].initiative),
+      memories: ([ $map[] ] | sort_by(.created_at // "") | reverse)
+    }
+  ' >"$tmp" && mv "$tmp" "$path"
+  echo "Memory cache merged → $path" >&2
+}
+
+read_sync_state() {
+  local key="$1"
+  local path
+  path=$(sync_state_path "$key")
+  [ -f "$path" ] || { echo "{}"; return 1; }
+  cat "$path"
+}
+
+write_sync_state() {
+  local key="$1"
+  local json="$2"
+  mkdir -p "$(SYNC_DIR)"
+  ensure_team_gitignore
+  local path
+  path=$(sync_state_path "$key")
+  echo "$json" | jq . >"$path"
+}
+
+touch_sync_activity() {
+  local key="${1:-}"
+  [ -n "$key" ] || return 0
+  key=$(echo "$key" | tr '[:lower:]' '[:upper:]')
+  local path
+  path=$(sync_state_path "$key")
+  [ -f "$path" ] || return 0
+  local mode
+  mode=$(jq -r '.mode // "stopped"' "$path")
+  [ "$mode" = "active" ] || [ "$mode" = "sleep" ] || return 0
+  local now
+  now=$(iso_now)
+  local tmp
+  tmp=$(mktemp)
+  jq --arg now "$now" '
+    .last_activity_at = $now
+    | if .mode == "sleep" then . else . end
+  ' "$path" >"$tmp" && mv "$tmp" "$path"
+}
+
+stop_sync_daemon() {
+  local key="$1"
+  local pidfile
+  pidfile=$(sync_pid_path "$key")
+  if [ -f "$pidfile" ]; then
+    local pid
+    pid=$(cat "$pidfile" 2>/dev/null || true)
+    if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+      kill "$pid" 2>/dev/null || true
+      # give it a moment; then force
+      sleep 0.2
+      kill -9 "$pid" 2>/dev/null || true
+    fi
+    rm -f "$pidfile"
+  fi
+}
+
+# Background pull loop — invoked as: team-brain-api.sh _sync_loop <KEY>
+cmd_sync_loop() {
+  require_api_key
+  local key="${1:-}"
+  [ -n "$key" ] || die "usage: _sync_loop <JIRA-KEY>"
+  key=$(echo "$key" | tr '[:lower:]' '[:upper:]')
+  local state_path interval idle_sec warn_sec
+  state_path=$(sync_state_path "$key")
+  [ -f "$state_path" ] || die "no sync session for $key — run start first"
+
+  echo "── sync loop $key started $(iso_now) ──" >&2
+  local warned=0
+  while true; do
+    [ -f "$state_path" ] || exit 0
+    local mode
+    mode=$(jq -r '.mode // "stopped"' "$state_path")
+    [ "$mode" = "active" ] || { echo "── sync loop exit (mode=$mode) ──" >&2; exit 0; }
+
+    interval=$(jq -r '.poll_interval_sec // 5' "$state_path")
+    idle_sec=$(jq -r '.idle_timeout_sec // 3600' "$state_path")
+    warn_sec=$(jq -r '.warn_before_sleep_sec // 300' "$state_path")
+    [[ "$interval" =~ ^[0-9]+$ ]] || interval=5
+    [ "$interval" -ge 2 ] || interval=2
+
+    sleep "$interval"
+
+    local last_act now_e last_e idle_for
+    last_act=$(jq -r '.last_activity_at // .started_at // empty' "$state_path")
+    now_e=$(epoch_now)
+    if [ -n "$last_act" ]; then
+      # macOS/BSD date and GNU date
+      last_e=$(date -u -j -f "%Y-%m-%dT%H:%M:%SZ" "$last_act" +%s 2>/dev/null \
+        || date -u -d "$last_act" +%s 2>/dev/null \
+        || echo "$now_e")
+    else
+      last_e=$now_e
+    fi
+    idle_for=$((now_e - last_e))
+
+    if [ "$idle_for" -ge "$idle_sec" ]; then
+      echo "" >&2
+      echo "⚠ Sync mode SLEEP for $key — no local activity for ${idle_sec}s ($(iso_now))" >&2
+      echo "  Run: bash team-brain-api.sh wake $key   (or start again)" >&2
+      local tmp
+      tmp=$(mktemp)
+      jq --arg now "$(iso_now)" --argjson idle "$idle_for" '
+        .mode = "sleep"
+        | .slept_at = $now
+        | .idle_for_sec = $idle
+        | .message = "Sync sleeping after idle timeout. Run wake or start to resume."
+      ' "$state_path" >"$tmp" && mv "$tmp" "$state_path"
+      rm -f "$(sync_pid_path "$key")"
+      exit 0
+    fi
+
+    if [ "$idle_for" -ge $((idle_sec - warn_sec)) ] && [ "$warned" -eq 0 ]; then
+      local left=$((idle_sec - idle_for))
+      echo "⚠ Sync mode for $key going to sleep in ~${left}s without activity. Run touch / recall / remember to stay awake." >&2
+      warned=1
+      tmp=$(mktemp)
+      jq --arg now "$(iso_now)" --argjson left "$left" '
+        .sleep_warning_at = $now
+        | .seconds_until_sleep = $left
+      ' "$state_path" >"$tmp" && mv "$tmp" "$state_path"
+    fi
+    if [ "$idle_for" -lt $((idle_sec - warn_sec)) ]; then
+      warned=0
+    fi
+
+    local since cursor_payload delta new_count
+    since=$(jq -r '.cursor // empty' "$state_path")
+    if [ -n "$since" ]; then
+      delta=$(fetch_memories "$key" "$since" 2>/dev/null || echo '{}')
+    else
+      delta=$(fetch_memories "$key" 2>/dev/null || echo '{}')
+    fi
+    new_count=$(jq '((.memories // .captures) // []) | length' <<<"$delta" 2>/dev/null || echo 0)
+    if [ "${new_count:-0}" -gt 0 ]; then
+      echo "── $(iso_now) +${new_count} memory(ies) for $key ──" >&2
+      jq -r '
+        ((.memories // .captures) // []) | .[] |
+        "[\(.updated_at // .created_at)] @\(.author_name) \(.kind)\(if .source_ref then " ("+.source_ref+")" else "" end): \(.body | gsub("\n"; " "))"
+      ' <<<"$delta" 2>/dev/null || true
+      merge_memory_cache "$key" "$delta"
+      # Full refresh keeps export + initiative metadata perfect
+      cursor_payload=$(fetch_memories "$key" 2>/dev/null || true)
+      if [ -n "${cursor_payload:-}" ]; then
+        merge_memory_cache "$key" "$cursor_payload"
+        mirror_captures_to_md "$key" "$cursor_payload" >/dev/null 2>&1 || true
+        since=$(jq -r '[((.memories // .captures) // [])[] | (.updated_at // .created_at)] | max // empty' <<<"$cursor_payload")
+      fi
+      tmp=$(mktemp)
+      jq --arg now "$(iso_now)" --arg cur "${since:-}" --argjson n "$new_count" '
+        .last_pull_at = $now
+        | .cursor = (if $cur == "" then .cursor else $cur end)
+        | .last_pull_count = $n
+      ' "$state_path" >"$tmp" && mv "$tmp" "$state_path"
+    else
+      tmp=$(mktemp)
+      jq --arg now "$(iso_now)" '.last_pull_at = $now | .last_pull_count = 0' \
+        "$state_path" >"$tmp" && mv "$tmp" "$state_path"
+    fi
+  done
+}
+
+cmd_start() {
+  require_api_key
+  local key=""
+  local interval=5
+  local idle_hours=1
+  local foreground=0
+  local positional=()
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --foreground|-f) foreground=1; shift ;;
+      --interval) interval="${2:-5}"; shift 2 ;;
+      --idle-hours) idle_hours="${2:-1}"; shift 2 ;;
+      -h|--help) die "usage: start <JIRA-KEY> [interval-sec] [idle-hours] [--foreground]" ;;
+      *) positional+=("$1"); shift ;;
+    esac
+  done
+  if [ ${#positional[@]} -ge 1 ]; then key="${positional[0]}"; fi
+  if [ ${#positional[@]} -ge 2 ]; then interval="${positional[1]}"; fi
+  if [ ${#positional[@]} -ge 3 ]; then idle_hours="${positional[2]}"; fi
+
+  [ -n "$key" ] || die "usage: start <JIRA-KEY> [interval-sec] [idle-hours] [--foreground]"
+  key=$(echo "$key" | tr '[:lower:]' '[:upper:]')
+  [[ "$interval" =~ ^[0-9]+$ ]] && [ "$interval" -ge 2 ] || die "interval must be integer >= 2"
+  local idle_sec
+  idle_sec=$(awk -v h="$idle_hours" 'BEGIN{printf "%d", (h+0)*3600}')
+  [ "$idle_sec" -ge 60 ] || die "idle-hours must yield at least 60s"
+
+  echo "→ Starting Team Brain sync mode for $key" >&2
+  # Ensure initiative exists (lightweight attach if missing)
+  if ! fetch_memories "$key" >/dev/null 2>&1; then
+    echo "→ Initiative missing — attaching $key" >&2
+    cmd_attach "$key" "$key" "active" >/dev/null
+  fi
+
+  stop_sync_daemon "$key"
+
+  local payload summary_n now
+  payload=$(fetch_memories "$key")
+  merge_memory_cache "$key" "$payload"
+  mirror_captures_to_md "$key" "$payload" >/dev/null 2>&1 || true
+  summary_n=$(jq '((.memories // .captures) // []) | length' <<<"$payload")
+  now=$(iso_now)
+  local cursor
+  cursor=$(jq -r '[((.memories // .captures) // [])[] | (.updated_at // .created_at)] | max // empty' <<<"$payload")
+
+  write_sync_state "$key" "$(jq -n \
+    --arg key "$key" \
+    --arg now "$now" \
+    --arg cur "${cursor:-}" \
+    --argjson iv "$interval" \
+    --argjson idle "$idle_sec" \
+    --argjson n "$summary_n" \
+    '{
+      jira_key: $key,
+      mode: "active",
+      started_at: $now,
+      last_activity_at: $now,
+      last_pull_at: $now,
+      cursor: (if $cur=="" then null else $cur end),
+      poll_interval_sec: $iv,
+      idle_timeout_sec: $idle,
+      warn_before_sleep_sec: 300,
+      initial_memory_count: $n,
+      message: "Sync mode active. Crew memory loaded; background pull running."
+    }')"
+
+  echo "" >&2
+  echo "══════════════════════════════════════════════" >&2
+  echo "  SYNC MODE ACTIVE — $key" >&2
+  echo "  Loaded ${summary_n} crew memories into cache" >&2
+  echo "  Poll every ${interval}s · sleep after ${idle_hours}h idle" >&2
+  echo "  Cache: $TEAM_DIR/cache/${key}.json" >&2
+  echo "══════════════════════════════════════════════" >&2
+  if [ "$summary_n" -gt 0 ]; then
+    echo "Crew memory (latest):" >&2
+    jq -r '((.memories // .captures) // [])[:5][] |
+      "- [\(.kind)] \(.body | gsub("\n"; " ") | .[0:120])"' <<<"$payload" >&2
+  else
+    echo "No memories yet — your first remember starts the shared brain." >&2
+  fi
+  echo "" >&2
+
+  if [ "$foreground" -eq 1 ]; then
+    echo "→ Foreground sync loop (Ctrl+C stops). Use touch/recall/remember to stay awake." >&2
+    cmd_sync_loop "$key"
+    return 0
+  fi
+
+  mkdir -p "$(SYNC_DIR)"
+  local logfile pidfile
+  logfile=$(sync_log_path "$key")
+  pidfile=$(sync_pid_path "$key")
+  nohup bash "$SCRIPT_DIR/team-brain-api.sh" _sync_loop "$key" >>"$logfile" 2>&1 &
+  echo $! >"$pidfile"
+  local tmp
+  tmp=$(mktemp)
+  jq --argjson pid "$(cat "$pidfile")" '.pid = $pid' "$(sync_state_path "$key")" >"$tmp" \
+    && mv "$tmp" "$(sync_state_path "$key")"
+  echo "Background sync pid $(cat "$pidfile") (log: $logfile)" >&2
+  echo "Stop:  bash team-brain-api.sh stop $key" >&2
+  echo "Wake:  bash team-brain-api.sh wake $key" >&2
+  jq . "$(sync_state_path "$key")"
+}
+
+cmd_stop() {
+  local key="${1:-}"
+  if [ -z "$key" ]; then
+    # stop all active sessions
+    local f base
+    for f in "$(SYNC_DIR)"/*.json; do
+      [ -f "$f" ] || continue
+      base=$(basename "$f" .json)
+      cmd_stop "$base"
+    done
+    return 0
+  fi
+  key=$(echo "$key" | tr '[:lower:]' '[:upper:]')
+  stop_sync_daemon "$key"
+  if [ -f "$(sync_state_path "$key")" ]; then
+    local tmp
+    tmp=$(mktemp)
+    jq --arg now "$(iso_now)" '
+      .mode = "stopped"
+      | .stopped_at = $now
+      | .message = "Sync stopped by user."
+      | del(.pid)
+    ' "$(sync_state_path "$key")" >"$tmp" && mv "$tmp" "$(sync_state_path "$key")"
+    echo "Sync mode STOPPED for $key" >&2
+    jq . "$(sync_state_path "$key")"
+  else
+    echo "No sync session for $key" >&2
+  fi
+}
+
+cmd_wake() {
+  require_api_key
+  local key="${1:-}"
+  [ -n "$key" ] || die "usage: wake <JIRA-KEY>"
+  key=$(echo "$key" | tr '[:lower:]' '[:upper:]')
+  local path
+  path=$(sync_state_path "$key")
+  if [ ! -f "$path" ]; then
+    echo "No prior session — starting fresh" >&2
+    cmd_start "$key"
+    return 0
+  fi
+  local interval idle_hours
+  interval=$(jq -r '.poll_interval_sec // 5' "$path")
+  idle_hours=$(jq -r '(.idle_timeout_sec // 3600) / 3600' "$path")
+  cmd_start "$key" "$interval" "$idle_hours"
+}
+
+cmd_touch() {
+  local key="${1:-}"
+  [ -n "$key" ] || die "usage: touch <JIRA-KEY>"
+  key=$(echo "$key" | tr '[:lower:]' '[:upper:]')
+  local path
+  path=$(sync_state_path "$key")
+  [ -f "$path" ] || die "no sync session for $key — run start first"
+  local mode
+  mode=$(jq -r '.mode // "stopped"' "$path")
+  if [ "$mode" = "sleep" ]; then
+    echo "Sync was sleeping — waking $key" >&2
+    cmd_wake "$key" >/dev/null
+    return 0
+  fi
+  if [ "$mode" != "active" ]; then
+    die "sync mode is $mode — run start $key"
+  fi
+  touch_sync_activity "$key"
+  echo "Activity touched for $key @ $(iso_now)" >&2
+  jq '{jira_key, mode, last_activity_at, idle_timeout_sec, message}' "$(sync_state_path "$key")"
+}
+
+_sync_status_one() {
+  local key="$1"
+  key=$(echo "$key" | tr '[:lower:]' '[:upper:]')
+  if [ ! -f "$(sync_state_path "$key")" ]; then
+    jq -n --arg k "$key" '{jira_key:$k, mode:"none", message:"No sync session. Run start <KEY>."}'
+    return 0
+  fi
+  local pid mode daemon
+  pid=$(jq -r '.pid // empty' "$(sync_state_path "$key")")
+  mode=$(jq -r '.mode // "stopped"' "$(sync_state_path "$key")")
+  daemon="stopped"
+  if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+    daemon="running"
+  elif [ "$mode" = "active" ]; then
+    daemon="dead"
+  fi
+  jq --arg d "$daemon" '. + {daemon: $d}' "$(sync_state_path "$key")"
+}
+
+cmd_sync_status() {
+  load_config
+  local key="${1:-}"
+  mkdir -p "$(SYNC_DIR)" 2>/dev/null || true
+  if [ -n "$key" ]; then
+    _sync_status_one "$key"
+    return 0
+  fi
+  local f
+  local acc="[]"
+  for f in "$(SYNC_DIR)"/*.json; do
+    [ -f "$f" ] || continue
+    acc=$(jq -n --argjson a "$acc" --argjson o "$(_sync_status_one "$(basename "$f" .json)")" '$a + [$o]')
+  done
+  echo "$acc" | jq .
 }
 
 # Local reuse metrics (P4) — .team-brain/metrics.json (gitignored)
@@ -631,9 +1053,17 @@ cmd_remember() {
     fi
   fi
   sync_payload=$(fetch_memories "$key")
+  merge_memory_cache "$key" "$sync_payload"
   mirror_captures_to_md "$key" "$sync_payload"
   # Count non-deduped writes as remember_writes; still bump on dedupe (retry reuse)
   bump_metric "$key" "remember_writes" 0
+  touch_sync_activity "$key"
+  # Surface merge result for agents
+  if jq -e '.updated == true' >/dev/null 2>&1 <<<"$out"; then
+    echo "→ memory UPDATED (same source_ref, new body)" >&2
+  elif jq -e '.deduped == true' >/dev/null 2>&1 <<<"$out"; then
+    echo "→ memory unchanged (deduped — identical content)" >&2
+  fi
   echo "$out" | jq .
 }
 
@@ -679,16 +1109,19 @@ cmd_recall() {
         die "search_memories unavailable — apply memory + embeddings migrations"
       fi
     fi
-    write_memory_cache "$key" "$(jq '{initiative, memories, captures: .memories, mode}' <<<"$out")"
+    merge_memory_cache "$key" "$(jq '{initiative, memories: (.memories // []), captures: (.memories // [])}' <<<"$out")"
     local hit_n
     hit_n=$(jq '((.memories // []) | length)' <<<"$out")
     bump_metric "$key" "recall_hits" "$hit_n"
+    touch_sync_activity "$key"
     echo "$out" | jq .
   else
     out=$(fetch_memories "$key")
+    merge_memory_cache "$key" "$out"
     mirror_captures_to_md "$key" "$out"
     hit_n=$(jq '((.memories // .captures) // []) | length' <<<"$out")
     bump_metric "$key" "recall_hits" "$hit_n"
+    touch_sync_activity "$key"
     echo "$out" | jq .
   fi
 }
@@ -731,7 +1164,9 @@ cmd_sync() {
   key=$(echo "$key" | tr '[:lower:]' '[:upper:]')
   local out
   out=$(fetch_memories "$key" "$since")
+  merge_memory_cache "$key" "$out"
   mirror_captures_to_md "$key" "$out"
+  touch_sync_activity "$key"
   echo "$out" | jq .
 }
 
@@ -996,6 +1431,11 @@ cmd_status() {
   echo "API_KEY=$([ -n "${TEAM_BRAIN_API_KEY:-}" ] && echo set || echo unset)"
   echo "EMBED_PROVIDER=${TEAM_BRAIN_EMBED_PROVIDER:-none} dims=$(embed_dims)"
   echo "METRICS=$(METRICS_FILE) $([ -f "$(METRICS_FILE)" ] && echo OK || echo missing)"
+  echo "SYNC_DIR=$(SYNC_DIR) $([ -d "$(SYNC_DIR)" ] && echo OK || echo missing)"
+  if [ -d "$(SYNC_DIR)" ]; then
+    echo "SYNC_SESSIONS:"
+    cmd_sync_status 2>/dev/null | jq -c '.[]? // .' 2>/dev/null || true
+  fi
   if [ -n "${TEAM_BRAIN_API_KEY:-}" ] && [ -n "${TEAM_BRAIN_SUPABASE_URL:-}" ]; then
     cmd_whoami || true
   fi
@@ -1012,14 +1452,23 @@ Team Brain — collaborative memory client (Supabase)
   attach <JIRA-KEY> [title] [status] [jira-url]
       Upsert initiative, then pull recent memories into cache/
 
+  start <JIRA-KEY> [interval-sec] [idle-hours] [--foreground]
+      ONE manual step: load crew memory + enter sync mode (background pull).
+      Merge-safe: new inserts; identical → no-op; same source_ref + new body → update.
+      Sleeps after idle-hours (default 1h) with warning; wake/start to resume.
+  stop [JIRA-KEY]           Leave sync mode (all sessions if no key)
+  wake <JIRA-KEY>           Resume from sleep
+  touch <JIRA-KEY>          Mark activity (keeps sync awake); wakes if sleeping
+  sync-status [JIRA-KEY]    Show sync mode (active | sleep | stopped)
+
   remember <JIRA-KEY> <research|decision|note> [--source-ref REF] <body...>
-      Write shared memory (preferred). Dedupes by source_ref / content hash.
+      Write shared memory. Dedupes identical; UPDATES same source_ref when body changes.
   capture …                 Compat alias for remember
 
   recall <JIRA-KEY> [query…]
       With query: FTS search. Without: same as sync (list recent).
   sync <JIRA-KEY> [since]   Pull memories → cache/<KEY>.json (+ md export)
-  watch <JIRA-KEY> [secs]   Near-realtime poll (default 5s); updates cache on new memories
+  watch <JIRA-KEY> [secs]   Foreground poll only (prefer start for sync mode)
   breakdown <JIRA-KEY> [q]  Recall memories → initiatives/<KEY>-breakdown.md (stories/spikes)
   metrics [JIRA-KEY]        Reuse stats (recall hits, remembers, breakdowns)
   reembed <JIRA-KEY> [n]    Backfill embeddings (requires TEAM_BRAIN_EMBED_PROVIDER)
@@ -1034,6 +1483,7 @@ Embeddings (optional semantic recall):
   Vectors are 768-d. Without a provider, recall uses FTS.
 
 SoT: Supabase memories + .team-brain/cache/<KEY>.json
+Sync state: .team-brain/sync/<KEY>.json
 Export: .team-brain/initiatives/<KEY>.md (optional)
 Plan: docs/team-brain-memory.md
 EOF
@@ -1048,6 +1498,12 @@ main() {
     join) cmd_join "$@" ;;
     whoami) cmd_whoami "$@" ;;
     attach) cmd_attach "$@" ;;
+    start) cmd_start "$@" ;;
+    stop) cmd_stop "$@" ;;
+    wake) cmd_wake "$@" ;;
+    touch) cmd_touch "$@" ;;
+    sync-status|sync_status) cmd_sync_status "$@" ;;
+    _sync_loop) cmd_sync_loop "$@" ;;
     remember) cmd_remember "$@" ;;
     capture) cmd_capture "$@" ;;
     recall) cmd_recall "$@" ;;

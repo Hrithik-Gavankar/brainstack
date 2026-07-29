@@ -59,12 +59,28 @@ local — never commit it back to this repository.
 | `/team-brain watch` / `metrics` | Near-realtime poll; local reuse stats |
 | `/team-brain init` | Local scaffold only |
 
-### Team Brain agent loop (always-on)
+### Team Brain sync mode (always-on)
 
-`team-brain.mdc` is installed with Cursor rules. On any Jira-key / initiative work:
+`team-brain.mdc` is installed with Cursor rules. **One chat line to start:**
 
-1. **`recall` before research** (sync crew memory)
-2. **`remember` after durable findings** (`source_ref` for dedup)
+```text
+I'm starting on AAP-81423 — start Team Brain sync.
+```
+
+```text
+I'm starting on AAP-81423 — start Team Brain sync, summarize crew memory, then help me.
+```
+
+```text
+/team-brain start AAP-81423
+```
+
+| Later | Say |
+|-------|-----|
+| After idle sleep | `Wake Team Brain sync for AAP-81423 and continue.` |
+| Done | `Stop Team Brain sync for AAP-81423.` |
+
+While active the agent should summarize cache, `touch` each turn, and `remember` findings (`source_ref`).
 
 Beginner path: [docs/team-brain-onboarding.md](../../docs/team-brain-onboarding.md).
 

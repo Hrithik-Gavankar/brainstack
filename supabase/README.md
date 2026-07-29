@@ -68,6 +68,8 @@ Do not commit `service_role` keys. Rotate invite codes if leaked.
 3. Apply migrations in order (SQL Editor or `supabase db push`) — see [`migrations/README.md`](migrations/README.md).
 4. `register` a team and share invite codes.
 
-**Existing demo projects:** apply any new migration files once (memory → embeddings → security).
+**Existing demo projects:** apply any new migration files once (memory → embeddings → security → **sync_mode**).
+
+**Sync mode:** `bash core/scripts/team-brain-api.sh start <JIRA-KEY>` — one entry, background pull, idle sleep. Requires `…_sync_mode.sql` for merge-on-`source_ref` updates.
 
 **Semantic recall (optional):** `TEAM_BRAIN_EMBED_PROVIDER=openai|ollama` — otherwise `recall` uses FTS.

@@ -6,9 +6,12 @@ Agent-native tools for collaborative initiative memory. Wraps [`team-brain-api.s
 
 | Tool | Purpose |
 |------|---------|
+| `start` | **Enter sync mode** — load crew memory + background pull |
+| `stop` / `wake` / `touch` | Leave / resume / keep awake |
+| `sync_status` | `active` \| `sleep` \| `stopped` |
 | `whoami` | Current member / team |
 | `attach` | Upsert Jira initiative + pull recent memories |
-| `remember` | Write memory (`source_ref` for dedup) |
+| `remember` | Write memory (`source_ref`; update on overlap) |
 | `recall` | Search (query) or list recent (no query) |
 | `list_recent` | Sync / list with optional `since` cursor |
 | `list_initiatives` | Team initiative index |
@@ -53,17 +56,32 @@ export TEAM_BRAIN_API_SCRIPT=/path/to/engineer-brain/core/scripts/team-brain-api
 
 Add the same command/args/env under MCP servers in your Claude config.
 
-## Mandatory agent loop
+## Sync mode (product loop)
 
 ```text
-BEFORE research on a Jira key  →  recall (sync)  →  summarize crew memory
-AFTER each durable finding     →  remember + source_ref  →  (do not wait for user)
+USER: start team work on KEY
+  → start(KEY)     # one entry — load memory + background pull
+  → summarize cache, then research
+
+WHILE active
+  → touch(KEY) each turn
+  → remember(KEY, body, source_ref) after findings
+      identical → no-op | same source_ref + new body → update
+
+IDLE ~1h
+  → mode=sleep; prompt user → wake(KEY) or start again
 ```
 
-1. Start / focus on a key → `attach` or `recall` (no query), plus `recall` with topic words  
-2. After each finding → `remember` with `source_ref` like `AAP-81423#cli-schema`  
-3. Before planning → `breakdown`
+### Chat examples (Cursor)
 
-Cursor also ships always-on rule `platforms/cursor/rules/team-brain.mdc` and skill defaults.
+```text
+I'm starting on AAP-81423 — start Team Brain sync.
+I'm starting on AAP-81423 — start Team Brain sync, summarize crew memory, then help me.
+Wake Team Brain sync for AAP-81423 and continue.
+Stop Team Brain sync for AAP-81423.
+Breakdown AAP-81423 from Team Brain memory.
+```
 
-See [docs/team-brain-memory.md](../../docs/team-brain-memory.md).
+Cursor ships always-on rule `platforms/cursor/rules/team-brain.mdc` + skill.
+
+See [docs/team-brain-onboarding.md](../../docs/team-brain-onboarding.md).

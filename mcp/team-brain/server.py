@@ -19,11 +19,11 @@ mcp = FastMCP(
     "team-brain",
     instructions=(
         "Team Brain = shared AI memory for a crew on one Jira key. "
-        "MANDATORY LOOP: (1) BEFORE any deep research/exploration on a Jira key, "
-        "call recall (and recall with topic keywords). Summarize crew memory first. "
-        "(2) AFTER each durable finding or decision, call remember immediately "
-        "with a stable source_ref like KEY#short-slug — do not wait for the user. "
-        "This is how two engineers on two laptops avoid duplicate research. "
+        "ENTRY: when the user starts team work on a ticket, call start(jira_key) once — "
+        "that loads crew memory and enters sync mode (background pull). "
+        "While active: call touch each turn; remember findings with source_ref "
+        "(identical=no-op; same source_ref+new body=update/merge). "
+        "If sync_status mode is sleep, prompt the user to wake before deep research. "
         "Never upload personal BRAIN.md or credentials.json."
     ),
 )
@@ -106,7 +106,7 @@ def attach(
 ) -> str:
     """Attach a Jira initiative and pull recent shared memories into the local cache.
 
-    Always call this (or list_recent) before working on a key so the agent loads crew context.
+    Prefer start() when beginning a work session — it attaches if needed and enters sync mode.
     """
     key = jira_key.strip().upper()
     title = title.strip() or key
@@ -114,6 +114,59 @@ def attach(
     if jira_url.strip():
         args.append(jira_url.strip())
     return _as_json(_run(*args))
+
+
+@mcp.tool()
+def start(
+    jira_key: str,
+    interval_sec: int = 5,
+    idle_hours: float = 1.0,
+) -> str:
+    """Enter sync mode for a Jira key — the ONE manual/session entrypoint.
+
+    Loads crew memory into cache, starts background merge-safe pull, returns session JSON.
+    Call when the user starts team work on a ticket. Summarize memories before researching.
+    """
+    key = jira_key.strip().upper()
+    return _as_json(
+        _run(
+            "start",
+            key,
+            str(max(2, int(interval_sec))),
+            str(idle_hours),
+        )
+    )
+
+
+@mcp.tool()
+def stop(jira_key: str = "") -> str:
+    """Leave sync mode for a key (or all sessions if jira_key empty)."""
+    if jira_key.strip():
+        return _as_json(_run("stop", jira_key.strip().upper()))
+    return _as_json(_run("stop"))
+
+
+@mcp.tool()
+def wake(jira_key: str) -> str:
+    """Resume sync mode after idle sleep."""
+    return _as_json(_run("wake", jira_key.strip().upper()))
+
+
+@mcp.tool()
+def touch(jira_key: str) -> str:
+    """Mark local activity so sync mode stays awake. Call each turn while working the key.
+
+    If the session is sleeping, wakes it.
+    """
+    return _as_json(_run("touch", jira_key.strip().upper()))
+
+
+@mcp.tool()
+def sync_status(jira_key: str = "") -> str:
+    """Show sync mode: active | sleep | stopped | none. Prompt user if sleep before deep work."""
+    if jira_key.strip():
+        return _as_json(_run("sync-status", jira_key.strip().upper()))
+    return _as_json(_run("sync-status"))
 
 
 @mcp.tool()
@@ -126,8 +179,8 @@ def remember(
     """Save a finding for the crew — call IMMEDIATELY after durable research (do not wait).
 
     kind: research | decision | note.
-    Always pass source_ref for idempotency across laptops (e.g. AAP-81423#cli-schema).
-    Duplicate source_ref or identical body returns deduped=true — safe to retry.
+    Always pass source_ref (e.g. AAP-81423#cli-schema).
+    Identical body → deduped=true. Same source_ref + new body → updated=true (merge).
     """
     key = jira_key.strip().upper()
     kind_n = (kind or "research").strip().lower()
