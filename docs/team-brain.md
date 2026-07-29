@@ -51,13 +51,15 @@ flowchart LR
 
 ## Onboard (new teammate)
 
-Share **only the invite code** (+ Jira key). URL/anon key ship in `supabase/project.public.env`.
+Admin provisions **their own** Supabase project (see [supabase/README.md](../supabase/README.md)). Repo ships placeholders only in `supabase/project.public.env`.
+
+Share with joiners: **invite code + project URL + anon key + Jira key** (not via public git).
 
 ```bash
 bash core/scripts/team-brain-api.sh onboard <INVITE> "Bob" AAP-81423
 ```
 
-Admin creates the team once: `register "Team Atlas" "Alice"` → share `invite_code` (16 hex chars on new teams).
+Admin once: create project → migrations → `register "Team Atlas" "Alice"` → share invite (16 hex chars).
 
 ## Sync mode (product loop)
 

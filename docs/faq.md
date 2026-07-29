@@ -143,13 +143,13 @@ The **team / initiative scope** of Brain. Crews share collaborative AI memory on
 
 ### How do I join a crew?
 
-Ask for an **invite code** and a **Jira key**, then:
+Ask your admin for an **invite code**, **Jira key**, and the crew’s **Supabase URL + anon key**. Put URL/anon in local `supabase/project.public.env` (or `team.yaml` / env), then:
 
 ```bash
 bash core/scripts/team-brain-api.sh onboard <INVITE> "Your Name" AAP-81423
 ```
 
-Step-by-step: [team-brain-onboarding.md](team-brain-onboarding.md).
+You do **not** need your own Supabase account. Step-by-step: [team-brain-onboarding.md](team-brain-onboarding.md). Admin setup: [supabase/README.md](../supabase/README.md).
 
 ### Do agents sync automatically?
 

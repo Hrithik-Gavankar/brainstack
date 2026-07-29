@@ -39,6 +39,6 @@ cp -r examples/team-spike-crew /path/to/workspace/.team-brain
 4. `remember` → teammate `recall` / agent loop / MCP
 5. Optional: `breakdown` / `watch` / `metrics`
 
-URL + anon key ship in `supabase/project.public.env` — joiners do not need a dashboard.
+Fill local `supabase/project.public.env` with **your** project URL + anon (placeholders only in git). Joiners do not need their own Supabase account — only the crew’s URL/anon + invite.
 
 Personal standups: `/engineer-brain sync` only.

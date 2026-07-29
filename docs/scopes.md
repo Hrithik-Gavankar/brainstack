@@ -37,13 +37,13 @@ flowchart TB
 3. **One initiative → one Jira key** (cache + optional `initiatives/<KEY>.md`).
 4. Collaborative memory: Jira identity + Supabase SoT + local cache; md is export.
 5. **Agent loop (mandatory in Cursor):** `recall` before research on a key; `remember` after durable findings (`source_ref`); `breakdown` consumes recall.
-6. Joiners need only invite code + Jira key (`onboard`); URL/anon key live in `supabase/project.public.env`.
+6. Joiners need invite + Jira key + crew’s URL/anon (`onboard`); repo ships placeholders in `supabase/project.public.env` — each crew brings their own project.
 
 ## Demo walkthrough
 
-1. Apply `supabase/migrations` (see [supabase/README.md](../supabase/README.md))
-2. Admin: `register "Spike Crew" "Alice"` → share invite
-3. Teammate: `onboard <invite> "Name" AAP-81423`
+1. Admin: create Supabase project → fill local `project.public.env` → apply `supabase/migrations` (see [supabase/README.md](../supabase/README.md))
+2. Admin: `register "Spike Crew" "Alice"` → share invite + URL + anon
+3. Teammate: put crew URL/anon locally → `onboard <invite> "Name" AAP-81423`
 4. Agents/`remember` / `recall` / `breakdown` (or MCP tools)
 5. Optional: wire [mcp/team-brain](../mcp/team-brain/README.md); Cursor installs `team-brain.mdc` always-on rule
 6. `/engineer-brain sync` still personal-only

@@ -2,7 +2,8 @@
 
 **Who this is for:** a junior engineer joining a crew that already uses Team Brain.  
 **Time:** about 10 minutes.  
-**You do not need:** a Supabase account, API keys from a dashboard, or Docker.
+**You do not need:** your own Supabase account, a `service_role` key, or Docker.  
+**You do need from your admin:** invite code, Jira key, and the crew’s Supabase **project URL + anon key** (placeholders ship in the repo — not a live project).
 
 ---
 
@@ -38,20 +39,22 @@ Enforced strongest in **Cursor** (`team-brain.mdc` + skill + optional MCP).
 
 ## Before you start — checklist
 
-Ask a teammate for **two things** (Slack/chat is fine):
+Ask a teammate (crew admin) for **three things** (Slack/chat is fine):
 
 | Ask for | Example | Notes |
 |---------|---------|--------|
-| **Invite code** | `9F7AC910` or longer | Not a password for the whole company — just your crew |
+| **Invite code** | 16 hex chars | From admin’s `register` — not in the public repo |
 | **Jira key** | `AAP-81423` | The ticket you will work on |
+| **Supabase URL + anon key** | `https://….supabase.co` + anon JWT | Crew’s project — put in local `supabase/project.public.env` or `.team-brain/team.yaml` |
 
 Also make sure you have:
 
 - [ ] This repo cloned (`engineer-brain`)
 - [ ] A terminal (macOS Terminal, iTerm, VS Code/Cursor terminal)
 - [ ] `curl` and `jq` installed (`brew install jq` if needed)
+- [ ] Placeholders in `supabase/project.public.env` replaced with the crew’s URL + anon (or set env / `team.yaml`)
 
-You do **not** need the Supabase dashboard.
+You do **not** need your own Supabase account or the dashboard.
 
 ---
 
@@ -64,6 +67,10 @@ cd /path/to/engineer-brain
 ```
 
 Use the real path on your machine (where you cloned the repo).
+
+### Step 1b — Point at the crew’s Supabase project
+
+Edit `supabase/project.public.env` (or export env / fill `.team-brain/team.yaml`) with the URL + anon key your admin shared. Leave placeholders → onboard will fail with a clear error.
 
 ### Step 2 — Run one onboard command
 
@@ -185,14 +192,23 @@ If sync slept: `wake AAP-81423` (or `start` again).
 
 ## Path B — You are creating the team (admin, once)
 
-Only one person does this for a new crew.
+Only one person does this for a new crew. **You need a Supabase account** (free tier is fine). Joiners do not.
+
+### B1 — Create a Supabase project
+
+1. Create a project at [supabase.com](https://supabase.com).
+2. Copy **Project URL** + **anon** key into local `supabase/project.public.env` (replace placeholders). Set `TEAM_BRAIN_JIRA_SITE`.
+3. Apply migrations in timestamp order — see [supabase/README.md](../supabase/README.md) and [migrations/README.md](../supabase/migrations/README.md).
+4. **Do not commit** your live URL/anon to a public fork.
+
+### B2 — Register and share
 
 ```bash
 cd /path/to/engineer-brain
 bash core/scripts/team-brain-api.sh register "Team Name" "Your Name"
 ```
 
-The command prints an **invite code**. Copy that into Slack for teammates.
+The command prints an **invite code**. Share with teammates: **invite code + URL + anon key + Jira key** (Slack is fine). Do not put live keys in the public GitHub repo.
 
 Then attach the Jira work:
 
@@ -200,9 +216,9 @@ Then attach the Jira work:
 bash core/scripts/team-brain-api.sh attach AAP-81423 "Short title" "active" "https://your-org.atlassian.net/browse/AAP-81423"
 ```
 
-Tell juniors to use **Path A** with your invite code + Jira key.
+Tell juniors to use **Path A**.
 
-> **Note:** New teams get longer invite codes (16 characters). Older demo codes may still be shorter — both are fine if your admin shared them.
+> **Note:** New teams get 16-character invite codes. Only admins see the invite via `register` / `whoami` — joiners’ `credentials.json` does not store it.
 
 ---
 

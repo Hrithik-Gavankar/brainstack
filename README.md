@@ -325,7 +325,7 @@ bash install.sh cursor ~/my-workspace
 # Personal: /engineer-brain sync
 # Admin once: bash core/scripts/team-brain-api.sh register "Team Atlas" "You"
 # Teammate:   bash core/scripts/team-brain-api.sh onboard <INVITE> "Name" AAP-81423
-# (URL + anon key ship in supabase/project.public.env — no dashboard for joiners)
+# (Admin: own Supabase project → fill local project.public.env; joiners get URL+anon+invite)
 # Then in Cursor: I'm starting on AAP-81423 — start Team Brain sync.
 ```
 

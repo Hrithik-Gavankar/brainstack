@@ -43,23 +43,40 @@ need_cmd jq
 
 load_public_env() {
   [ -f "$PUBLIC_ENV" ] || return 0
-  # shellcheck disable=SC1090
-  set -a
-  # Only export the known keys (ignore comments / blank lines)
+  # Only fill keys that are unset — never clobber env / team.yaml values already loaded
   while IFS= read -r line || [ -n "$line" ]; do
     case "$line" in
-      TEAM_BRAIN_SUPABASE_URL=*|TEAM_BRAIN_SUPABASE_ANON_KEY=*|TEAM_BRAIN_JIRA_SITE=*)
-        export "$line"
+      TEAM_BRAIN_SUPABASE_URL=*)
+        [ -n "${TEAM_BRAIN_SUPABASE_URL:-}" ] || export TEAM_BRAIN_SUPABASE_URL="${line#TEAM_BRAIN_SUPABASE_URL=}"
+        ;;
+      TEAM_BRAIN_SUPABASE_ANON_KEY=*)
+        [ -n "${TEAM_BRAIN_SUPABASE_ANON_KEY:-}" ] || export TEAM_BRAIN_SUPABASE_ANON_KEY="${line#TEAM_BRAIN_SUPABASE_ANON_KEY=}"
+        ;;
+      TEAM_BRAIN_JIRA_SITE=*)
+        [ -n "${TEAM_BRAIN_JIRA_SITE:-}" ] || export TEAM_BRAIN_JIRA_SITE="${line#TEAM_BRAIN_JIRA_SITE=}"
         ;;
     esac
   done <"$PUBLIC_ENV"
-  set +a
+}
+
+supabase_config_is_placeholder() {
+  case "${TEAM_BRAIN_SUPABASE_URL:-}" in
+    ""|*YOUR_PROJECT*|*your-project*|*example.supabase*) return 0 ;;
+  esac
+  case "${TEAM_BRAIN_SUPABASE_ANON_KEY:-}" in
+    ""|your-anon-key|YOUR_ANON*|replace-me*|changeme*) return 0 ;;
+  esac
+  return 1
 }
 
 seed_team_yaml_from_public() {
-  load_public_env
-  [ -n "${TEAM_BRAIN_SUPABASE_URL:-}" ] || die "missing TEAM_BRAIN_SUPABASE_URL (expected $PUBLIC_ENV)"
-  [ -n "${TEAM_BRAIN_SUPABASE_ANON_KEY:-}" ] || die "missing TEAM_BRAIN_SUPABASE_ANON_KEY (expected $PUBLIC_ENV)"
+  # Same resolution as require_supabase: env → team.yaml → project.public.env
+  load_config
+  [ -n "${TEAM_BRAIN_SUPABASE_URL:-}" ] || die "missing TEAM_BRAIN_SUPABASE_URL (set env, $CONFIG_YAML, or $PUBLIC_ENV)"
+  [ -n "${TEAM_BRAIN_SUPABASE_ANON_KEY:-}" ] || die "missing TEAM_BRAIN_SUPABASE_ANON_KEY (set env, $CONFIG_YAML, or $PUBLIC_ENV)"
+  if supabase_config_is_placeholder; then
+    die "Supabase URL/anon are still placeholders. Set real values in env, $CONFIG_YAML, or $PUBLIC_ENV. Ask your crew admin for the project URL + anon key, or see supabase/README.md if you are the admin."
+  fi
   mkdir -p "$TEAM_DIR/initiatives"
   if [ ! -f "$TEAM_DIR/.gitignore" ]; then
     echo "credentials.json" >"$TEAM_DIR/.gitignore"
@@ -77,7 +94,8 @@ jira:
   site: ${TEAM_BRAIN_JIRA_SITE:-https://your-org.atlassian.net}
 initiatives: []
 EOF
-    echo "Seeded $CONFIG_YAML from $PUBLIC_ENV" >&2
+    chmod 600 "$CONFIG_YAML" 2>/dev/null || true
+    echo "Seeded $CONFIG_YAML with crew Supabase config" >&2
   fi
 }
 
@@ -118,6 +136,9 @@ require_supabase() {
   load_config
   [ -n "${TEAM_BRAIN_SUPABASE_URL:-}" ] || die "set TEAM_BRAIN_SUPABASE_URL or sync.supabase_url in $CONFIG_YAML"
   [ -n "${TEAM_BRAIN_SUPABASE_ANON_KEY:-}" ] || die "set TEAM_BRAIN_SUPABASE_ANON_KEY or sync.supabase_anon_key in $CONFIG_YAML"
+  if supabase_config_is_placeholder; then
+    die "Supabase URL/anon are still placeholders. Crew admin: create a project, apply supabase/migrations, set TEAM_BRAIN_SUPABASE_URL + TEAM_BRAIN_SUPABASE_ANON_KEY (or edit $PUBLIC_ENV / $CONFIG_YAML). See supabase/README.md"
+  fi
 }
 
 require_api_key() {
@@ -241,18 +262,21 @@ fetch_memories() {
 save_credentials() {
   local json="$1"
   mkdir -p "$TEAM_DIR"
+  # Persist invite_code only for admins (defense in depth if DB not yet on invite_hygiene)
   jq '{
     api_key: .api_key,
     team_id: .team_id,
     member_id: .member_id,
     display_name: .display_name,
     role: .role,
-    team_name: .team_name,
-    invite_code: .invite_code
-  }' <<<"$json" >"$CRED_FILE"
+    team_name: .team_name
+  } + (if .role == "admin" and (.invite_code // null) != null and .invite_code != "" then {invite_code: .invite_code} else {} end)' \
+    <<<"$json" >"$CRED_FILE"
   chmod 600 "$CRED_FILE" 2>/dev/null || true
   echo "Wrote credentials → $CRED_FILE" >&2
-  echo "Invite code: $(jq -r .invite_code <<<"$json")" >&2
+  if jq -e '.role == "admin" and (.invite_code // null) != null and .invite_code != ""' >/dev/null 2>&1 <<<"$json"; then
+    echo "Invite code (share with teammates; keep private from the public internet): $(jq -r .invite_code <<<"$json")" >&2
+  fi
   echo "API key saved (keep private)." >&2
 }
 
@@ -987,18 +1011,30 @@ PY
 }
 
 # remember — collaborative memory write (preferred). capture is a compat alias.
+# Body: positional args, or "-" (stdin), or --body-file PATH (preferred for MCP / special chars).
 cmd_remember() {
   require_api_key
   local key="${1:-}"
   local kind="${2:-note}"
   shift 2 || true
   local source_ref="${TEAM_BRAIN_SOURCE_REF:-}"
+  local body_file=""
+  local from_stdin=0
   local args=()
+  local usage='usage: remember <JIRA-KEY> <research|decision|note> [--source-ref REF] [--body-file PATH | - | <body...>]'
   while [ $# -gt 0 ]; do
     case "$1" in
       --source-ref)
         source_ref="${2:-}"
-        shift 2 || die "usage: remember <JIRA-KEY> <kind> [--source-ref REF] <body...>"
+        shift 2 || die "$usage"
+        ;;
+      --body-file)
+        body_file="${2:-}"
+        shift 2 || die "$usage"
+        ;;
+      -)
+        from_stdin=1
+        shift
         ;;
       *)
         args+=("$1")
@@ -1007,11 +1043,16 @@ cmd_remember() {
     esac
   done
   local body_text=""
-  if [ ${#args[@]} -gt 0 ]; then
+  if [ -n "$body_file" ]; then
+    [ -f "$body_file" ] || die "body file not found: $body_file"
+    body_text=$(cat "$body_file")
+  elif [ "$from_stdin" -eq 1 ]; then
+    body_text=$(cat)
+  elif [ ${#args[@]} -gt 0 ]; then
     body_text="${args[*]}"
   fi
-  [ -n "$key" ] || die "usage: remember <JIRA-KEY> <research|decision|note> [--source-ref REF] <body...>"
-  [ -n "$body_text" ] || die "memory body required"
+  [ -n "$key" ] || die "$usage"
+  [ -n "$body_text" ] || die "memory body required ($usage)"
   key=$(echo "$key" | tr '[:lower:]' '[:upper:]')
   local out sync_payload payload emb
   emb=""
@@ -1185,7 +1226,8 @@ cmd_watch() {
   local payload since new_count
   payload=$(fetch_memories "$key")
   mirror_captures_to_md "$key" "$payload" >/dev/null
-  since=$(jq -r '[((.memories // .captures) // [])[].created_at] | max // empty' <<<"$payload")
+  # Cursor must track updated_at (source_ref merges) — same as cmd_sync_loop
+  since=$(jq -r '[((.memories // .captures) // [])[] | (.updated_at // .created_at)] | max // empty' <<<"$payload")
   new_count=$(jq '((.memories // .captures) // []) | length' <<<"$payload")
   echo "Watching $key every ${interval}s (${new_count} memories). Ctrl+C to stop." >&2
   echo "Cursor: ${since:-none}" >&2
@@ -1204,11 +1246,11 @@ cmd_watch() {
       echo "── $(date -u +%Y-%m-%dT%H:%M:%SZ) +${new_count} memory(ies) ──" >&2
       jq -r '
         ((.memories // .captures) // []) | .[] |
-        "[\(.created_at)] @\(.author_name) \(.kind): \(.body | gsub("\n"; " "))"
+        "[\(.updated_at // .created_at)] @\(.author_name) \(.kind): \(.body | gsub("\n"; " "))"
       ' <<<"$delta"
       payload=$(fetch_memories "$key")
       mirror_captures_to_md "$key" "$payload" >/dev/null
-      since=$(jq -r '[((.memories // .captures) // [])[].created_at] | max // empty' <<<"$payload")
+      since=$(jq -r '[((.memories // .captures) // [])[] | (.updated_at // .created_at)] | max // empty' <<<"$payload")
     fi
   done
 }
@@ -1461,7 +1503,7 @@ Team Brain — collaborative memory client (Supabase)
   touch <JIRA-KEY>          Mark activity (keeps sync awake); wakes if sleeping
   sync-status [JIRA-KEY]    Show sync mode (active | sleep | stopped)
 
-  remember <JIRA-KEY> <research|decision|note> [--source-ref REF] <body...>
+  remember <JIRA-KEY> <research|decision|note> [--source-ref REF] [--body-file PATH | - | <body...>]
       Write shared memory. Dedupes identical; UPDATES same source_ref when body changes.
   capture …                 Compat alias for remember
 

@@ -62,7 +62,7 @@ This scans your git history and auto-populates BRAIN.md with your expertise, pat
 
 ### Optional — Team Brain
 
-If your crew already has an invite code + Jira key:
+If your crew shared an invite code, Jira key, and Supabase URL + anon (fill local `project.public.env`):
 
 ```bash
 bash core/scripts/team-brain-api.sh onboard <INVITE> "Your Name" AAP-81423

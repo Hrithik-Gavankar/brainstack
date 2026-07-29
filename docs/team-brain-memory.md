@@ -78,7 +78,7 @@ The product must deliver this **core memory loop**:
 **Product fit (Brain umbrella):**
 
 - Jira-native attach
-- Zero self-host for joiners (invite + committed anon project)
+- Zero Supabase account for joiners (admin hosts one project; share invite + URL/anon out of band — repo ships placeholders only)
 - Clear personal vs team privacy
 - Agent loop: `recall` before research, `remember` after findings
 - `breakdown` consumes `recall`

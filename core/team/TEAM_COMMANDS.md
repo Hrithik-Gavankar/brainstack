@@ -82,7 +82,7 @@ bash core/scripts/team-brain-api.sh stop AAP-81423     # done
 bash core/scripts/team-brain-api.sh wake AAP-81423     # after sleep
 ```
 
-`capture` / `sync` remain aliases. Public config: `supabase/project.public.env`.
+`capture` / `sync` remain aliases. Project config: `supabase/project.public.env` (placeholders in git — fill with your crew’s project).
 
 ## Commands
 

@@ -40,6 +40,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 - Jira site defaults use `https://your-org.atlassian.net` (no hardcoded company host)
+- `supabase/project.public.env` ships **placeholders only** (no live URL/anon in git); each crew brings their own project
+- `join_team` omits `invite_code`; `whoami` returns invite only for admin (`…_invite_hygiene.sql`)
+- `watch` cursor uses `updated_at` so source_ref merges are visible
+- MCP `remember` passes body on stdin (avoids shell arg mangling)
 - `.gitignore` scopes Team Brain credentials to `.team-brain/` only
 - `team-brain-api.sh`: yq-aware YAML load; RPC `payload`/`resp_body` naming
 - Dashboard expertise taxonomy aligned with brain-spec (**Strong / Growing / Exposure**); chart colors moved to UI layer

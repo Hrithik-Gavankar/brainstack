@@ -45,7 +45,7 @@ def _api_script() -> Path:
     )
 
 
-def _run(*args: str, timeout: int = 120) -> str:
+def _run(*args: str, timeout: int = 120, stdin_data: str | None = None) -> str:
     script = _api_script()
     env = os.environ.copy()
     # Prefer caller cwd .team-brain unless explicitly set
@@ -57,6 +57,7 @@ def _run(*args: str, timeout: int = 120) -> str:
     try:
         proc = subprocess.run(
             cmd,
+            input=stdin_data,
             capture_output=True,
             text=True,
             timeout=timeout,
@@ -189,11 +190,12 @@ def remember(
     body = body.strip()
     if not body:
         raise ValueError("body is required")
+    # Pass body on stdin ("-") so quotes/newlines/$() are not mangled as shell args
     args = ["remember", key, kind_n]
     if source_ref.strip():
         args.extend(["--source-ref", source_ref.strip()])
-    args.append(body)
-    return _as_json(_run(*args))
+    args.append("-")
+    return _as_json(_run(*args, stdin_data=body))
 
 
 @mcp.tool()
