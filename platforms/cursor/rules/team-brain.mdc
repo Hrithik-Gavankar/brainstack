@@ -1,0 +1,74 @@
+---
+description: >-
+  Team Brain sync mode — one start per ticket, then live merge-safe crew memory.
+  Always-on when .team-brain exists or work mentions an initiative/Jira key.
+globs:
+alwaysApply: true
+---
+
+# Team Brain — sync mode (mandatory)
+
+If this workspace has `.team-brain/` **or** the user is working on a shared Jira initiative / spike / epic, treat Team Brain as the crew’s shared memory.
+
+Personal `BRAIN.md` / engineer-brain stay private — never upload those.
+
+## Human entry (one manual step)
+
+When the user starts team work on a ticket — including phrases like:
+
+```text
+I'm starting on AAP-81423 — start Team Brain sync.
+I'm starting on AAP-81423 — start Team Brain sync, summarize crew memory, then help me.
+/team-brain start AAP-81423
+Wake Team Brain sync for AAP-81423 and continue.
+Stop Team Brain sync for AAP-81423.
+```
+
+…run the matching command (`start` / `wake` / `stop`):
+
+```bash
+bash <engineer-brain>/core/scripts/team-brain-api.sh start <JIRA-KEY>
+```
+
+That loads crew memory into `.team-brain/cache/<KEY>.json` and starts background pull.
+
+Then you MUST:
+
+1. Read the cache / `sync-status`
+2. Summarize crew knowledge (2–5 bullets)
+3. Only then dig into the codebase
+
+## While sync mode is active
+
+```text
+EACH TURN on this key
+  → touch <KEY>   (keeps sync awake)
+  → prefer cache; recall if topic-specific search needed
+
+AFTER durable finding
+  → remember with stable source_ref (KEY#slug)
+  → identical body = no-op; same source_ref + new body = UPDATE (merge)
+  → never invent a second row for the same topic slug
+```
+
+## Sleep / wake
+
+Check `sync-status <KEY>`:
+
+| mode | What you do |
+|------|-------------|
+| `active` | Continue; `touch` each turn |
+| `sleep` | **Prompt the user**: “Team Brain sync slept after idle — run `wake <KEY>` or `start`?” Do not silently research without waking. |
+| `stopped` / `none` | Offer `start <KEY>` before deep work |
+
+## Prefer MCP tools if connected
+
+`start` / `stop` / `wake` / `touch` / `sync_status` / `recall` / `remember`
+
+## Never
+
+- Deep research on a known Jira key without `start` or `recall` first
+- Leave durable findings only in chat
+- Blind-overwrite unrelated memories (always use `source_ref`)
+- Put personal career notes into Team Brain
+- Commit or paste `credentials.json` / `api_key`

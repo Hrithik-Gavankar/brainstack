@@ -1,6 +1,9 @@
 # Architecture
 
-Engineer Brain is composed of three layers: data collection, intelligence, and delivery.
+Brain is composed of three layers: data collection, intelligence, and delivery —
+with two **scopes** (skills): engineer-brain (personal) and team-brain (team/initiative).
+
+See also [scopes.md](scopes.md) and [team-brain.md](team-brain.md).
 
 ---
 
@@ -17,12 +20,24 @@ flowchart TD
     subgraph Core["Core Engine"]
         SCAN[Multi-Repo Scanner<br/>scan.sh]
         PATTERN[Pattern Detection]
-        BRAIN[BRAIN.md<br/>Living Engineering Profile]
-        CMD[Command Engine<br/>sync / update / quarterly / reflect]
+        BRAIN[BRAIN.md<br/>Personal profile]
+        TEAM[TEAM.md + cache/<br/>Team / initiative context]
+        API[team-brain-api.sh]
+        CMD[Command Engine]
+    end
+
+    subgraph Cloud["Team Brain cloud opt-in"]
+        SB[(Supabase memories)]
+        MCP[mcp/team-brain]
+    end
+
+    subgraph Skills["Skills = scopes"]
+        EB[engineer-brain<br/>sync update quarterly …]
+        TB[team-brain<br/>onboard attach remember recall breakdown]
     end
 
     subgraph Adapters["Platform Adapters"]
-        CUR[Cursor<br/>.mdc + SKILL.md]
+        CUR[Cursor<br/>engineer + team rules + skills]
         CLA[Claude Code<br/>CLAUDE.md]
         COP[GitHub Copilot<br/>copilot-instructions.md]
         WIN[Windsurf<br/>.windsurfrules]
@@ -30,18 +45,32 @@ flowchart TD
         CON[Continue.dev<br/>rules.md]
     end
 
+    subgraph Surfaces["Other Delivery Surfaces"]
+        DASH[Web Dashboard<br/>dashboard/ — local + demo viz]
+        DOCS[Docs Site<br/>website/ — Docusaurus product docs]
+    end
+
     GIT --> SCAN
-    JIRA -.->|optional| CMD
+    JIRA -->|attach identity| API
     SESS -.->|optional| CMD
     SCAN --> PATTERN
     PATTERN --> BRAIN
     CMD --> BRAIN
+    CMD --> TEAM
+    EB --> BRAIN
+    TB --> API
+    API --> SB
+    API --> TEAM
+    MCP --> API
     BRAIN --> CUR
+    TEAM --> CUR
     BRAIN --> CLA
     BRAIN --> COP
     BRAIN --> WIN
     BRAIN --> AID
     BRAIN --> CON
+    BRAIN -.->|via data port / future parser| DASH
+    BRAIN -.->|documented by| DOCS
 ```
 
 ---
@@ -58,8 +87,10 @@ The scanner is a bash script that traverses all git repositories in a workspace 
 - **Commit type breakdown** — Conventional commit prefix distribution
 - **Files touched** — Which areas of the codebase are receiving attention
 - **Velocity metrics** — Commits per day/week, trend direction
+- **GitHub activity** (optional, via `gh`) — authored PRs, reviews given, recent releases
+- **Personal-repo filtering** — optional `PERSONAL_REPOS` basenames excluded from team metrics
 
-**Input:** Workspace path, author pattern, lookback period (days)
+**Input:** Workspace path, author pattern, lookback period (days); optional `GH_OWNERS` / `RELEASE_REPOS`
 **Output:** Structured text suitable for AI consumption
 
 ```mermaid
@@ -102,14 +133,47 @@ flowchart TD
 
 ### Command Engine
 
-Commands are natural language triggers interpreted by the AI assistant:
+Commands are natural language triggers interpreted by the AI assistant.
+**Skills name the scope; commands are verbs** (do not install `sync` as its own skill).
 
-| Command | Data Flow |
-|---------|-----------|
-| `sync` | Scanner (1-3 days) → BRAIN.md sprint context → Standup output |
-| `update` | Scanner (30 days) → Pattern detection → BRAIN.md rewrite |
-| `quarterly` | Scanner (90 days) → BRAIN.md → Structured review document |
-| `reflect` | Scanner (30 days) → Pattern detection → Recommendations |
+| Skill | Command | Data Flow |
+|-------|---------|-----------|
+| engineer-brain | `sync` | Scanner (1-3 days) → BRAIN.md sprint context → Standup output |
+| engineer-brain | `update` | Scanner (30 days) → Pattern detection → BRAIN.md rewrite |
+| engineer-brain | `quarterly` | Scanner (90 days) → BRAIN.md → Structured review document |
+| engineer-brain | `reflect` | Scanner (30 days) → Pattern detection → Recommendations |
+| team-brain | `onboard` / `register` / `join` | Invite membership; write `credentials.json` |
+| team-brain | `attach` / `recall` | Jira identity + pull memories → cache / session brief |
+| team-brain | `remember` | Append shared memory (dedup by `source_ref` / content hash) |
+| team-brain | `breakdown` | Recall memories → story/spike draft (`*-breakdown.md`) |
+| team-brain | `watch` / `metrics` | Near-realtime poll; local reuse stats |
+
+### Team Brain collaborative memory
+
+```mermaid
+flowchart LR
+  Jira -->|attach key title status| Init[initiatives]
+  EngA -->|remember| SB[(Supabase memories)]
+  EngB -->|recall / watch| SB
+  SB -->|cache| JSON[".team-brain/cache/KEY.json"]
+  SB -->|optional export| MD["initiatives/KEY.md"]
+  JSON -->|breakdown| Draft["KEY-breakdown.md"]
+  Rule[Cursor team-brain.mdc] -->|recall before / remember after| EngA
+  MCP[team-brain MCP] --> EngA
+  MCP --> EngB
+```
+
+| Layer | Responsibility |
+|-------|----------------|
+| **Jira** | Initiative identity |
+| **Supabase** | Membership + memories (SoT); FTS recall; optional pgvector |
+| **Local cache** | Agent-facing snapshot |
+| **Markdown** | Optional human/git export |
+| **Agent loop** | Always-on Cursor rule + skill: recall before research, remember after findings |
+| **MCP** | `mcp/team-brain/` — attach / remember / recall / breakdown / metrics |
+
+Beginner path: [team-brain-onboarding.md](team-brain-onboarding.md).  
+Plan and phases: [team-brain-memory.md](team-brain-memory.md). Setup: [supabase/README.md](../supabase/README.md).
 
 ---
 
@@ -119,8 +183,8 @@ Each AI coding assistant has its own native format for loading persistent contex
 
 ```mermaid
 flowchart TD
-    BRAIN[BRAIN.md + COMMANDS.md] --> ADAPTER{Platform Adapter}
-    ADAPTER -->|Cursor| A1[".cursor/rules/engineer-brain.mdc<br/>.cursor/skills/engineer-brain/SKILL.md"]
+    BRAIN[BRAIN.md + TEAM.md + commands] --> ADAPTER{Platform Adapter}
+    ADAPTER -->|Cursor| A1[".cursor/rules/engineer-brain.mdc + team-brain.mdc<br/>skills/engineer-brain + skills/team-brain"]
     ADAPTER -->|Claude Code| A2["CLAUDE.md"]
     ADAPTER -->|Copilot| A3[".github/copilot-instructions.md"]
     ADAPTER -->|Windsurf| A4[".windsurfrules"]
@@ -135,6 +199,15 @@ Each adapter file contains:
 2. **Behavior instructions** — How the AI should use the context (calibrate complexity, push growth, flag security)
 3. **Command reference** — How to invoke engineer-brain commands in that platform's syntax
 4. **Link to full brain** — Path to BRAIN.md for detailed lookups
+
+### Web dashboard (`dashboard/`) vs docs site (`website/`)
+
+| Path | Role | Data |
+|------|------|------|
+| `dashboard/` | Personal / demo visualization UI (Vite + React) | Consumes brain-shaped data via `loadDashboardData()` — sample fixture today; local `BRAIN.md` parser later |
+| `website/` | Public product documentation (Docusaurus) | Static docs only — not a brain viewer |
+
+The dashboard is a Delivery-layer **consumer** of BRAIN.md, not a second source of truth. Keep presentation (chart colors, layout) in the UI layer; keep taxonomy aligned with [brain-spec.md](brain-spec.md) (Strong / Growing / Exposure).
 
 ---
 
@@ -175,11 +248,11 @@ sequenceDiagram
 
 ## Security & Privacy
 
-- All data stays local — nothing is transmitted to external services
-- BRAIN.md lives in the engineer's workspace, versioned in their git repo
+- **Personal engineer-brain** stays local — scanner and `BRAIN.md` are not uploaded
 - The scanner reads only git metadata (commits, branches), not file contents
-- No credentials, secrets, or sensitive data are stored in BRAIN.md
 - Engineers can `.gitignore` their BRAIN.md if they prefer not to share it
+- **Team Brain (opt-in):** membership + initiative memories sync to your Supabase project via RPC + hashed member API keys. Personal `BRAIN.md` is never sent. Do not commit `credentials.json` or `service_role` keys. See [supabase/README.md](../supabase/README.md) security table.
+- **Dashboard hosting:** public deploys (Vercel, Pages, etc.) may ship the **sample/demo** dashboard only. Do not upload personal `BRAIN.md` to a public host — use local `npm run dev` / `preview` for real brain data (see [dashboard/README.md](../dashboard/README.md))
 
 ---
 
@@ -203,3 +276,10 @@ sequenceDiagram
 1. Define the command in `core/COMMANDS.md`
 2. Specify: trigger, data sources, output format, scope rules
 3. For Cursor: also add to `platforms/cursor/skills/engineer-brain/SKILL.md`
+
+### Extending the web dashboard
+
+1. Add or update a data adapter under `dashboard/src/data/` (do not hard-import fixtures from `App.tsx`)
+2. Keep `DashboardData` aligned with [brain-spec.md](brain-spec.md)
+3. Put chart colors and other presentation details in the UI layer (`colors.ts` / components)
+4. Document hosting/privacy constraints in `dashboard/README.md`

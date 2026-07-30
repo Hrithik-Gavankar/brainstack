@@ -1,16 +1,9 @@
 import type { DashboardData } from "../types";
 
-const CHART_COLORS = {
-  feat: "#40c057",
-  fix: "#ff6b6b",
-  refactor: "#9775fa",
-  chore: "#fcc419",
-  docs: "#22b8cf",
-  test: "#ff922b",
-  ci: "#748ffc",
-  style: "#f06595",
-};
-
+/**
+ * Demo fixture for local preview and public deploys (Vercel/Pages).
+ * Not personal BRAIN.md data — see dashboard/README.md hosting rules.
+ */
 export const sampleData: DashboardData = {
   profile: {
     name: "Jane Engineer",
@@ -60,12 +53,12 @@ export const sampleData: DashboardData = {
     },
   ],
   commitTypes: [
-    { type: "feat", count: 18, color: CHART_COLORS.feat },
-    { type: "fix", count: 12, color: CHART_COLORS.fix },
-    { type: "refactor", count: 5, color: CHART_COLORS.refactor },
-    { type: "test", count: 4, color: CHART_COLORS.test },
-    { type: "chore", count: 2, color: CHART_COLORS.chore },
-    { type: "docs", count: 1, color: CHART_COLORS.docs },
+    { type: "feat", count: 18 },
+    { type: "fix", count: 12 },
+    { type: "refactor", count: 5 },
+    { type: "test", count: 4 },
+    { type: "chore", count: 2 },
+    { type: "docs", count: 1 },
   ],
   velocity: [
     { period: "Apr W1", commits: 3 },
@@ -89,11 +82,11 @@ export const sampleData: DashboardData = {
     { area: "Python", level: 85, category: "strong" },
     { area: "TypeScript", level: 75, category: "strong" },
     { area: "PostgreSQL", level: 70, category: "strong" },
+    { area: "Testing", level: 60, category: "strong" },
     { area: "React", level: 65, category: "growing" },
     { area: "CI/CD", level: 55, category: "growing" },
     { area: "System Design", level: 40, category: "growing" },
-    { area: "Docker/K8s", level: 35, category: "growing" },
-    { area: "Testing", level: 60, category: "strong" },
+    { area: "Docker/K8s", level: 25, category: "exposure" },
   ],
   growthItems: [
     {
@@ -152,4 +145,5 @@ export const sampleData: DashboardData = {
     },
   ],
   lastUpdated: "2026-07-22",
+  source: "sample",
 };

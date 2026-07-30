@@ -7,22 +7,24 @@ import {
   ResponsiveContainer,
   Tooltip,
 } from "recharts";
-import type { ExpertiseArea } from "../types";
+import type { ExpertiseArea, ExpertiseCategory } from "../types";
 
 interface ExpertiseMapProps {
   data: ExpertiseArea[];
 }
 
-const categoryColors: Record<string, string> = {
+const CATEGORIES: ExpertiseCategory[] = ["strong", "growing", "exposure"];
+
+const categoryColors: Record<ExpertiseCategory, string> = {
   strong: "text-green-accent",
   growing: "text-brain-400",
-  dormant: "text-text-muted",
+  exposure: "text-text-muted",
 };
 
-const categoryLabels: Record<string, string> = {
+const categoryLabels: Record<ExpertiseCategory, string> = {
   strong: "Strong",
   growing: "Growing",
-  dormant: "Dormant",
+  exposure: "Exposure",
 };
 
 function CustomTooltip({ active, payload }: { active?: boolean; payload?: Array<{ payload: ExpertiseArea }> }) {
@@ -31,8 +33,8 @@ function CustomTooltip({ active, payload }: { active?: boolean; payload?: Array<
   return (
     <div className="bg-surface-hover border border-border-dim rounded-lg px-3 py-2 shadow-lg">
       <p className="text-sm font-medium text-text-primary">{d.area}</p>
-      <p className="text-xs text-text-secondary capitalize">
-        {d.category} &middot; {d.level}%
+      <p className="text-xs text-text-secondary">
+        {categoryLabels[d.category]} &middot; {d.level}%
       </p>
     </div>
   );
@@ -71,15 +73,15 @@ export function ExpertiseMap({ data }: ExpertiseMapProps) {
         </ResponsiveContainer>
       </div>
       <div className="flex items-center justify-center gap-5 mt-2">
-        {(["strong", "growing", "dormant"] as const).map((cat) => (
+        {CATEGORIES.map((cat) => (
           <div key={cat} className="flex items-center gap-1.5">
             <div
               className={`w-2 h-2 rounded-full ${
                 cat === "strong"
                   ? "bg-green-accent"
                   : cat === "growing"
-                  ? "bg-brain-400"
-                  : "bg-text-muted"
+                    ? "bg-brain-400"
+                    : "bg-text-muted"
               }`}
             />
             <span className={`text-xs ${categoryColors[cat]}`}>

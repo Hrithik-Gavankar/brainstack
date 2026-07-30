@@ -60,6 +60,26 @@ This scans your git history and auto-populates BRAIN.md with your expertise, pat
 "engineer-brain quarterly"   → before performance reviews
 ```
 
+### Optional — Team Brain
+
+If your crew shared an invite code, Jira key, and Supabase URL + anon (fill local `project.public.env`):
+
+```bash
+bash core/scripts/team-brain-api.sh onboard <INVITE> "Your Name" AAP-81423
+```
+
+Then in Cursor (one line to start crew work):
+
+```text
+I'm starting on AAP-81423 — start Team Brain sync.
+```
+
+```text
+I'm starting on AAP-81423 — start Team Brain sync, summarize crew memory, then help me.
+```
+
+Junior guide: [team-brain-onboarding.md](https://github.com/Hrithik-Gavankar/engineer-brain/blob/main/docs/team-brain-onboarding.md).
+
 ## Verify it works
 
 After running `engineer-brain update`, ask your AI assistant:

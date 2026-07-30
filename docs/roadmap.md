@@ -29,10 +29,17 @@ Growing beyond individual use into a richer tool.
 - [ ] **Zed editor support** — platform adapter for Zed's AI features
 - [ ] **JetBrains AI Assistant support** — platform adapter for IntelliJ/WebStorm/PyCharm
 - [ ] **Neovim + AI plugin support** — adapter for Neovim-based AI workflows
-- [ ] **Web dashboard** — local web UI for visualizing patterns, velocity, expertise growth
-- [ ] **Team-level brain** — aggregate patterns across a team (opt-in sharing)
+- [x] **Web dashboard (MVP)** — Vite/React UI with sample data + data-port seam (`dashboard/`); local `BRAIN.md` parser still open
+- [x] **Team Brain (scopes)** — `team-brain` skill + cache / optional md; see [scopes.md](scopes.md)
+- [x] **Team Brain collaborative memory (P0–P4)** — `remember` / `recall`, cache, `watch` poll, optional pgvector, MCP, breakdown + metrics; see [team-brain-memory.md](team-brain-memory.md)
+- [x] **Team Brain agent loop** — Cursor always-on `team-brain.mdc` + skill: recall before research, remember after findings
+- [x] **Team Brain onboarding** — invite + Jira key via `onboard`; beginner guide [team-brain-onboarding.md](team-brain-onboarding.md)
+- [x] **Team Brain sync mode** — `start` / `stop` / `wake` / idle sleep; merge-safe `source_ref` updates
+- [ ] **Team Brain Realtime push** — private broadcast into other agents (v1 uses sync-mode poll)
+- [ ] **Anon register/join rate limits** — Edge Function / Auth hardening (documented gap)
+- [ ] **Team aggregation metrics** — skill coverage matrix, workload heatmap, collaboration graph
 - [ ] **GitLab/Bitbucket support** — scanner support beyond GitHub
-- [ ] **MCP server** — expose brain data as an MCP resource for real-time queries
+- [ ] **Engineer-brain MCP** — personal BRAIN.md / sync as MCP resources (team-brain MCP ships first)
 - [ ] **Weekly email digest** — scheduled summary of patterns and recommendations
 - [ ] **BRAIN.md validator** — CLI tool to check completeness and freshness
 - [ ] **Import from LinkedIn/GitHub** — bootstrap BRAIN.md from existing profiles

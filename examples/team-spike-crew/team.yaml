@@ -1,0 +1,40 @@
+version: 1
+
+team:
+  name: "Platform Spike Crew"
+  standup_channel: "#platform-standup"
+
+members:
+  - id: alex
+    name: "Alex"
+    role: "Software Engineer"
+    share_scopes: [research]
+  - id: blair
+    name: "Blair"
+    role: "Software Engineer"
+    share_scopes: [research]
+  - id: casey
+    name: "Casey"
+    role: "Tech Lead"
+    share_scopes: [research, metrics]
+
+repos:
+  - name: example-cli
+    path: "../example-cli"
+  - name: example-schemas
+    path: "../example-schemas"
+
+initiatives:
+  - id: DEMO-EE-1
+    title: "EE decision_environment scaffolding spike"
+    status: active
+    file: initiatives/DEMO-EE-1.md
+
+sync:
+  # Use supabase + credentials.json for multi-engineer demos
+  backend: local
+  # supabase_url: https://YOUR_PROJECT.supabase.co
+  # supabase_anon_key: YOUR_ANON_KEY
+
+jira:
+  site: https://your-org.atlassian.net

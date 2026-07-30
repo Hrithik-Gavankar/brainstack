@@ -15,8 +15,12 @@
 <p align="center">
   <a href="#quick-start">Quick Start</a> •
   <a href="#how-it-works">How It Works</a> •
+  <a href="#brain-scopes">Scopes</a> •
   <a href="docs/brain-spec.md">BRAIN.md Spec</a> •
+  <a href="docs/scopes.md">Engineer + Team</a> •
+  <a href="docs/team-brain-onboarding.md">Team Brain Onboard</a> •
   <a href="docs/architecture.md">Architecture</a> •
+  <a href="dashboard/README.md">Dashboard</a> •
   <a href="docs/roadmap.md">Roadmap</a> •
   <a href="docs/faq.md">FAQ</a>
 </p>
@@ -208,9 +212,26 @@ Engineer Brain works with every major AI coding assistant. Same brain, native fo
 
 ---
 
+## Brain scopes
+
+**Brain** is the product umbrella. Two skills = two scopes:
+
+| Skill | For | Living docs |
+|-------|-----|-------------|
+| `engineer-brain` | You — standups, growth, personal patterns | `BRAIN.md` |
+| `team-brain` | Crew — collaborative AI memory on a Jira key | Supabase + `cache/<KEY>.json` (+ optional md) |
+
+Commands (`sync`, `quarterly`, `attach`, …) are **verbs under a skill**, not separate skills.
+
+- Scopes guide: **[docs/scopes.md](docs/scopes.md)**
+- Team Brain **beginner onboarding:** **[docs/team-brain-onboarding.md](docs/team-brain-onboarding.md)**
+- Team Brain overview: **[docs/team-brain.md](docs/team-brain.md)** · Memory plan: **[docs/team-brain-memory.md](docs/team-brain-memory.md)**
+- Supabase setup: **[supabase/README.md](supabase/README.md)** · MCP: **[mcp/team-brain/](mcp/team-brain/)**
+- Demo fixture: **[examples/team-spike-crew/](examples/team-spike-crew/)**
+
 ## Features
 
-### Commands
+### Engineer Brain commands
 
 | Command | Description |
 |---------|-------------|
@@ -220,6 +241,19 @@ Engineer Brain works with every major AI coding assistant. Same brain, native fo
 | `engineer-brain reflect` | Pattern analysis: blind spots, habits, recommendations |
 | `engineer-brain scan [days]` | Raw multi-repo git scan output |
 | `engineer-brain doctor` | Brain health check with completeness score and growth suggestions |
+
+### Team Brain commands
+
+| Command | Description |
+|---------|-------------|
+| `team-brain onboard` / `register` / `join` | Invite join or create a team (Supabase) |
+| `team-brain start` / `stop` / `wake` / `touch` | **Sync mode** — one entry, background pull, idle sleep |
+| `team-brain attach <JIRA-KEY>` | Jira identity → initiative + pull memories into cache |
+| `team-brain remember` / `recall` | Write / search shared memories (merge-safe `source_ref`) |
+| `team-brain breakdown <KEY>` | Recall → story/spike draft (`*-breakdown.md`) |
+| `team-brain sync-status` / `metrics` | Session state; local reuse stats |
+| `team-brain sync` / `capture` / `watch` | Lower-level pull / aliases |
+| `team-brain status` / `whoami` | Config + membership |
 
 ### Intelligence
 
@@ -272,6 +306,27 @@ bash install.sh continue-dev ~/my-workspace
 "engineer-brain reflect"     → Friday afternoons
 "engineer-brain update"      → start of each month
 "engineer-brain quarterly"   → before performance reviews
+
+"team-brain onboard <invite> Name KEY" → new joiner (one command)
+"team-brain register …"                → admin creates team once
+
+# Sync mode (Cursor chat — one line to start crew work):
+"I'm starting on AAP-81423 — start Team Brain sync."
+"Wake Team Brain sync for AAP-81423 and continue."
+"Stop Team Brain sync for AAP-81423."
+"Breakdown AAP-81423 from Team Brain memory."
+```
+
+
+### Demo (Cursor) — personal + team
+
+```bash
+bash install.sh cursor ~/my-workspace
+# Personal: /engineer-brain sync
+# Admin once: bash core/scripts/team-brain-api.sh register "Team Atlas" "You"
+# Teammate:   bash core/scripts/team-brain-api.sh onboard <INVITE> "Name" AAP-81423
+# (Admin: own Supabase project → fill local project.public.env; joiners get URL+anon+invite)
+# Then in Cursor: I'm starting on AAP-81423 — start Team Brain sync.
 ```
 
 ---
@@ -288,14 +343,25 @@ engineer-brain/
 ├── install.sh                         # Universal installer
 │
 ├── core/                              # Platform-agnostic engine
-│   ├── BRAIN.md                       # Living document template
-│   ├── COMMANDS.md                    # Command definitions & logic
+│   ├── BRAIN.md                       # Personal living document template
+│   ├── COMMANDS.md                    # Engineer-brain command definitions
 │   ├── CONTEXT.md                     # Context rule template
+│   ├── team/                          # Team Brain templates + commands
+│   │   ├── TEAM.md
+│   │   ├── team.yaml.example
+│   │   ├── TEAM_COMMANDS.md
+│   │   └── initiatives/_TEMPLATE.md
 │   └── scripts/
-│       └── scan.sh                    # Multi-repo git scanner
+│       ├── scan.sh                    # Multi-repo git scanner
+│       ├── doctor.sh
+│       ├── team-init.sh               # Scaffold .team-brain/
+│       └── team-brain-api.sh          # Supabase RPC client
+│
+├── supabase/                          # Team Brain cloud (migrations + public env)
+├── mcp/team-brain/                    # Team Brain MCP (attach / remember / recall / breakdown)
 │
 ├── platforms/                         # Platform-specific adapters
-│   ├── cursor/
+│   ├── cursor/                        # engineer + team rules/skills (agent loop)
 │   ├── claude-code/
 │   ├── vscode-copilot/
 │   ├── windsurf/
@@ -304,17 +370,25 @@ engineer-brain/
 │
 ├── docs/                              # Documentation
 │   ├── architecture.md
+│   ├── scopes.md                      # Umbrella: engineer + team skills
+│   ├── team-brain.md                  # Team Brain overview
+│   ├── team-brain-onboarding.md       # Junior join path
+│   ├── team-brain-memory.md           # Collaborative memory plan (P0–P4)
 │   ├── brain-spec.md
 │   ├── vision.md
 │   ├── roadmap.md
 │   └── faq.md
 │
-├── examples/                          # Example BRAIN.md profiles
-│   ├── backend-engineer/
-│   ├── frontend-engineer/
-│   ├── devops-engineer/
-│   ├── platform-engineer/
-│   └── oss-maintainer/
+├── dashboard/                         # Web dashboard (local + demo viz)
+│   ├── README.md                      # Hosting/privacy + data-port docs
+│   └── src/                           # React + Vite app
+│
+├── website/                           # Product docs site (Docusaurus)
+│
+├── examples/                          # Example profiles
+│   ├── backend-engineer/              # Personal BRAIN.md examples
+│   ├── …/
+│   └── team-spike-crew/               # Team Brain demo fixture
 │
 ├── templates/                         # Starter templates
 │   └── BRAIN.md
@@ -325,6 +399,16 @@ engineer-brain/
     └── PULL_REQUEST_TEMPLATE.md
 ```
 
+### Web dashboard
+
+Visualize patterns locally (or ship a **sample-data demo** on Vercel/Pages):
+
+```bash
+cd dashboard && npm install && npm run dev
+```
+
+See **[dashboard/README.md](dashboard/README.md)** for the data-port design and hosting rules. Do not deploy personal `BRAIN.md` to a public host.
+
 ---
 
 ## Roadmap
@@ -333,14 +417,17 @@ See **[docs/roadmap.md](docs/roadmap.md)** for the full roadmap.
 
 **Near-term:**
 - [x] `engineer-brain doctor` — health check and brain completeness score
-- [ ] Web dashboard for visualizing patterns
-- [ ] Team-level brain (aggregate insights)
+- [x] Web dashboard MVP (`dashboard/`) — sample data + data-port seam; BRAIN.md parser next
+- [x] Team Brain collaborative memory — Jira + Supabase SoT + cache + MCP + agent loop
+- [x] Team Brain onboarding — invite + Jira key (`onboard`)
+- [ ] Team aggregation metrics (coverage matrix, workload heatmap)
 
 **Mid-term:**
 - [ ] Zed and JetBrains platform support
 - [ ] GitLab/Bitbucket integration
 - [ ] Weekly email digest mode
-- [ ] MCP server for real-time brain queries
+- [x] Team Brain MCP (`mcp/team-brain/`) — remember / recall / attach / breakdown
+- [ ] Engineer-brain personal MCP (BRAIN.md / sync)
 
 **Long-term:**
 - [ ] BRAIN.md ecosystem — importers, exporters, validators

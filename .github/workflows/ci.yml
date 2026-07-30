@@ -23,7 +23,12 @@ jobs:
 
       - name: Validate shell scripts
         run: |
-          find . -name "*.sh" -exec shellcheck {} \;
+          find . -name "*.sh" -not -path './mcp/*' -exec shellcheck {} \;
+
+      - name: Smoke team-brain-api help
+        run: |
+          bash core/scripts/team-brain-api.sh --help | grep -q remember
+          bash core/scripts/team-brain-api.sh --help | grep -q breakdown
 
   install-test:
     name: Test Installation (${{ matrix.platform }})
@@ -72,3 +77,27 @@ jobs:
       - name: Run scanner
         run: |
           bash core/scripts/scan.sh /tmp/test-workspace 7
+
+  dashboard:
+    name: Dashboard Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: dashboard
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: dashboard/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck and production build
+        run: npm run build
+
+      - name: Lint
+        run: npm run lint

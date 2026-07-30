@@ -1,0 +1,18 @@
+# Minimal Supabase CLI config for Team Brain.
+# Docs: https://supabase.com/docs/guides/cli
+
+project_id = "engineer-brain-team"
+
+[api]
+enabled = true
+port = 54321
+
+[db]
+port = 54322
+# Match your hosted Supabase Postgres major (Dashboard → Settings → Infrastructure).
+# Team Atlas demo project uses PG 15; bump if you provision a newer project.
+major_version = 15
+
+[studio]
+enabled = true
+port = 54323

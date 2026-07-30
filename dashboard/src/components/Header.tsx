@@ -4,9 +4,11 @@ import type { EngineerProfile } from "../types";
 interface HeaderProps {
   profile: EngineerProfile;
   lastUpdated: string;
+  loading?: boolean;
+  onRefresh: () => void;
 }
 
-export function Header({ profile, lastUpdated }: HeaderProps) {
+export function Header({ profile, lastUpdated, loading = false, onRefresh }: HeaderProps) {
   return (
     <header className="border-b border-border-dim px-6 py-4 flex items-center justify-between">
       <div className="flex items-center gap-3">
@@ -26,8 +28,14 @@ export function Header({ profile, lastUpdated }: HeaderProps) {
         <span className="text-xs text-text-muted">
           Updated {lastUpdated}
         </span>
-        <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-brain-600/15 text-brain-400 text-sm font-medium hover:bg-brain-600/25 transition-colors">
-          <RefreshCw className="w-3.5 h-3.5" />
+        <button
+          type="button"
+          onClick={onRefresh}
+          disabled={loading}
+          aria-busy={loading}
+          className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-brain-600/15 text-brain-400 text-sm font-medium hover:bg-brain-600/25 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
           Refresh
         </button>
       </div>

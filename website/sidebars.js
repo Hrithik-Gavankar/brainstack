@@ -3,6 +3,7 @@ const sidebars = {
   docsSidebar: [
     "introduction",
     "quick-start",
+    "scopes",
     {
       type: "category",
       label: "Concepts",
