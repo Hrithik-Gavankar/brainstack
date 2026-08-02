@@ -23,6 +23,10 @@ mcp = FastMCP(
         "that loads crew memory and enters sync mode (background pull). "
         "While active: call touch each turn; remember findings with source_ref "
         "(identical=no-op; same source_ref+new body=update/merge). "
+        "On human correction of bad research: call correct(source_ref, corrected_body) "
+        "or re-remember with the same source_ref — never invent a second row for the topic. "
+        "Optional learning kind records what was wrong → what to prefer (natural language, "
+        "no TODO/NO-TODO dumps). "
         "If sync_status mode is sleep, prompt the user to wake before deep research. "
         "Never upload personal BRAIN.md or credentials.json."
     ),
@@ -179,14 +183,16 @@ def remember(
 ) -> str:
     """Save a finding for the crew — call IMMEDIATELY after durable research (do not wait).
 
-    kind: research | decision | note.
+    kind: research | decision | note | learning.
     Always pass source_ref (e.g. AAP-81423#cli-schema).
     Identical body → deduped=true. Same source_ref + new body → updated=true (merge).
+    For human corrections prefer correct(); or re-remember with the same source_ref.
+    Memory bodies: natural-language prefer/avoid guidance — never TODO/NO-TODO dumps.
     """
     key = jira_key.strip().upper()
     kind_n = (kind or "research").strip().lower()
-    if kind_n not in ("research", "decision", "note"):
-        raise ValueError("kind must be research, decision, or note")
+    if kind_n not in ("research", "decision", "note", "learning"):
+        raise ValueError("kind must be research, decision, note, or learning")
     body = body.strip()
     if not body:
         raise ValueError("body is required")
@@ -194,6 +200,40 @@ def remember(
     args = ["remember", key, kind_n]
     if source_ref.strip():
         args.extend(["--source-ref", source_ref.strip()])
+    args.append("-")
+    return _as_json(_run(*args, stdin_data=body))
+
+
+@mcp.tool()
+def correct(
+    jira_key: str,
+    source_ref: str,
+    corrected_body: str,
+    kind: str = "research",
+    was_wrong: str = "",
+    learning: str = "",
+) -> str:
+    """Absorb a human correction as ground truth — call when the user corrects bad research.
+
+    Updates the memory at source_ref (merge — no second row). Optionally records a
+    learning at source_ref/learning (what was wrong → what to prefer).
+    Prefer natural-language guidance; never TODO/NO-TODO lists in bodies.
+    """
+    key = jira_key.strip().upper()
+    ref = source_ref.strip()
+    if not ref:
+        raise ValueError("source_ref is required for correct")
+    body = corrected_body.strip()
+    if not body:
+        raise ValueError("corrected_body is required")
+    kind_n = (kind or "research").strip().lower()
+    if kind_n not in ("research", "decision", "note"):
+        raise ValueError("kind must be research, decision, or note")
+    args = ["correct", key, "--source-ref", ref, "--kind", kind_n]
+    if was_wrong.strip():
+        args.extend(["--was", was_wrong.strip()])
+    if learning.strip():
+        args.extend(["--learning", learning.strip()])
     args.append("-")
     return _as_json(_run(*args, stdin_data=body))
 

@@ -17,7 +17,7 @@ Commands (`sync`, `attach`, `remember`, …) are **verbs under a skill**, not se
 
 1. Admin: create Supabase project → fill local config → migrations → `register` → share invite + URL + anon  
 2. Teammate: put crew URL/anon locally → `onboard <invite> "Name" <JIRA-KEY>`  
-3. Agents: **recall before research**, **remember after findings**  
+3. Agents: **recall before research**, **remember after findings**, **correct on human pushback**  
 4. Optional: MCP tools in `mcp/team-brain/`
 
 Full guides on GitHub:

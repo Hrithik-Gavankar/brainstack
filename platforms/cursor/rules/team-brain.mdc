@@ -49,6 +49,12 @@ AFTER durable finding
   → remember with stable source_ref (KEY#slug)
   → identical body = no-op; same source_ref + new body = UPDATE (merge)
   → never invent a second row for the same topic slug
+  → body style: natural prefer/avoid guidance — never TODO/NO-TODO dumps
+
+ON HUMAN CORRECTION (bad research / wrong sync summary)
+  → treat as ground truth; do not argue
+  → correct(source_ref, corrected_body) or re-remember same source_ref → UPDATE
+  → optional learning at source_ref/learning (was wrong → prefer …)
 ```
 
 ## Sleep / wake
@@ -63,12 +69,13 @@ Check `sync-status <KEY>`:
 
 ## Prefer MCP tools if connected
 
-`start` / `stop` / `wake` / `touch` / `sync_status` / `recall` / `remember`
+`start` / `stop` / `wake` / `touch` / `sync_status` / `recall` / `remember` / `correct`
 
 ## Never
 
 - Deep research on a known Jira key without `start` or `recall` first
 - Leave durable findings only in chat
 - Blind-overwrite unrelated memories (always use `source_ref`)
+- Fork a second memory row when correcting the same topic (always same `source_ref`)
 - Put personal career notes into Team Brain
 - Commit or paste `credentials.json` / `api_key`

@@ -80,6 +80,12 @@ bash core/scripts/team-brain-api.sh recall AAP-81423 "decision environment"
 bash core/scripts/team-brain-api.sh touch AAP-81423    # keep awake
 bash core/scripts/team-brain-api.sh stop AAP-81423     # done
 bash core/scripts/team-brain-api.sh wake AAP-81423     # after sleep
+
+# Human correction (update same source_ref + optional learning)
+bash core/scripts/team-brain-api.sh correct AAP-81423 --source-ref "AAP-81423#cli" \
+  --was "Claimed schema was in tox-ansible" \
+  --learning "Was wrong: schema in tox-ansible. Prefer: packages/ansible-language-server." \
+  "EE schema path lives in packages/ansible-language-server."
 ```
 
 `capture` / `sync` remain aliases. Project config: `supabase/project.public.env` (placeholders in git — fill with your crew’s project).
@@ -94,7 +100,8 @@ bash core/scripts/team-brain-api.sh wake AAP-81423     # after sleep
 | `onboard` | Join + optional attach + recall |
 | `register` / `join` / `whoami` | Membership |
 | `attach` | Upsert Jira initiative + pull recent memories |
-| `remember` | Write memory (dedupe identical; **update** same `source_ref`) |
+| `remember` | Write memory (dedupe identical; **update** same `source_ref`; kinds include `learning`) |
+| `correct` | Correction loop: update `source_ref` + optional `learning` at `REF/learning` |
 | `recall` | List recent, or vector/FTS search |
 | `reembed` | Backfill embeddings for an initiative |
 | `watch` | Foreground poll only (prefer `start`) |
@@ -111,7 +118,11 @@ bash core/scripts/team-brain-api.sh wake AAP-81423     # after sleep
 | Identical body (hash) | no-op (`deduped`) |
 | Same `source_ref`, changed body | **update** that row (`updated`) — no second copy |
 
-Apply migration `20260729000003_team_brain_sync_mode.sql` on the Supabase project.
+Human corrections use the same merge path (`correct` or re-`remember`).  
+Optional `learning` kind records “was wrong → prefer …” at `source_ref/learning`.  
+Memory bodies: natural prefer/avoid prose — not TODO/NO-TODO dumps.
+
+Apply migrations `…_sync_mode.sql` and `…_learning_kind.sql` on the Supabase project.
 
 ## Agent loop (Cursor)
 

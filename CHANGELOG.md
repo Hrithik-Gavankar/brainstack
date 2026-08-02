@@ -9,6 +9,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- Team Brain **correction / learning loop** (#30): `correct` CLI + MCP; `learning` kind; skill/onboarding guidance
+- Migration `20260802000001_team_brain_learning_kind.sql` — `captures.kind` includes `learning`
 - `engineer-brain doctor` command — brain health check with weighted scoring, cooling repo detection, and growth suggestions
 - `core/scripts/doctor.sh` — portable health check script (macOS + Linux)
 - Dashboard data port (`loadDashboardData`) with sample adapter + BRAIN.md stub (#26)
@@ -39,6 +41,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - MCP + Cursor rule/skill wired for sync mode lifecycle
 
 ### Changed
+- Team Brain `remember` accepts `learning` kind; memory body guidance prefers natural prefer/avoid (no TODO dumps)
+- engineer-brain standup correction feedback mirrors Team Brain absorb-and-learn pattern
 - Jira site defaults use `https://your-org.atlassian.net` (no hardcoded company host)
 - `supabase/project.public.env` ships **placeholders only** (no live URL/anon in git); each crew brings their own project
 - `join_team` omits `invite_code`; `whoami` returns invite only for admin (`…_invite_hygiene.sql`)
