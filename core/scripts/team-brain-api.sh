@@ -1189,14 +1189,24 @@ cmd_correct() {
   key=$(echo "$key" | tr '[:lower:]' '[:upper:]')
 
   echo "→ correcting memory at source_ref=$source_ref" >&2
-  local corrected_out learning_out learning_ref learning_body tmp_body tmp_learn
+  local corrected_out learning_out learning_ref learning_body tmp_body tmp_learn tmp_err
+  local got_ref learning_error
   tmp_body=$(mktemp)
   tmp_learn=""
-  trap 'rm -f "$tmp_body" "$tmp_learn"' RETURN
+  tmp_err=""
+  trap 'rm -f "$tmp_body" "$tmp_learn" "$tmp_err"' RETURN
   printf '%s' "$body_text" >"$tmp_body"
   corrected_out=$(cmd_remember "$key" "$kind" --source-ref "$source_ref" --body-file "$tmp_body")
 
+  # Soft content-hash dedupe / old add_capture can return a different (or null) source_ref.
+  # Never report ok unless the intended topic slug was actually bound.
+  got_ref=$(jq -r '.source_ref // empty' <<<"$corrected_out")
+  if [ "$got_ref" != "$source_ref" ]; then
+    die "correct did not bind source_ref=$source_ref (got: ${got_ref:-none}). Apply sync-mode migration; avoid identical body already stored under a different ref."
+  fi
+
   learning_out="null"
+  learning_error=""
   if [ -n "$learning_text" ] || [ -n "$was_wrong" ]; then
     learning_ref="${source_ref}/learning"
     if [ -n "$learning_text" ]; then
@@ -1207,15 +1217,31 @@ cmd_correct() {
     fi
     echo "→ recording learning at source_ref=$learning_ref" >&2
     tmp_learn=$(mktemp)
+    tmp_err=$(mktemp)
     printf '%s' "$learning_body" >"$tmp_learn"
-    learning_out=$(cmd_remember "$key" learning --source-ref "$learning_ref" --body-file "$tmp_learn")
+    # Correction already saved — learning failure must not abort the command (set -e safe via if).
+    if learning_out=$(cmd_remember "$key" learning --source-ref "$learning_ref" --body-file "$tmp_learn" 2>"$tmp_err"); then
+      :
+    else
+      learning_error=$(tr '\n' ' ' <"$tmp_err" | sed 's/[[:space:]]*$//')
+      [ -n "$learning_error" ] || learning_error="learning remember failed — apply 20260802000001_team_brain_learning_kind.sql"
+      echo "⚠ correction saved but learning write failed: $learning_error" >&2
+      learning_out="null"
+    fi
   fi
 
   jq -n \
     --argjson corrected "$corrected_out" \
     --argjson learning "$learning_out" \
     --arg ref "$source_ref" \
-    '{ok: true, source_ref: $ref, corrected: $corrected, learning: (if $learning == null then null else $learning end)}'
+    --arg learning_error "$learning_error" \
+    '{
+      ok: true,
+      source_ref: $ref,
+      corrected: $corrected,
+      learning: (if $learning == null then null else $learning end),
+      learning_error: (if $learning_error == "" then null else $learning_error end)
+    }'
 }
 
 # recall — semantic (vector) when embed provider set; else FTS. No query → sync.
