@@ -9,6 +9,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- Team Brain **repo pin + access roles** (#39 / #40): commit-safe `.team-brain/project.json`; `start`/`attach`/`onboard` honor pin; roles `admin`\|`member`\|`viewer`; `rotate-invite` / `set-role`; join `--role viewer`
+- Migration `20260805000001_team_brain_roles_and_invites.sql` — write gates for viewers; admin invite rotate
 - Team Brain **Realtime signal push** (#31): DB `realtime.send` trigger + `team-brain-realtime.py` listener; `watch --push`; `notify/<KEY>.json`; poll/`watch` remain fallback; no anon SELECT on captures
 - Migration `20260804000001_team_brain_realtime_broadcast.sql` — `memory_broadcast_topic` + capture broadcast trigger
 - Team Brain **MCP-first compliance** (#36): soft session gate (`compliance` / `prepare_research`); `sync-status` embeds `research_ok` + `agent_action`; Cursor rule/skill + MCP instructions use `stronger_prompts` (CLI not hard-blocked)

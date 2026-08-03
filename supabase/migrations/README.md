@@ -12,6 +12,7 @@
 | [`20260802000001_team_brain_learning_kind.sql`](20260802000001_team_brain_learning_kind.sql) | **#30** — `learning` kind; `remember` accepts correction-loop learnings |
 | [`20260803000001_team_brain_memory_history.sql`](20260803000001_team_brain_memory_history.sql) | **#34** — `capture_revisions`; archive on `source_ref` update; `list_memory_history` / `restore_memory` |
 | [`20260804000001_team_brain_realtime_broadcast.sql`](20260804000001_team_brain_realtime_broadcast.sql) | **#31** — signal-only Realtime Broadcast on capture write; `memory_broadcast_topic` |
+| [`20260805000001_team_brain_roles_and_invites.sql`](20260805000001_team_brain_roles_and_invites.sql) | **#40** — `viewer` role; write gates; `rotate_invite` / `set_member_role`; join `p_role` |
 
 Apply in timestamp order (`supabase db push`, `psql` via bootstrap `--db-url`, or SQL Editor).  
 **Admin shortcut:** `bash core/scripts/team-brain-api.sh bootstrap …` ([supabase/README.md](../README.md)).  

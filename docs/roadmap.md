@@ -36,6 +36,8 @@ Growing beyond individual use into a richer tool.
 - [x] **Team Brain onboarding** — invite + Jira key via `onboard`; beginner guide [team-brain-onboarding.md](team-brain-onboarding.md)
 - [x] **Team Brain sync mode** — `start` / `stop` / `wake` / idle sleep; merge-safe `source_ref` updates
 - [x] **Team Brain Realtime push** — signal-only Broadcast + poll fallback (#31); Auth-private channels later
+- [x] **Team Brain repo pin** — commit-safe `.team-brain/project.json` (#39)
+- [x] **Team Brain access roles** — admin / member / viewer + admin invite rotate (#40)
 - [ ] **Anon register/join rate limits** — Edge Function / Auth hardening (documented gap)
 - [ ] **Team aggregation metrics** — skill coverage matrix, workload heatmap, collaboration graph
 - [ ] **GitLab/Bitbucket support** — scanner support beyond GitHub

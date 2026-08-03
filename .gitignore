@@ -15,10 +15,12 @@ website/.docusaurus/
 .env
 .env.local
 
-# Team Brain secrets (per-workspace only — do not blanket-ignore all credentials.json)
+# Team Brain secrets (per-workspace only — do not blanket-ignore all of .team-brain/)
 .team-brain/credentials.json
 .team-brain/**/credentials.json
 !.team-brain/**/.gitkeep
+# Commit-safe pin (.team-brain/project.json) SHOULD be committed — never put anon/api_key/invite there.
+# team.yaml often holds URL+anon for local use — prefer env / project.public.env; do not commit anon.
 
 # Bootstrap-generated combined SQL (may be large; never commit crew secrets beside it)
 supabase/.bootstrap-migrations.combined.sql

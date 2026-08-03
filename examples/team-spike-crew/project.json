@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "team_name": "Spike Crew",
+  "default_jira_key": "DEMO-EE-1",
+  "jira_keys": ["DEMO-EE-1"],
+  "supabase_project_ref": null,
+  "notes": "Commit-safe crew pin (#39). NEVER put anon key, api_key, or invite_code here. Secrets stay in env / credentials.json (gitignored). Copy to your workspace as .team-brain/project.json (or keep under examples for reference)."
+}

@@ -27,6 +27,12 @@ Part of **Brain**: personal=`engineer-brain`, crew=`team-brain`.
 If `.team-brain/notify/<KEY>.json` updates mid-session, summarize new peer memories before continuing.  
 If push is unavailable (`TEAM_BRAIN_REALTIME=off` / no `websockets` / migration missing), poll/`watch`/`recall` still work.
 
+### Repo pin (#39) + roles (#40)
+
+- Prefer pinned Jira key from `.team-brain/project.json` when the user omits a key (`start` / `attach`).
+- Never put anon / api_key / invite into the pin — credentials stay gitignored.
+- `whoami.role`: `viewer` → recall only; `member`/`admin` → remember OK; only `admin` rotates invites.
+
 ## Compliance (policy=`stronger_prompts`)
 
 v1 follow-up chose **stronger prompts + soft session gate** (not a hard CLI block).
