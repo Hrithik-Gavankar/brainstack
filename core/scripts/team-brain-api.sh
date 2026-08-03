@@ -7,8 +7,8 @@
 #   bash team-brain-api.sh <command> [args...]
 #
 # Commands: onboard | register | join | whoami | attach | start | stop | wake |
-#           remember | recall | capture | sync | watch | breakdown | metrics |
-#           list | mirror | status | sync-status | touch
+#           remember | correct | history | restore | recall | capture | sync |
+#           watch | breakdown | metrics | list | mirror | status | sync-status | touch
 # Plan: docs/team-brain-memory.md — memories are SoT; md is optional export.
 
 set -euo pipefail
@@ -1110,7 +1110,13 @@ cmd_remember() {
   touch_sync_activity "$key"
   # Surface merge result for agents
   if jq -e '.updated == true' >/dev/null 2>&1 <<<"$out"; then
-    echo "→ memory UPDATED (same source_ref, new body)" >&2
+    local archived
+    archived=$(jq -r '.archived_revision // empty' <<<"$out")
+    if [ -n "$archived" ]; then
+      echo "→ memory UPDATED (same source_ref, new body; prior archived as revision $archived)" >&2
+    else
+      echo "→ memory UPDATED (same source_ref, new body)" >&2
+    fi
   elif jq -e '.deduped == true' >/dev/null 2>&1 <<<"$out"; then
     echo "→ memory unchanged (deduped — identical content)" >&2
   fi
@@ -1242,6 +1248,103 @@ cmd_correct() {
       learning: (if $learning == null then null else $learning end),
       learning_error: (if $learning_error == "" then null else $learning_error end)
     }'
+}
+
+# history — list archived revisions + current body for a source_ref
+cmd_history() {
+  require_api_key
+  local key="${1:-}"
+  shift || true
+  local source_ref="${TEAM_BRAIN_SOURCE_REF:-}"
+  local usage='usage: history <JIRA-KEY> --source-ref REF'
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --source-ref)
+        source_ref="${2:-}"
+        shift 2 || die "$usage"
+        ;;
+      *)
+        die "$usage"
+        ;;
+    esac
+  done
+  [ -n "$key" ] || die "$usage"
+  [ -n "$source_ref" ] || die "history requires --source-ref. $usage"
+  key=$(echo "$key" | tr '[:lower:]' '[:upper:]')
+  local payload out err tmp_err
+  payload=$(jq -n \
+    --arg k "$TEAM_BRAIN_API_KEY" \
+    --arg j "$key" \
+    --arg r "$source_ref" \
+    '{p_api_key:$k, p_jira_key:$j, p_source_ref:$r}')
+  tmp_err=$(mktemp)
+  if ! out=$(rpc_try list_memory_history "$payload" 2>"$tmp_err"); then
+    err=$(tr '\n' ' ' <"$tmp_err" | sed 's/[[:space:]]*$//')
+    rm -f "$tmp_err"
+    if echo "$err" | grep -Eqi 'Could not find the function|PGRST202|404|does not exist'; then
+      die "list_memory_history unavailable — apply migration 20260803000001_team_brain_memory_history.sql"
+    fi
+    die "list_memory_history failed: ${err:-unknown error}"
+  fi
+  rm -f "$tmp_err"
+  touch_sync_activity "$key"
+  echo "$out" | jq .
+}
+
+# restore — soft-rollback source_ref to an archived revision (archives current first)
+cmd_restore() {
+  require_api_key
+  local key="${1:-}"
+  shift || true
+  local source_ref="${TEAM_BRAIN_SOURCE_REF:-}"
+  local revision=""
+  local usage='usage: restore <JIRA-KEY> --source-ref REF --revision N'
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --source-ref)
+        source_ref="${2:-}"
+        shift 2 || die "$usage"
+        ;;
+      --revision)
+        revision="${2:-}"
+        shift 2 || die "$usage"
+        ;;
+      *)
+        die "$usage"
+        ;;
+    esac
+  done
+  [ -n "$key" ] || die "$usage"
+  [ -n "$source_ref" ] || die "restore requires --source-ref. $usage"
+  [[ "$revision" =~ ^[1-9][0-9]*$ ]] || die "restore requires --revision N (positive integer). $usage"
+  key=$(echo "$key" | tr '[:lower:]' '[:upper:]')
+  local payload out sync_payload err tmp_err
+  payload=$(jq -n \
+    --arg k "$TEAM_BRAIN_API_KEY" \
+    --arg j "$key" \
+    --arg r "$source_ref" \
+    --argjson rev "$revision" \
+    '{p_api_key:$k, p_jira_key:$j, p_source_ref:$r, p_revision:$rev}')
+  tmp_err=$(mktemp)
+  if ! out=$(rpc_try restore_memory "$payload" 2>"$tmp_err"); then
+    err=$(tr '\n' ' ' <"$tmp_err" | sed 's/[[:space:]]*$//')
+    rm -f "$tmp_err"
+    if echo "$err" | grep -Eqi 'Could not find the function|PGRST202|404|does not exist'; then
+      die "restore_memory unavailable — apply migration 20260803000001_team_brain_memory_history.sql"
+    fi
+    die "restore_memory failed: ${err:-unknown error}"
+  fi
+  rm -f "$tmp_err"
+  sync_payload=$(fetch_memories "$key")
+  merge_memory_cache "$key" "$sync_payload"
+  mirror_captures_to_md "$key" "$sync_payload"
+  touch_sync_activity "$key"
+  if jq -e '.restored == true' >/dev/null 2>&1 <<<"$out"; then
+    echo "→ restored $source_ref from revision $revision (current archived)" >&2
+  elif jq -e '.deduped == true' >/dev/null 2>&1 <<<"$out"; then
+    echo "→ already at revision $revision (no change)" >&2
+  fi
+  echo "$out" | jq .
 }
 
 # recall — semantic (vector) when embed provider set; else FTS. No query → sync.
@@ -1639,6 +1742,10 @@ Team Brain — collaborative memory client (Supabase)
   correct <JIRA-KEY> --source-ref REF [--kind research|decision|note] [--was TEXT] [--learning TEXT] [--body-file PATH | - | <body...>]
       Human correction: UPDATE memory at source_ref; optional learning row at REF/learning.
       Bodies: natural-language prefer/avoid guidance — not TODO/NO-TODO dumps.
+  history <JIRA-KEY> --source-ref REF
+      List archived revisions + current body (apply memory-history migration).
+  restore <JIRA-KEY> --source-ref REF --revision N
+      Soft-rollback to revision N; archives current body first (audit preserved).
   capture …                 Compat alias for remember
 
   recall <JIRA-KEY> [query…]
@@ -1682,6 +1789,8 @@ main() {
     _sync_loop) cmd_sync_loop "$@" ;;
     remember) cmd_remember "$@" ;;
     correct) cmd_correct "$@" ;;
+    history) cmd_history "$@" ;;
+    restore) cmd_restore "$@" ;;
     capture) cmd_capture "$@" ;;
     recall) cmd_recall "$@" ;;
     reembed) cmd_reembed "$@" ;;

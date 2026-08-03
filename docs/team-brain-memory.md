@@ -143,6 +143,8 @@ bash core/scripts/team-brain-api.sh recall AAP-81423 "where is decision_environm
       (`platforms/cursor/rules/team-brain.mdc` + skill + MCP instructions)
 - [x] **Correction / learning loop** — `correct` CLI/MCP; `learning` kind; skill + onboarding  
       (`20260802000001_team_brain_learning_kind.sql`, issue [#30](https://github.com/Hrithik-Gavankar/engineer-brain/issues/30))
+- [x] **Memory version history / soft rollback** — `capture_revisions`; archive on `source_ref` update;  
+      `history` / `restore` CLI+MCP (`20260803000001_team_brain_memory_history.sql`, issue [#34](https://github.com/Hrithik-Gavankar/engineer-brain/issues/34))
 - [ ] Optional long-lived push into the other agent session (beyond poll/`watch`) — still open
 
 ### Agent loop (what makes it a shared brain)
@@ -222,11 +224,11 @@ Use this as the build board (check off in PRs):
 | Recall before research | ✅ Rule/skill/MCP | Keep mandatory |
 | Remember after findings | ✅ Direct save | Keep mandatory |
 | Dedup (`source_ref`) | ✅ | — |
-| Correction / learning | ✅ `correct` + `learning` kind | Version/history soft rollback (#34) |
+| Correction / learning | ✅ `correct` + `learning` kind | — |
+| Version/history/soft rollback | ✅ `history` / `restore` + `capture_revisions` | Optional snapshots / UI |
 | Semantic search | Optional embeddings; FTS default | Enable when crews want it |
 | Live push into other agent context | Poll `watch` / next `recall` | Private Realtime/Broadcast if auth allows |
 | Model compliance | Soft (rules/skills) | Stronger MCP-first defaults |
-| Version/history/snapshots | — | Evaluate later (#34) |
 | Metrics | Local `metrics.json` | Optional team dashboard |
 
 ## 9. Out of scope (for now)

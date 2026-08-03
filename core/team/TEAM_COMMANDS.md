@@ -102,6 +102,8 @@ bash core/scripts/team-brain-api.sh correct AAP-81423 --source-ref "AAP-81423#cl
 | `attach` | Upsert Jira initiative + pull recent memories |
 | `remember` | Write memory (dedupe identical; **update** same `source_ref`; kinds include `learning`) |
 | `correct` | Correction loop: update `source_ref` + optional `learning` at `REF/learning` |
+| `history` | List archived revisions + current body for a `source_ref` |
+| `restore` | Soft-rollback to revision N (archives current first) |
 | `recall` | List recent, or vector/FTS search |
 | `reembed` | Backfill embeddings for an initiative |
 | `watch` | Foreground poll only (prefer `start`) |
@@ -120,9 +122,15 @@ bash core/scripts/team-brain-api.sh correct AAP-81423 --source-ref "AAP-81423#cl
 
 Human corrections use the same merge path (`correct` or re-`remember`).  
 Optional `learning` kind records “was wrong → prefer …” at `source_ref/learning`.  
+On `source_ref` update, the prior body is **archived** (`archived_revision`); use `history` / `restore` for soft rollback.  
 Memory bodies: natural prefer/avoid prose — not TODO/NO-TODO dumps.
 
-Apply migrations `…_sync_mode.sql` and `…_learning_kind.sql` on the Supabase project.
+```bash
+bash core/scripts/team-brain-api.sh history AAP-81423 --source-ref "AAP-81423#cli"
+bash core/scripts/team-brain-api.sh restore AAP-81423 --source-ref "AAP-81423#cli" --revision 1
+```
+
+Apply migrations `…_sync_mode.sql`, `…_learning_kind.sql`, and `…_memory_history.sql` on the Supabase project.
 
 ## Agent loop (Cursor)
 

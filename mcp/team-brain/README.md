@@ -13,6 +13,8 @@ Agent-native tools for collaborative initiative memory. Wraps [`team-brain-api.s
 | `attach` | Upsert Jira initiative + pull recent memories |
 | `remember` | Write memory (`source_ref`; update on overlap; kinds include `learning`) |
 | `correct` | Human correction — update `source_ref` + optional learning |
+| `history` | List archived revisions + current body for a `source_ref` |
+| `restore` | Soft-rollback to revision N (archives current first) |
 | `recall` | Search (query) or list recent (no query) |
 | `list_recent` | Sync / list with optional `since` cursor |
 | `list_initiatives` | Team initiative index |
@@ -76,7 +78,8 @@ IDLE ~1h
 ```
 
 Memory bodies: natural-language prefer/avoid guidance — not TODO/NO-TODO dumps.  
-Apply migration `20260802000001_team_brain_learning_kind.sql` for the `learning` kind.
+Apply migration `20260802000001_team_brain_learning_kind.sql` for the `learning` kind.  
+Apply `20260803000001_team_brain_memory_history.sql` for revision archive + `history` / `restore`.
 
 ### Chat examples (Cursor)
 

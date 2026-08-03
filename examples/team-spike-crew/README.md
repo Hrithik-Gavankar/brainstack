@@ -62,4 +62,16 @@ bash core/scripts/team-brain-api.sh correct DEMO-EE-1 \
 Expect `corrected.updated: true` and a `learning` memory at `DEMO-EE-1#ee-schema/learning`.  
 Bodies use prefer/avoid prose — not TODO/NO-TODO dumps.
 
+### History / soft rollback example
+
+After a correction, the prior body is archived (apply `…_memory_history.sql`):
+
+```bash
+bash core/scripts/team-brain-api.sh history DEMO-EE-1 --source-ref "DEMO-EE-1#ee-schema"
+# → revisions[] (archived) + current
+
+# Soft-rollback to revision 1 (archives today's current body first)
+bash core/scripts/team-brain-api.sh restore DEMO-EE-1 --source-ref "DEMO-EE-1#ee-schema" --revision 1
+```
+
 Personal standups: `/engineer-brain sync` only (same absorb-and-learn correction pattern in the engineer-brain skill).

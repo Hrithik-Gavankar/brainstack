@@ -265,13 +265,29 @@ bash core/scripts/team-brain-api.sh correct AAP-81423 --source-ref "AAP-81423#cl
 Optional `--learning "Was wrong: … Prefer: …"` writes a `learning` row at `source_ref/learning`.  
 Memory bodies should be natural prefer/avoid guidance — not TODO/NO-TODO lists.
 
+Each `source_ref` update **archives** the prior body. Inspect or soft-rollback:
+
+```bash
+bash core/scripts/team-brain-api.sh history AAP-81423 --source-ref "AAP-81423#cli-schema"
+bash core/scripts/team-brain-api.sh restore AAP-81423 --source-ref "AAP-81423#cli-schema" --revision 1
+```
+
+`restore` keeps the audit trail (current body is archived before rollback).
+
 In Cursor you can say:
 
 ```text
 Correct Team Brain for AAP-81423#cli-schema — the schema is in packages/ansible-language-server, not tox-ansible.
 ```
 
-Apply migration `20260802000001_team_brain_learning_kind.sql` once on the crew Supabase project for the `learning` kind.
+```text
+Show Team Brain history for AAP-81423#cli-schema and restore revision 1 if needed.
+```
+
+Apply once on the crew Supabase project:
+
+- `20260802000001_team_brain_learning_kind.sql` — `learning` kind  
+- `20260803000001_team_brain_memory_history.sql` — revisions + history/restore
 
 ---
 

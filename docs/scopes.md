@@ -5,7 +5,7 @@ Brain is the **product umbrella**. Two scopes ship as skills:
 | Scope | Skill | Living documents | Typical commands |
 |-------|-------|------------------|------------------|
 | **Engineer** | `engineer-brain` | `BRAIN.md` | `sync`, `update`, `quarterly`, `reflect`, `scan`, `doctor` |
-| **Team** | `team-brain` | Supabase memories + `cache/<KEY>.json` (+ optional md export) | `onboard`, `attach`, `remember`, `recall`, `breakdown`, `watch` |
+| **Team** | `team-brain` | Supabase memories + `cache/<KEY>.json` (+ optional md export) | `onboard`, `attach`, `remember`, `correct`, `history`, `restore`, `recall`, `breakdown`, `watch` |
 
 ```mermaid
 flowchart TB
@@ -36,7 +36,7 @@ flowchart TB
 2. Personal brain stays personal — never uploaded to Team Brain.
 3. **One initiative → one Jira key** (cache + optional `initiatives/<KEY>.md`).
 4. Collaborative memory: Jira identity + Supabase SoT + local cache; md is export.
-5. **Agent loop (mandatory in Cursor):** `recall` before research on a key; `remember` after durable findings (`source_ref`); `breakdown` consumes recall.
+5. **Agent loop (mandatory in Cursor):** `recall` before research on a key; `remember` after durable findings (`source_ref`); `correct` / `history` / `restore` on human pushback; `breakdown` consumes recall.
 6. Joiners need invite + Jira key + crew’s URL/anon (`onboard`); repo ships placeholders in `supabase/project.public.env` — each crew brings their own project.
 
 ## Demo walkthrough

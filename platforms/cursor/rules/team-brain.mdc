@@ -55,6 +55,7 @@ ON HUMAN CORRECTION (bad research / wrong sync summary)
   → treat as ground truth; do not argue
   → correct(source_ref, corrected_body) or re-remember same source_ref → UPDATE
   → optional learning at source_ref/learning (was wrong → prefer …)
+  → prior body archived; history/restore for soft rollback if needed
 ```
 
 ## Sleep / wake
@@ -69,7 +70,7 @@ Check `sync-status <KEY>`:
 
 ## Prefer MCP tools if connected
 
-`start` / `stop` / `wake` / `touch` / `sync_status` / `recall` / `remember` / `correct`
+`start` / `stop` / `wake` / `touch` / `sync_status` / `recall` / `remember` / `correct` / `history` / `restore`
 
 ## Never
 
