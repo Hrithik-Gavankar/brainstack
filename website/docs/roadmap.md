@@ -17,7 +17,7 @@ See the full [roadmap on GitHub](https://github.com/Hrithik-Gavankar/brainstack/
 - Zed, JetBrains, Neovim support
 - Web dashboard MVP shipped (`dashboard/`); local BRAIN.md parser next
 - **Team Brain collaborative memory shipped** — remember/recall, cache, MCP, agent loop, onboard
-- Team aggregation metrics (coverage matrix, workload heatmap) still open
+- Team aggregation metrics (#35): coverage + reuse via `metrics --team` (collab graph / heatmap deferred)
 - Engineer-brain personal MCP next
 
 ### Later (v2.0)

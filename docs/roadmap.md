@@ -39,7 +39,7 @@ Growing beyond individual use into a richer tool.
 - [x] **Team Brain repo pin** — commit-safe `.team-brain/project.json` (#39)
 - [x] **Team Brain access roles** — admin / member / viewer + admin invite rotate (#40)
 - [x] **Anon register/join rate limits** — DB-level sliding window (#32)
-- [ ] **Team aggregation metrics** — skill coverage matrix, workload heatmap, collaboration graph
+- [x] **Team aggregation metrics** — coverage matrix + reuse/activity via `metrics --team` (#35); collab graph / heatmap deferred — see [team-brain-memory.md](team-brain-memory.md) · parent [#2](https://github.com/Hrithik-Gavankar/brainstack/issues/2)
 - [ ] **GitLab/Bitbucket support** — scanner support beyond GitHub
 - [ ] **Engineer-brain MCP** — personal BRAIN.md / sync as MCP resources (team-brain MCP ships first)
 - [ ] **Weekly email digest** — scheduled summary of patterns and recommendations

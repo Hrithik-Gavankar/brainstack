@@ -8,12 +8,13 @@
 #
 # Commands: onboard | register | join | whoami | attach | start | stop | wake |
 #           bootstrap | pin | remember | correct | history | restore | recall | capture |
-#           sync | watch | breakdown | metrics | compliance | list | mirror | status |
+#           sync | watch | breakdown | metrics | aggregate | compliance | list | mirror | status |
 #           sync-status | touch | broadcast-topic | rotate-invite | set-role
 # Plan: docs/team-brain-memory.md — memories are SoT; md is optional export.
 # Realtime (#31): signal Broadcast + poll fallback — see migration …_realtime_broadcast.sql
 # Pin (#39): commit-safe .team-brain/project.json — never secrets.
 # Roles (#40): admin | member (write) | viewer (read-only).
+# Aggregate (#35): metrics --team / aggregate — coverage + reuse; no BRAIN.md.
 
 set -euo pipefail
 
@@ -2240,10 +2241,146 @@ PY
     '{jira_key:$key, title:$title, memory_count:$memories, breakdown_path:$path}'
 }
 
+# Local reuse overlay for team aggregation (#35) — never uploads metrics.json.
+_local_reuse_overlay() {
+  local path
+  path="$(METRICS_FILE)"
+  if [ ! -f "$path" ]; then
+    echo '{"available":false,"note":"no local metrics.json yet — recall/remember/breakdown on this machine first"}'
+    return 0
+  fi
+  jq '{
+    available: true,
+    source: "local metrics.json (this machine only — not uploaded)",
+    initiatives: .initiatives,
+    totals: {
+      recall_hits: ([.initiatives[].recall_hits] | add // 0),
+      remember_writes: ([.initiatives[].remember_writes] | add // 0),
+      breakdown_runs: ([.initiatives[].breakdown_runs] | add // 0),
+      memories_reused_total: ([.initiatives[].memories_reused_total] | add // 0)
+    }
+  }' "$path"
+}
+
+# Client-side fallback when team_aggregate_metrics RPC is not applied yet.
+_aggregate_client_fallback() {
+  local initiatives payload key mems
+  initiatives=$(rpc list_initiatives "$(jq -n --arg k "$TEAM_BRAIN_API_KEY" '{p_api_key:$k}')")
+  mems='[]'
+  while IFS= read -r key; do
+    [ -n "$key" ] || continue
+    payload=$(rpc list_recent "$(jq -n --arg k "$TEAM_BRAIN_API_KEY" --arg j "$key" \
+      '{p_api_key:$k, p_jira_key:$j, p_limit:200}')") || continue
+    mems=$(jq -n -c --argjson acc "$mems" --argjson p "$payload" '
+      $acc + (
+        ($p.memories // $p.captures // []) | map({
+          jira_key: ($p.initiative.jira_key // ""),
+          title: ($p.initiative.title // ""),
+          status: ($p.initiative.status // ""),
+          kind,
+          author_name,
+          created_at,
+          updated_at: (.updated_at // .created_at // null)
+        })
+      )
+    ')
+  done < <(jq -r '.[].jira_key // empty' <<<"$initiatives")
+
+  jq -n --argjson memories "$mems" --argjson initiatives "$initiatives" '
+    {
+      version: 1,
+      source: "client_fallback",
+      note: "Apply migration 20260807000001_team_brain_aggregate_metrics.sql for server RPC (faster, no bodies).",
+      team: { name: null, id: null },
+      totals: {
+        members: ([$memories[].author_name] | unique | length),
+        initiatives: ($initiatives | length),
+        memories: ($memories | length)
+      },
+      coverage: {
+        by_member_kind: (
+          [$memories[] | {author_name, kind}]
+          | group_by(.author_name + "|" + .kind)
+          | map({author_name: .[0].author_name, kind: .[0].kind, count: length})
+          | sort_by(-.count)
+        ),
+        by_member_initiative: (
+          [$memories[] | {author_name, jira_key}]
+          | group_by(.author_name + "|" + .jira_key)
+          | map({author_name: .[0].author_name, jira_key: .[0].jira_key, count: length})
+          | sort_by(-.count)
+        ),
+        matrix: (
+          [$memories[] | {author_name, kind}]
+          | group_by(.author_name)
+          | map({
+              key: .[0].author_name,
+              value: (group_by(.kind) | map({key: .[0].kind, value: length}) | from_entries)
+            })
+          | from_entries
+        ),
+        note: "Derived from Team Brain remember activity. Not personal BRAIN.md. Bodies discarded client-side."
+      },
+      reuse: {
+        per_initiative: (
+          $initiatives | map(. as $i | {
+            jira_key: $i.jira_key,
+            title: ($i.title // ""),
+            status: ($i.status // ""),
+            memory_count: ([$memories[] | select(.jira_key == $i.jira_key)] | length),
+            unique_authors: ([$memories[] | select(.jira_key == $i.jira_key) | .author_name] | unique | length)
+          })
+        ),
+        per_week: (
+          [$memories[] | select((.updated_at // .created_at) != null) | {
+            week: ((.updated_at // .created_at)[0:7]),
+            jira_key
+          }]
+          | group_by(.week + "|" + .jira_key)
+          | map({week: .[0].week, jira_key: .[0].jira_key, memories: length})
+          | sort_by(.week) | reverse
+        ),
+        note: "Fallback buckets by YYYY-MM from list_recent samples (limit 200/key). Server RPC preferred for ISO weeks."
+      },
+      privacy: {
+        includes: ["member display_name", "memory kind counts", "initiative keys"],
+        excludes: ["memory bodies (stripped)", "personal BRAIN.md", "api keys", "GitHub review graph"],
+        scope: "crew members with a valid team api_key"
+      },
+      out_of_scope_v1: ["collaboration_graph_from_github", "workload_heatmap_from_calendar", "personal_BRAIN_md_skills"]
+    }
+  '
+}
+
+cmd_aggregate() {
+  load_config
+  require_api_key
+  ensure_team_gitignore
+  local remote local_overlay merged
+  local_overlay=$(_local_reuse_overlay)
+  if remote=$(rpc_try team_aggregate_metrics "$(jq -n --arg k "$TEAM_BRAIN_API_KEY" '{p_api_key:$k}')" 2>/dev/null); then
+    if echo "$remote" | jq -e 'type == "object" and (.coverage != null or .reuse != null)' >/dev/null 2>&1; then
+      jq -n --argjson remote "$remote" --argjson local "$local_overlay" \
+        '$remote + {local_reuse: $local, source: ($remote.source // "server")}'
+      return 0
+    fi
+  fi
+  echo "→ team_aggregate_metrics RPC unavailable — client fallback (apply …_aggregate_metrics.sql)" >&2
+  merged=$(_aggregate_client_fallback)
+  jq -n --argjson remote "$merged" --argjson local "$local_overlay" \
+    '$remote + {local_reuse: $local}'
+}
+
 cmd_metrics() {
   load_config
   ensure_team_gitignore
   local path key="${1:-}"
+  case "$key" in
+    --team|team|--aggregate|aggregate)
+      cmd_aggregate
+      return 0
+      ;;
+  esac
   path="$(METRICS_FILE)"
   if [ ! -f "$path" ]; then
     echo '{"version":1,"initiatives":{},"note":"no metrics yet — recall/remember/breakdown first"}'
@@ -2270,7 +2407,8 @@ cmd_metrics() {
         remember_writes: ([.initiatives[].remember_writes] | add // 0),
         breakdown_runs: ([.initiatives[].breakdown_runs] | add // 0),
         memories_reused_total: ([.initiatives[].memories_reused_total] | add // 0)
-      }
+      },
+      team_hint: "Run metrics --team (or aggregate) for crew coverage + reuse (#35)"
     }' "$path"
   fi
 }
@@ -2345,7 +2483,11 @@ Team Brain — collaborative memory client (Supabase)
   broadcast-topic <JIRA-KEY>
       Show signal Broadcast topic (apply …_realtime_broadcast.sql).
   breakdown <JIRA-KEY> [q]  Recall memories → initiatives/<KEY>-breakdown.md (stories/spikes)
-  metrics [JIRA-KEY]        Reuse stats (recall hits, remembers, breakdowns)
+  metrics [JIRA-KEY]        Local reuse stats (recall hits, remembers, breakdowns)
+  metrics --team | aggregate
+      Crew aggregation (#35): coverage matrix + reuse/activity by initiative/week.
+      Prefers team_aggregate_metrics RPC; falls back to list_recent (bodies stripped).
+      Overlays local metrics.json recall hits (this machine only — never uploaded).
   reembed <JIRA-KEY> [n]    Backfill embeddings (requires TEAM_BRAIN_EMBED_PROVIDER)
   list
   status
@@ -2369,6 +2511,11 @@ Roles / invites (#40):
 
 Repo pin (#39):
   Commit .team-brain/project.json (non-secret). Keep credentials.json gitignored.
+
+Team aggregation (#35):
+  Apply migration 20260807000001_team_brain_aggregate_metrics.sql
+  bash core/scripts/team-brain-api.sh metrics --team
+  Privacy: counts + display_name only — never memory bodies / BRAIN.md
 
 SoT: Supabase memories + .team-brain/cache/<KEY>.json
 Sync state: .team-brain/sync/<KEY>.json
@@ -2414,6 +2561,7 @@ main() {
     reembed) cmd_reembed "$@" ;;
     breakdown) cmd_breakdown "$@" ;;
     metrics) cmd_metrics "$@" ;;
+    aggregate|team-metrics|team_metrics) cmd_aggregate "$@" ;;
     sync|mirror) cmd_sync "$@" ;;
     watch) cmd_watch "$@" ;;
     broadcast-topic|broadcast_topic) cmd_broadcast_topic "$@" ;;

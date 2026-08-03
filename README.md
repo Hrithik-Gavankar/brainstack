@@ -350,7 +350,7 @@ Both scopes work with every major AI coding assistant. Same brain, native format
 | `team-brain attach <JIRA-KEY>` | Jira identity → initiative + pull memories into cache |
 | `team-brain remember` / `recall` | Write / search shared memories (merge-safe `source_ref`) |
 | `team-brain breakdown <KEY>` | Recall → story/spike draft (`*-breakdown.md`) |
-| `team-brain sync-status` / `metrics` | Session state; local reuse stats |
+| `team-brain sync-status` / `metrics` / `metrics --team` | Session state; local reuse; crew aggregation (#35) |
 | `team-brain sync` / `capture` / `watch` | Lower-level pull / aliases |
 | `team-brain status` / `whoami` | Config + membership |
 
@@ -519,7 +519,7 @@ See **[docs/roadmap.md](docs/roadmap.md)** for the full roadmap.
 - [x] Web dashboard MVP (`dashboard/`) — sample data + data-port seam; BRAIN.md parser next
 - [x] Team Brain collaborative memory — Jira + Supabase SoT + cache + MCP + agent loop
 - [x] Team Brain onboarding — invite + Jira key (`onboard`)
-- [ ] Team aggregation metrics (coverage matrix, workload heatmap)
+- [x] Team aggregation metrics (coverage + reuse via `metrics --team` — #35; collab graph deferred)
 
 **Mid-term:**
 - [ ] Zed and JetBrains platform support

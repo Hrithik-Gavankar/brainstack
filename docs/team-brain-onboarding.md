@@ -437,6 +437,7 @@ bash core/scripts/team-brain-api.sh wake <JIRA-KEY>
 bash core/scripts/team-brain-api.sh touch <JIRA-KEY>
 bash core/scripts/team-brain-api.sh watch <JIRA-KEY> &   # optional; once per long spike
 bash core/scripts/team-brain-api.sh metrics <JIRA-KEY>
+bash core/scripts/team-brain-api.sh metrics --team   # crew coverage + reuse (#35)
 
 # Or in Cursor chat:
 #   I'm starting on AAP-81423 — start Team Brain sync.

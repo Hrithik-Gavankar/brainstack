@@ -172,13 +172,28 @@ Humans can still run CLI manually; **agents must not skip the loop**.
 - [x] `breakdown` consumes recall → `initiatives/<KEY>-breakdown.md` (CLI + MCP)
 - [x] Simple reuse metrics → `.team-brain/metrics.json` + `metrics` command
 - [ ] Optional Slack/digest via Edge Function (deferred)
-- [ ] Team aggregation metrics from roadmap (coverage, collab) — separate track
+- [x] Team aggregation metrics (#35) — coverage + reuse via `metrics --team` / `aggregate` (collab graph deferred)
 
 ```bash
 bash core/scripts/team-brain-api.sh breakdown AAP-81423
 bash core/scripts/team-brain-api.sh metrics AAP-81423
 # → initiatives/AAP-81423-breakdown.md + metrics.json (gitignored)
+bash core/scripts/team-brain-api.sh metrics --team   # crew coverage + reuse (#35)
 ```
+
+### Team aggregation v1 signals (#35)
+
+| In scope (opt-in Team Brain activity) | Out of scope for v1 |
+|---------------------------------------|---------------------|
+| Member `display_name` × memory `kind` counts | Personal `BRAIN.md` / career skills |
+| Member × initiative (`jira_key`) memory counts | Memory bodies / `source_ref` text in aggregate payload |
+| Memories per initiative + ISO-week activity | GitHub/GitLab review collaboration graph |
+| Local `metrics.json` recall overlay (this machine only) | Uploading local metrics to the server |
+| Crew members with a valid team `api_key` | Org-wide dashboards beyond the crew |
+
+**CLI:** `metrics --team` or `aggregate` → prefers RPC `team_aggregate_metrics` (migration `20260807000001_…`); falls back to `list_recent` with bodies stripped.  
+**Privacy:** same boundary as `list_initiatives` — never uploads personal `BRAIN.md`; aggregate response has no bodies.  
+**Parent:** [#2](https://github.com/Hrithik-Gavankar/brainstack/issues/2) · issue [#35](https://github.com/Hrithik-Gavankar/brainstack/issues/35) · roadmap: [roadmap.md](roadmap.md)
 
 ---
 
@@ -207,6 +222,7 @@ Use this as the build board (check off in PRs):
 - Memories are team-visible by design — keep professional
 - RPCs stay security-definer; no direct anon table reads
 - Unique `(team_id, display_name)`; invite codes 16 hex chars
+- **Aggregation (#35):** `team_aggregate_metrics` returns counts + `display_name` only — never memory bodies, never personal `BRAIN.md`, never local `metrics.json` upload
 - **Known v1 gap:** anon `register_team` / `join_team` have no app-level rate limit — document mitigations in [supabase/README.md](../supabase/README.md); prefer Edge Function / Auth for register later
 - Near-realtime: authenticated poll (`watch`) + signal-only Broadcast (no anon SELECT / no bodies on the wire)
 
@@ -234,7 +250,7 @@ Use this as the build board (check off in PRs):
 | Semantic search | Optional embeddings; FTS default | Enable when crews want it |
 | Live push into other agent context | ✅ Signal Broadcast + poll fallback (#31) | Private Auth-linked channels when membership moves to Supabase Auth |
 | Model compliance | ✅ Stronger prompts + soft session gate (`compliance` / `prepare_research`; CLI not hard-blocked) | Optional hard gate / metrics later |
-| Metrics | Local `metrics.json` | Optional team dashboard |
+| Metrics | Local `metrics.json` + crew `metrics --team` (#35) | Optional team dashboard UI |
 
 ## 9. Out of scope (for now)
 
