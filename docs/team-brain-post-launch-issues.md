@@ -73,7 +73,7 @@ feat(team-brain): realtime push of new memories into peer agent context
 ```markdown
 ## Summary
 
-Close the HiveShare-class gap: when Engineer A `remember`s, Engineer B’s active session should learn about it without waiting on the next `recall` or `watch` poll.
+Close the gap: when Engineer A `remember`s, Engineer B’s active session should learn about it without waiting on the next `recall` or `watch` poll.
 
 ## Problem
 
@@ -162,7 +162,7 @@ Embeddings exist (optional OpenAI/Ollama path) but FTS is the default. Make sema
 
 ## Problem
 
-HiveShare-class products treat semantic search as core. Team Brain has the plumbing; crews need a clear enable path without reading the full embeddings migration notes.
+Some-class products treat semantic search as core. Team Brain has the plumbing; crews need a clear enable path without reading the full embeddings migration notes.
 
 ## Goals
 
@@ -229,7 +229,7 @@ Merge-safe updates overwrite the current body. Without history, crews cannot see
 
 ## 6. Team aggregation metrics
 
-**Status:** implemented locally for [#35](https://github.com/Hrithik-Gavankar/engineer-brain/issues/35) — v1 signals spec + `team_aggregate_metrics` RPC + `metrics --team` / `aggregate` CLI (+ MCP); privacy documented; collab graph deferred.
+**Status:** implemented locally for [#35](https://github.com/Hrithik-Gavankar/brainstack/issues/35) — v1 signals spec + `team_aggregate_metrics` RPC + `metrics --team` / `aggregate` CLI (+ MCP); privacy documented; collab graph deferred.
 
 ### Title
 
@@ -290,7 +290,7 @@ Reduce soft failure where the model skips `recall` before research or `remember`
 
 ## Problem
 
-v1 enforcement is soft (Cursor rule + skill + MCP instructions). Models can still skip the loop. HiveShare-class products are MCP-habit-first; we should tighten defaults without blocking legitimate offline CLI use.
+v1 enforcement is soft (Cursor rule + skill + MCP instructions). Models can still skip the loop. Some-class products are MCP-habit-first; we should tighten defaults without blocking legitimate offline CLI use.
 
 ## Goals
 

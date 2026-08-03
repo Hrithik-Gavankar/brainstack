@@ -193,7 +193,7 @@ bash core/scripts/team-brain-api.sh metrics --team   # crew coverage + reuse (#3
 
 **CLI:** `metrics --team` or `aggregate` → prefers RPC `team_aggregate_metrics` (migration `20260807000001_…`); falls back to `list_recent` with bodies stripped.  
 **Privacy:** same boundary as `list_initiatives` — never uploads personal `BRAIN.md`; aggregate response has no bodies.  
-**Parent:** [#2](https://github.com/Hrithik-Gavankar/engineer-brain/issues/2) · issue [#35](https://github.com/Hrithik-Gavankar/engineer-brain/issues/35) · roadmap: [roadmap.md](roadmap.md)
+**Parent:** [#2](https://github.com/Hrithik-Gavankar/brainstack/issues/2) · issue [#35](https://github.com/Hrithik-Gavankar/brainstack/issues/35) · roadmap: [roadmap.md](roadmap.md)
 
 ---
 
