@@ -6,9 +6,10 @@ description: >-
   Invoke for team-brain, start, stop, wake, sync, shared spike, initiative,
   Jira crew work, remember, recall, breakdown (not personal standups).
 argument-hint: >-
-  <command> — start | stop | wake | touch | sync-status | bootstrap | onboard |
-    register | join | whoami | init | attach | remember | correct | history |
-    restore | recall | capture | sync | watch | breakdown | status | detach
+  <command> — start | stop | wake | touch | sync-status | compliance |
+    prepare_research | bootstrap | onboard | register | join | whoami | init |
+    attach | remember | correct | history | restore | recall | capture | sync |
+    watch | breakdown | status | detach
 tools: Read, Write, Shell, Glob, Grep
 ---
 
@@ -18,7 +19,22 @@ Part of **Brain**: personal=`engineer-brain`, crew=`team-brain`.
 
 | Prefer | Fallback |
 |--------|----------|
-| MCP `start` / `recall` / `remember` / `correct` / `history` / `restore` / `touch` | `bash …/team-brain-api.sh …` |
+| MCP `start` / `prepare_research` / `recall` / `remember` / `compliance` / `correct` / `history` / `restore` / `touch` | `bash …/team-brain-api.sh …` |
+
+## Compliance (policy=`stronger_prompts`)
+
+v1 follow-up chose **stronger prompts + soft session gate** (not a hard CLI block).
+
+- Before deep research: `research_ok` must be true (`start` loads context, or `prepare_research` / `recall`).
+- If `sync_status` / `compliance` returns `agent_action`, follow it before coding.
+- After durable findings: `remember` with `source_ref` in the same turn.
+- Humans may still use the CLI offline; agents must not skip the loop.
+- Never upload personal `BRAIN.md`.
+
+```bash
+bash "$API" compliance <JIRA-KEY>
+bash "$API" sync-status <JIRA-KEY>   # embeds compliance
+```
 
 ```bash
 API="${SKILL_DIR}/scripts/team-brain-api.sh"
@@ -53,12 +69,12 @@ Run:
 
 ```bash
 bash "$API" start <JIRA-KEY>
-bash "$API" sync-status <JIRA-KEY>
+bash "$API" sync-status <JIRA-KEY>   # confirm compliance.research_ok
 ```
 
 Then read `.team-brain/cache/<JIRA-KEY>.json`, summarize crew memory, **then** explore.
 
-If already `active`, `touch` and read cache (optional `recall` for a topic).
+If already `active`, `touch` and read cache (or MCP `prepare_research` / `recall` for a topic).
 
 If `sleep`, tell the user and run `wake` only after they agree (or if they asked to continue).
 
@@ -68,6 +84,7 @@ Each turn on this key:
 
 ```bash
 bash "$API" touch <JIRA-KEY>
+bash "$API" compliance <JIRA-KEY>   # if agent_action set → follow it
 ```
 
 After durable findings:
@@ -159,7 +176,8 @@ Never invent stories without recalled memories.
 |---------|---------|
 | `start` | **Enter sync mode** — load memory + background pull |
 | `stop` / `wake` / `touch` | Leave / resume / keep awake |
-| `sync-status` | active \| sleep \| stopped |
+| `sync-status` | active \| sleep \| stopped (+ `compliance`) |
+| `compliance` | Soft MCP-first gate (`research_ok`, `agent_action`) |
 | `bootstrap` | Admin one-shot setup + share bundle |
 | `onboard` / `register` / `join` | Membership |
 | `attach` | Bind Jira key |
@@ -168,13 +186,16 @@ Never invent stories without recalled memories.
 | `history` / `restore` | Revision audit trail / soft rollback |
 | `breakdown` / `metrics` / `status` | Plan / stats / config |
 
+MCP also exposes `prepare_research` (recall + compliance in one call).
+
 Beginner guide: `docs/team-brain-onboarding.md`
 
 ## Hard rules
 
 - User’s one step: **`start`** (or ask you to start)
-- Context first from cache before research
+- Context first from cache before research (`research_ok` / follow `agent_action`)
 - `remember` with `source_ref`; never clobber unrelated rows
 - On human correction: **update** the matching `source_ref` (never fork)
 - Memory bodies: prefer/avoid prose — **no** TODO/NO-TODO dumps
 - Prompt on sleep; never commit `credentials.json`
+- Never upload personal `BRAIN.md`

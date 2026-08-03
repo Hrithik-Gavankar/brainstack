@@ -73,7 +73,8 @@ CLI:
 
 ```bash
 bash core/scripts/team-brain-api.sh start AAP-81423
-bash core/scripts/team-brain-api.sh sync-status AAP-81423
+bash core/scripts/team-brain-api.sh sync-status AAP-81423   # includes compliance
+bash core/scripts/team-brain-api.sh compliance AAP-81423    # soft MCP-first gate
 ```
 
 | Chat example | Effect |
@@ -107,7 +108,8 @@ bash core/scripts/team-brain-api.sh correct AAP-81423 --source-ref "AAP-81423#cl
 |---------|---------|
 | `start` | **Enter sync mode** — load memory + background pull |
 | `stop` / `wake` / `touch` | Leave / resume / keep awake |
-| `sync-status` | Session state: active \| sleep \| stopped |
+| `sync-status` | Session state: active \| sleep \| stopped (+ `compliance`) |
+| `compliance` | Soft MCP-first gate (`research_ok`, `agent_action`) — agents follow; CLI not blocked |
 | `bootstrap` | **Admin one-shot** — migrate + register + share bundle |
 | `onboard` | Join + optional attach + recall |
 | `register` / `join` / `whoami` | Membership |

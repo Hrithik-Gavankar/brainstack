@@ -10,7 +10,6 @@ from __future__ import annotations
 import json
 import os
 import subprocess
-import sys
 from pathlib import Path
 
 from mcp.server.fastmcp import FastMCP
@@ -19,17 +18,23 @@ mcp = FastMCP(
     "team-brain",
     instructions=(
         "Team Brain = shared AI memory for a crew on one Jira key. "
-        "ENTRY: when the user starts team work on a ticket, call start(jira_key) once — "
-        "that loads crew memory and enters sync mode (background pull). "
-        "While active: call touch each turn; remember findings with source_ref "
-        "(identical=no-op; same source_ref+new body=update/merge). "
-        "On human correction of bad research: call correct(source_ref, corrected_body) "
-        "or re-remember with the same source_ref — never invent a second row for the topic. "
-        "Optional learning kind records what was wrong → what to prefer (natural language, "
+        "COMPLIANCE (policy=stronger_prompts, soft gate — do not skip): "
+        "Before deep research on a Jira key you MUST have research_ok "
+        "(start loads context; or call prepare_research / recall). "
+        "If sync_status/compliance returns agent_action, follow it before coding. "
+        "After durable findings call remember with source_ref in the same turn. "
+        "ENTRY: when the user starts team work, call start(jira_key) once — "
+        "loads crew memory + sync mode. Summarize cache, then research. "
+        "While active: touch each turn; remember with source_ref "
+        "(identical=no-op; same source_ref + new body=update/merge). "
+        "On human correction: correct(source_ref, corrected_body) "
+        "or re-remember same source_ref — never a second row for the topic. "
+        "Optional learning kind: what was wrong → what to prefer (natural language, "
         "no TODO/NO-TODO dumps). "
-        "source_ref updates archive the prior body; use history() / restore() for soft rollback. "
+        "source_ref updates archive the prior body; history() / restore() for soft rollback. "
         "If sync_status mode is sleep, prompt the user to wake before deep research. "
-        "Never upload personal BRAIN.md or credentials.json."
+        "Never upload personal BRAIN.md or credentials.json. "
+        "CLI humans may bypass the soft gate; agents must not."
     ),
 )
 
@@ -97,6 +102,47 @@ def _as_json(raw: str) -> str:
         return raw
 
 
+def _parse_obj(raw: str) -> dict:
+    """Best-effort parse of CLI JSON object output."""
+    if not raw:
+        return {}
+    try:
+        data = json.loads(raw)
+        return data if isinstance(data, dict) else {"data": data}
+    except json.JSONDecodeError:
+        for line in reversed(raw.splitlines()):
+            line = line.strip()
+            if line.startswith("{"):
+                try:
+                    data = json.loads(line)
+                    if isinstance(data, dict):
+                        return data
+                except json.JSONDecodeError:
+                    continue
+    return {"raw": raw}
+
+
+def _with_compliance(jira_key: str, payload: dict) -> str:
+    """Attach compliance soft-gate fields so agents see agent_action inline."""
+    key = jira_key.strip().upper()
+    if not key:
+        return json.dumps(payload, indent=2)
+    try:
+        compliance = _parse_obj(_run("compliance", key))
+    except RuntimeError:
+        compliance = {
+            "policy": "stronger_prompts",
+            "research_ok": False,
+            "agent_action": f"Call start({key}) or compliance({key}) before deep research.",
+        }
+    out = dict(payload)
+    out["compliance"] = compliance
+    action = compliance.get("agent_action")
+    if action:
+        out["agent_action"] = action
+    return json.dumps(out, indent=2)
+
+
 @mcp.tool()
 def whoami() -> str:
     """Show the current Team Brain member and team (from credentials.json)."""
@@ -132,9 +178,10 @@ def start(
 
     Loads crew memory into cache, starts background merge-safe pull, returns session JSON.
     Call when the user starts team work on a ticket. Summarize memories before researching.
+    Sets research_ok (context load counts as recall for the soft compliance gate).
     """
     key = jira_key.strip().upper()
-    return _as_json(
+    payload = _parse_obj(
         _run(
             "start",
             key,
@@ -142,6 +189,7 @@ def start(
             str(idle_hours),
         )
     )
+    return _with_compliance(key, payload)
 
 
 @mcp.tool()
@@ -169,10 +217,49 @@ def touch(jira_key: str) -> str:
 
 @mcp.tool()
 def sync_status(jira_key: str = "") -> str:
-    """Show sync mode: active | sleep | stopped | none. Prompt user if sleep before deep work."""
+    """Show sync mode + compliance soft gate (research_ok, agent_action).
+
+    Modes: active | sleep | stopped | none.
+    If compliance.agent_action is set, follow it before deep research.
+    Prompt the user if mode is sleep.
+    """
     if jira_key.strip():
         return _as_json(_run("sync-status", jira_key.strip().upper()))
     return _as_json(_run("sync-status"))
+
+
+@mcp.tool()
+def compliance(jira_key: str) -> str:
+    """MCP-first soft gate for a Jira key (policy=stronger_prompts).
+
+    Returns research_ok and agent_action. Soft gate: CLI humans are not blocked;
+    agents MUST follow agent_action when present before deep research or ending a
+    turn with unsaved durable findings. Never requires uploading personal BRAIN.md.
+    """
+    key = jira_key.strip().upper()
+    if not key:
+        raise ValueError("jira_key is required")
+    return _as_json(_run("compliance", key))
+
+
+@mcp.tool()
+def prepare_research(jira_key: str, query: str = "") -> str:
+    """Required before deep research — loads/search crew memory and returns compliance.
+
+    Prefer this (or start + summarize) over jumping into the codebase.
+    Without query: recent memories. With query: topic search.
+    If compliance.agent_action remains set (e.g. sleep), stop and prompt the user.
+    """
+    key = jira_key.strip().upper()
+    if not key:
+        raise ValueError("jira_key is required")
+    if query.strip():
+        raw = _run("recall", key, query.strip())
+    else:
+        raw = _run("recall", key)
+    payload = _parse_obj(raw)
+    payload["prepared"] = True
+    return _with_compliance(key, payload)
 
 
 @mcp.tool()
@@ -190,6 +277,7 @@ def remember(
     prior body is archived (archived_revision) when the history migration is applied.
     For human corrections prefer correct(); or re-remember with the same source_ref.
     Memory bodies: natural-language prefer/avoid guidance — never TODO/NO-TODO dumps.
+    Response includes compliance (marks last_remember_at on the sync session).
     """
     key = jira_key.strip().upper()
     kind_n = (kind or "research").strip().lower()
@@ -203,7 +291,8 @@ def remember(
     if source_ref.strip():
         args.extend(["--source-ref", source_ref.strip()])
     args.append("-")
-    return _as_json(_run(*args, stdin_data=body))
+    payload = _parse_obj(_run(*args, stdin_data=body))
+    return _with_compliance(key, payload)
 
 
 @mcp.tool()
@@ -284,11 +373,15 @@ def recall(jira_key: str, query: str = "") -> str:
     Without query: list recent (session sync). With query: search by topic.
     Summarize hits for the user, then explore the codebase. Skipping this causes
     duplicate work when a teammate already remembered findings.
+    Marks research_ok on the sync session; response includes compliance.
+    Prefer prepare_research() when you want an explicit pre-research gate check.
     """
     key = jira_key.strip().upper()
     if query.strip():
-        return _as_json(_run("recall", key, query.strip()))
-    return _as_json(_run("recall", key))
+        raw = _run("recall", key, query.strip())
+    else:
+        raw = _run("recall", key)
+    return _with_compliance(key, _parse_obj(raw))
 
 
 @mcp.tool()

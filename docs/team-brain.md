@@ -47,7 +47,7 @@ flowchart LR
   MCP --> EngB
 ```
 
-**Honesty:** sync is not automatic chat sync. Shared memory requires `remember`, then `recall` (or the Cursor agent loop / MCP / optional `watch` poll).
+**Honesty:** sync is not automatic chat sync. Shared memory requires `remember`, then `recall` (or the Cursor agent loop / MCP / optional `watch` poll). Agents get a soft MCP-first compliance gate (`compliance` / `prepare_research`); the CLI is not hard-blocked.
 
 ## Onboard (new teammate)
 

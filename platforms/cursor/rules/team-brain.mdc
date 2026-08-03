@@ -12,6 +12,26 @@ If this workspace has `.team-brain/` **or** the user is working on a shared Jira
 
 Personal `BRAIN.md` / engineer-brain stay private — never upload those.
 
+## Compliance check (MCP-first, soft gate)
+
+Policy: `stronger_prompts` (not a hard CLI block). Agents must follow it; humans may still use the CLI offline.
+
+```text
+EACH TURN on a known Jira key
+ → prefer MCP: sync_status / compliance / prepare_research
+ → if compliance.agent_action is set → do that BEFORE deep research or ending the turn
+ → research_ok must be true before digging into the codebase
+     (start loads context; else prepare_research / recall)
+ → after durable findings → remember(source_ref) in the same turn
+```
+
+CLI mirror:
+
+```bash
+bash <engineer-brain>/core/scripts/team-brain-api.sh compliance <JIRA-KEY>
+bash <engineer-brain>/core/scripts/team-brain-api.sh sync-status <JIRA-KEY>
+```
+
 ## Human entry (one manual step)
 
 When the user starts team work on a ticket — including phrases like:
@@ -34,7 +54,7 @@ That loads crew memory into `.team-brain/cache/<KEY>.json` and starts background
 
 Then you MUST:
 
-1. Read the cache / `sync-status`
+1. Read the cache / `sync-status` (check `compliance.research_ok`)
 2. Summarize crew knowledge (2–5 bullets)
 3. Only then dig into the codebase
 
@@ -43,7 +63,7 @@ Then you MUST:
 ```text
 EACH TURN on this key
   → touch <KEY>   (keeps sync awake)
-  → prefer cache; recall if topic-specific search needed
+  → prefer cache; recall / prepare_research if topic-specific search needed
 
 AFTER durable finding
   → remember with stable source_ref (KEY#slug)
@@ -70,13 +90,15 @@ Check `sync-status <KEY>`:
 
 ## Prefer MCP tools if connected
 
-`start` / `stop` / `wake` / `touch` / `sync_status` / `recall` / `remember` / `correct` / `history` / `restore`
+`start` / `stop` / `wake` / `touch` / `sync_status` / `compliance` / `prepare_research` / `recall` / `remember` / `correct` / `history` / `restore`
 
 ## Never
 
-- Deep research on a known Jira key without `start` or `recall` first
+- Deep research on a known Jira key without `start`, `prepare_research`, or `recall` first
+- Ignore `compliance.agent_action` when present
 - Leave durable findings only in chat
 - Blind-overwrite unrelated memories (always use `source_ref`)
 - Fork a second memory row when correcting the same topic (always same `source_ref`)
 - Put personal career notes into Team Brain
 - Commit or paste `credentials.json` / `api_key`
+- Upload personal `BRAIN.md` to Team Brain

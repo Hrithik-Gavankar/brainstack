@@ -312,8 +312,8 @@ bash install.sh cursor /path/to/your/workspace
 
 That installs:
 
-- `team-brain.mdc` — always-on: **recall before research**, **remember after findings**
-- `team-brain` skill — chat commands
+- `team-brain.mdc` — always-on: **recall before research**, **remember after findings**, soft `compliance` gate
+- `team-brain` skill — chat commands (+ `compliance` / MCP `prepare_research`)
 
 ### Start-of-ticket (do this every time)
 
@@ -338,12 +338,15 @@ Other useful lines:
 | Keep working after a break | `Wake Team Brain sync for AAP-81423 and continue.` |
 | Done for the day | `Stop Team Brain sync for AAP-81423.` |
 | Check state | `What's my Team Brain sync-status for AAP-81423?` |
+| Compliance | `What's Team Brain compliance for AAP-81423?` |
 | Plan stories | `Breakdown AAP-81423 from Team Brain memory.` |
 | Fix bad research | `Correct Team Brain for AAP-81423#<slug> — …` |
 
 Then work. After findings the AI should `remember` (and `touch`) without you asking.  
+If `compliance.agent_action` is set, the agent should follow it before deep research.  
 If you correct it, it should `correct` / re-`remember` the same `source_ref`.  
-If sync sleeps, it should ask before continuing.
+If sync sleeps, it should ask before continuing.  
+Personal `BRAIN.md` stays private — never upload it to Team Brain.
 
 ### MCP tools (advanced)
 

@@ -265,6 +265,8 @@ Initiative memory + local reuse metrics exist. Tech leads still lack skill cover
 
 ## 7. Stronger MCP-first compliance
 
+**Status:** implemented locally for [#36](https://github.com/Hrithik-Gavankar/engineer-brain/issues/36) — **decision: stronger prompts + soft session gate** (`policy=stronger_prompts`). Hard CLI gate deferred.
+
 ### Title
 
 ```
@@ -290,10 +292,10 @@ v1 enforcement is soft (Cursor rule + skill + MCP instructions). Models can stil
 
 ## Acceptance criteria
 
-- [ ] Proposal: hard gate vs stronger prompts (pick one for v1 follow-up)
-- [ ] Implementation for at least Cursor + team-brain MCP
-- [ ] Docs updated in skill + `mcp/team-brain/README.md`
-- [ ] No requirement to upload personal BRAIN.md
+- [x] Proposal: hard gate vs stronger prompts (pick one for v1 follow-up) → **stronger prompts**
+- [x] Implementation for at least Cursor + team-brain MCP
+- [x] Docs updated in skill + `mcp/team-brain/README.md`
+- [x] No requirement to upload personal BRAIN.md
 
 ## References
 

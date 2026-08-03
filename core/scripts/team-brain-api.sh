@@ -8,7 +8,8 @@
 #
 # Commands: onboard | register | join | whoami | attach | start | stop | wake |
 #           bootstrap | remember | correct | history | restore | recall | capture |
-#           sync | watch | breakdown | metrics | list | mirror | status | sync-status | touch
+#           sync | watch | breakdown | metrics | compliance | list | mirror | status |
+#           sync-status | touch
 # Plan: docs/team-brain-memory.md — memories are SoT; md is optional export.
 
 set -euo pipefail
@@ -456,6 +457,99 @@ touch_sync_activity() {
   ' "$path" >"$tmp" && mv "$tmp" "$path"
 }
 
+# Soft MCP-first compliance (#36): track recall/remember on sync session (not a hard CLI gate).
+# research_ok = sync active/sleep AND crew context loaded this session (start or recall).
+mark_compliance() {
+  local key="${1:-}"
+  local event="${2:-}"
+  [ -n "$key" ] && [ -n "$event" ] || return 0
+  key=$(echo "$key" | tr '[:lower:]' '[:upper:]')
+  local path
+  path=$(sync_state_path "$key")
+  [ -f "$path" ] || return 0
+  local now
+  now=$(iso_now)
+  local tmp
+  tmp=$(mktemp)
+  case "$event" in
+    recall|context)
+      jq --arg now "$now" '
+        .last_recall_at = $now
+        | .compliance = ((.compliance // {}) + {
+            policy: "stronger_prompts",
+            last_recall_at: $now,
+            research_ok: true
+          })
+      ' "$path" >"$tmp" && mv "$tmp" "$path"
+      ;;
+    remember)
+      jq --arg now "$now" '
+        .last_remember_at = $now
+        | .compliance = ((.compliance // {}) + {
+            policy: "stronger_prompts",
+            last_remember_at: $now
+          })
+      ' "$path" >"$tmp" && mv "$tmp" "$path"
+      ;;
+    *) return 0 ;;
+  esac
+}
+
+compliance_payload() {
+  local key="$1"
+  local path mode last_recall last_remember research_ok agent_action
+  path=$(sync_state_path "$key")
+  if [ ! -f "$path" ]; then
+    jq -n --arg k "$key" '{
+      jira_key: $k,
+      policy: "stronger_prompts",
+      mode: "none",
+      research_ok: false,
+      last_recall_at: null,
+      last_remember_at: null,
+      agent_action: "Call start(jira_key) then summarize crew memory before deep research.",
+      note: "Soft gate — CLI humans may still run commands; agents must follow agent_action."
+    }'
+    return 0
+  fi
+  mode=$(jq -r '.mode // "stopped"' "$path")
+  last_recall=$(jq -r '.last_recall_at // .compliance.last_recall_at // empty' "$path")
+  last_remember=$(jq -r '.last_remember_at // .compliance.last_remember_at // empty' "$path")
+  research_ok=false
+  agent_action=""
+  if [ "$mode" = "sleep" ]; then
+    agent_action="Sync is sleep — ask user to wake(jira_key) or start before deep research."
+  elif [ "$mode" != "active" ]; then
+    agent_action="Call start(jira_key) (loads crew memory) before deep research."
+  elif [ -z "$last_recall" ]; then
+    agent_action="Call recall(jira_key) before deep research (sync is active but no context load recorded)."
+  else
+    research_ok=true
+    if [ -z "$last_remember" ]; then
+      agent_action="After durable findings, call remember(jira_key, body, source_ref) before ending the turn."
+    else
+      agent_action=""
+    fi
+  fi
+  jq -n \
+    --arg k "$key" \
+    --arg mode "$mode" \
+    --arg lr "${last_recall}" \
+    --arg lm "${last_remember}" \
+    --argjson ok "$research_ok" \
+    --arg action "$agent_action" \
+    '{
+      jira_key: $k,
+      policy: "stronger_prompts",
+      mode: $mode,
+      research_ok: $ok,
+      last_recall_at: (if $lr=="" then null else $lr end),
+      last_remember_at: (if $lm=="" then null else $lm end),
+      agent_action: (if $action=="" then null else $action end),
+      note: "Soft gate — CLI humans may still run commands; agents must follow agent_action when present."
+    }'
+}
+
 stop_sync_daemon() {
   local key="$1"
   local pidfile
@@ -636,12 +730,18 @@ cmd_start() {
       started_at: $now,
       last_activity_at: $now,
       last_pull_at: $now,
+      last_recall_at: $now,
       cursor: (if $cur=="" then null else $cur end),
       poll_interval_sec: $iv,
       idle_timeout_sec: $idle,
       warn_before_sleep_sec: 300,
       initial_memory_count: $n,
-      message: "Sync mode active. Crew memory loaded; background pull running."
+      message: "Sync mode active. Crew memory loaded; background pull running.",
+      compliance: {
+        policy: "stronger_prompts",
+        last_recall_at: $now,
+        research_ok: true
+      }
     }')"
 
   echo "" >&2
@@ -756,7 +856,9 @@ _sync_status_one() {
   local key="$1"
   key=$(echo "$key" | tr '[:lower:]' '[:upper:]')
   if [ ! -f "$(sync_state_path "$key")" ]; then
-    jq -n --arg k "$key" '{jira_key:$k, mode:"none", message:"No sync session. Run start <KEY>."}'
+    jq -n --argjson c "$(compliance_payload "$key")" \
+      --arg k "$key" \
+      '{jira_key:$k, mode:"none", message:"No sync session. Run start <KEY>.", compliance:$c}'
     return 0
   fi
   local pid mode daemon
@@ -768,7 +870,8 @@ _sync_status_one() {
   elif [ "$mode" = "active" ]; then
     daemon="dead"
   fi
-  jq --arg d "$daemon" '. + {daemon: $d}' "$(sync_state_path "$key")"
+  jq --arg d "$daemon" --argjson c "$(compliance_payload "$key")" \
+    '. + {daemon: $d, compliance: $c}' "$(sync_state_path "$key")"
 }
 
 cmd_sync_status() {
@@ -786,6 +889,22 @@ cmd_sync_status() {
     acc=$(jq -n --argjson a "$acc" --argjson o "$(_sync_status_one "$(basename "$f" .json)")" '$a + [$o]')
   done
   echo "$acc" | jq .
+}
+
+# compliance — agent-visible soft gate status (MCP-first loop)
+cmd_compliance() {
+  load_config
+  local key="${1:-}"
+  [ -n "$key" ] || die "usage: compliance <JIRA-KEY>"
+  key=$(echo "$key" | tr '[:lower:]' '[:upper:]')
+  local out
+  out=$(compliance_payload "$key")
+  if jq -e '.agent_action != null' >/dev/null 2>&1 <<<"$out"; then
+    echo "→ compliance: $(jq -r '.agent_action' <<<"$out")" >&2
+  elif jq -e '.research_ok == true' >/dev/null 2>&1 <<<"$out"; then
+    echo "→ compliance: research_ok (recall/context loaded this session)" >&2
+  fi
+  echo "$out" | jq .
 }
 
 # Local reuse metrics (P4) — .team-brain/metrics.json (gitignored)
@@ -1108,6 +1227,7 @@ cmd_remember() {
   # Count non-deduped writes as remember_writes; still bump on dedupe (retry reuse)
   bump_metric "$key" "remember_writes" 0
   touch_sync_activity "$key"
+  mark_compliance "$key" remember
   # Surface merge result for agents
   if jq -e '.updated == true' >/dev/null 2>&1 <<<"$out"; then
     local archived
@@ -1389,6 +1509,7 @@ cmd_recall() {
     hit_n=$(jq '((.memories // []) | length)' <<<"$out")
     bump_metric "$key" "recall_hits" "$hit_n"
     touch_sync_activity "$key"
+    mark_compliance "$key" recall
     echo "$out" | jq .
   else
     out=$(fetch_memories "$key")
@@ -1397,6 +1518,7 @@ cmd_recall() {
     hit_n=$(jq '((.memories // .captures) // []) | length' <<<"$out")
     bump_metric "$key" "recall_hits" "$hit_n"
     touch_sync_activity "$key"
+    mark_compliance "$key" recall
     echo "$out" | jq .
   fi
 }
@@ -1738,7 +1860,8 @@ Team Brain — collaborative memory client (Supabase)
   stop [JIRA-KEY]           Leave sync mode (all sessions if no key)
   wake <JIRA-KEY>           Resume from sleep
   touch <JIRA-KEY>          Mark activity (keeps sync awake); wakes if sleeping
-  sync-status [JIRA-KEY]    Show sync mode (active | sleep | stopped)
+  sync-status [JIRA-KEY]    Sync mode + MCP compliance (research_ok, agent_action)
+  compliance [JIRA-KEY]     MCP-first soft gate status (issue #36)
 
   remember <JIRA-KEY> <research|decision|note|learning> [--source-ref REF] [--body-file PATH | - | <body...>]
       Write shared memory. Dedupes identical; UPDATES same source_ref when body changes.
@@ -1796,6 +1919,7 @@ main() {
     wake) cmd_wake "$@" ;;
     touch) cmd_touch "$@" ;;
     sync-status|sync_status) cmd_sync_status "$@" ;;
+    compliance|compliance-status|compliance_status) cmd_compliance "$@" ;;
     _sync_loop) cmd_sync_loop "$@" ;;
     remember) cmd_remember "$@" ;;
     correct) cmd_correct "$@" ;;

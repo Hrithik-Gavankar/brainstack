@@ -8,19 +8,33 @@ Agent-native tools for collaborative initiative memory. Wraps [`team-brain-api.s
 |------|---------|
 | `start` | **Enter sync mode** — load crew memory + background pull |
 | `stop` / `wake` / `touch` | Leave / resume / keep awake |
-| `sync_status` | `active` \| `sleep` \| `stopped` |
+| `sync_status` | `active` \| `sleep` \| `stopped` + embedded `compliance` |
+| `compliance` | Soft MCP-first gate (`research_ok`, `agent_action`) |
+| `prepare_research` | Recall/list + compliance — call before deep research |
 | `whoami` | Current member / team |
 | `attach` | Upsert Jira initiative + pull recent memories |
 | `remember` | Write memory (`source_ref`; update on overlap; kinds include `learning`) |
 | `correct` | Human correction — update `source_ref` + optional learning |
 | `history` | List archived revisions + current body for a `source_ref` |
 | `restore` | Soft-rollback to revision N (archives current first) |
-| `recall` | Search (query) or list recent (no query) |
+| `recall` | Search (query) or list recent (no query); includes `compliance` |
 | `list_recent` | Sync / list with optional `since` cursor |
 | `list_initiatives` | Team initiative index |
 | `breakdown` | Recall → draft stories/spikes (`*-breakdown.md`) |
 | `metrics` | Local reuse stats (recall / remember / breakdown) |
 | `status` | Client config |
+
+## MCP-first compliance (#36)
+
+**Decision:** stronger prompts + soft session gate (`policy=stronger_prompts`). Not a hard CLI block — offline humans keep working; agents must follow `agent_action`.
+
+| Signal | Meaning |
+|--------|---------|
+| `research_ok` | Crew context loaded this session (`start` or `recall` / `prepare_research`) |
+| `agent_action` | Next required agent step (start / wake / recall / remember) — do not ignore |
+| Soft vs hard | CLI commands still run; compliance is agent-visible guidance |
+
+`start` stamps context load. `recall` / `remember` update session stamps. `sync_status` embeds the same `compliance` object. Never requires uploading personal `BRAIN.md`.
 
 ## Install
 
@@ -63,11 +77,13 @@ Add the same command/args/env under MCP servers in your Claude config.
 
 ```text
 USER: start team work on KEY
-  → start(KEY)     # one entry — load memory + background pull
+  → start(KEY)     # one entry — load memory + background pull (research_ok)
   → summarize cache, then research
 
 WHILE active
   → touch(KEY) each turn
+  → if compliance.agent_action set → follow it
+  → prepare_research(KEY[, query]) before deep dives when unsure
   → remember(KEY, body, source_ref) after findings
       identical → no-op | same source_ref + new body → update
   → on human correction: correct(KEY, source_ref, corrected_body[, was_wrong, learning])

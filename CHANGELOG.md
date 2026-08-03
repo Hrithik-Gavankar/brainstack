@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- Team Brain **MCP-first compliance** (#36): soft session gate (`compliance` / `prepare_research`); `sync-status` embeds `research_ok` + `agent_action`; Cursor rule/skill + MCP instructions use `stronger_prompts` (CLI not hard-blocked)
 - Team Brain **crew bootstrap** (#41): `bootstrap` / `team-brain-bootstrap.sh` — migrate + register + share bundle for admins
 - Team Brain **memory version history / soft rollback** (#34): `capture_revisions`; `history` / `restore` CLI + MCP
 - Migration `20260803000001_team_brain_memory_history.sql` — archive prior body on `source_ref` update

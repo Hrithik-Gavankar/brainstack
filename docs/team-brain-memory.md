@@ -229,7 +229,7 @@ Use this as the build board (check off in PRs):
 | Version/history/soft rollback | ✅ `history` / `restore` + `capture_revisions` | Optional snapshots / UI |
 | Semantic search | Optional embeddings; FTS default | Enable when crews want it |
 | Live push into other agent context | Poll `watch` / next `recall` | Private Realtime/Broadcast if auth allows |
-| Model compliance | Soft (rules/skills) | Stronger MCP-first defaults |
+| Model compliance | ✅ Stronger prompts + soft session gate (`compliance` / `prepare_research`; CLI not hard-blocked) | Optional hard gate / metrics later |
 | Metrics | Local `metrics.json` | Optional team dashboard |
 
 ## 9. Out of scope (for now)
