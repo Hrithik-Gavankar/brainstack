@@ -432,7 +432,7 @@ bash core/scripts/team-brain-api.sh remember <JIRA-KEY> research --source-ref "<
 bash core/scripts/team-brain-api.sh breakdown <JIRA-KEY>
 bash core/scripts/team-brain-api.sh stop <JIRA-KEY>
 
-|# Sleep / wake / long-session freshness
+# Sleep / wake / long-session freshness
 bash core/scripts/team-brain-api.sh wake <JIRA-KEY>
 bash core/scripts/team-brain-api.sh touch <JIRA-KEY>
 bash core/scripts/team-brain-api.sh watch <JIRA-KEY> &   # optional; once per long spike
