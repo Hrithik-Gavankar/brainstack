@@ -73,7 +73,7 @@ feat(team-brain): realtime push of new memories into peer agent context
 ```markdown
 ## Summary
 
-Close the HiveShare-class gap: when Engineer A `remember`s, Engineer B’s active session should learn about it without waiting on the next `recall` or `watch` poll.
+Close the collaborative-memory gap: when Engineer A `remember`s, Engineer B’s active session should learn about it without waiting on the next `recall` or `watch` poll.
 
 ## Problem
 
@@ -162,7 +162,7 @@ Embeddings exist (optional OpenAI/Ollama path) but FTS is the default. Make sema
 
 ## Problem
 
-HiveShare-class products treat semantic search as core. Team Brain has the plumbing; crews need a clear enable path without reading the full embeddings migration notes.
+collaborative-memory products treat semantic search as core. Team Brain has the plumbing; crews need a clear enable path without reading the full embeddings migration notes.
 
 ## Goals
 
@@ -288,7 +288,7 @@ Reduce soft failure where the model skips `recall` before research or `remember`
 
 ## Problem
 
-v1 enforcement is soft (Cursor rule + skill + MCP instructions). Models can still skip the loop. HiveShare-class products are MCP-habit-first; we should tighten defaults without blocking legitimate offline CLI use.
+v1 enforcement is soft (Cursor rule + skill + MCP instructions). Models can still skip the loop. collaborative-memory products are MCP-habit-first; we should tighten defaults without blocking legitimate offline CLI use.
 
 ## Goals
 
