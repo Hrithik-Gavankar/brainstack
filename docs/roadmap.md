@@ -18,7 +18,7 @@ The foundation: a working system with multi-platform support.
 - [x] Documentation: architecture, BRAIN.md spec, vision, FAQ
 - [x] Examples for multiple engineering profiles
 - [x] `engineer-brain doctor` — brain health check and completeness score
-- [ ] GIF/screenshot demos for README and social media
+- [x] GIF/screenshot demos for README and social media (#38 — demo doc + Office Hours one-pager)
 
 ---
 
@@ -38,7 +38,7 @@ Growing beyond individual use into a richer tool.
 - [x] **Team Brain Realtime push** — signal-only Broadcast + poll fallback (#31); Auth-private channels later
 - [x] **Team Brain repo pin** — commit-safe `.team-brain/project.json` (#39)
 - [x] **Team Brain access roles** — admin / member / viewer + admin invite rotate (#40)
-- [ ] **Anon register/join rate limits** — Edge Function / Auth hardening (documented gap)
+- [x] **Anon register/join rate limits** — DB-level sliding window (#32)
 - [ ] **Team aggregation metrics** — skill coverage matrix, workload heatmap, collaboration graph
 - [ ] **GitLab/Bitbucket support** — scanner support beyond GitHub
 - [ ] **Engineer-brain MCP** — personal BRAIN.md / sync as MCP resources (team-brain MCP ships first)

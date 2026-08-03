@@ -9,6 +9,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- Team Brain **launch readiness** (#32 / #38 / #42): rate-limit `register_team`/`join_team` (DB sliding window, default 5 reg/h, 15 join/h); demo & Office Hours one-pager (`docs/team-brain-demo.md`); hands-on tutorial with verification checklist (`docs/team-brain-tutorial.md`)
+- Migration `20260806000001_team_brain_rate_limits.sql` — fingerprint-based sliding window; `tb_rate_limit_stats` monitoring view
 - Team Brain **repo pin + access roles** (#39 / #40): commit-safe `.team-brain/project.json`; `start`/`attach`/`onboard` honor pin; roles `admin`\|`member`\|`viewer`; `rotate-invite` / `set-role`; join `--role viewer`
 - Migration `20260805000001_team_brain_roles_and_invites.sql` — write gates for viewers; admin invite rotate
 - Team Brain **Realtime signal push** (#31): DB `realtime.send` trigger + `team-brain-realtime.py` listener; `watch --push`; `notify/<KEY>.json`; poll/`watch` remain fallback; no anon SELECT on captures

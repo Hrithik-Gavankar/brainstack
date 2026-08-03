@@ -102,6 +102,8 @@ v1 uses authenticated polling (`watch` / sync-mode background pull). That is sec
 
 ## 3. Anon register/join rate limits
 
+**Status:** implemented locally for [#32](https://github.com/Hrithik-Gavankar/engineer-brain/issues/32) — **DB-level sliding window rate limiting** (default 5 register/h, 15 join/h). Fingerprint from request headers; tunable via Postgres settings; monitoring view for abuse detection.
+
 ### Title
 
 ```
@@ -127,10 +129,12 @@ Invite entropy and unique display names help, but unbounded anon RPC calls remai
 
 ## Acceptance criteria
 
-- [ ] Rate limit or Auth gate on register/join paths
-- [ ] Legitimate `onboard INVITE_CODE "Name" JIRA-KEY` still works for invitees
-- [ ] Docs updated (known gap removed or marked resolved)
-- [ ] Notes on monitoring / abuse response
+- [x] Rate limit or Auth gate on register/join paths
+- [x] Legitimate `onboard INVITE_CODE "Name" JIRA-KEY` still works for invitees
+- [x] Docs updated (known gap removed or marked resolved)
+- [x] Notes on monitoring / abuse response
+
+> Implemented in branch `feat/launch-readiness-32-38-42` (issue #32).
 
 ## References
 
@@ -349,6 +353,8 @@ Sync mode background pull helps, but long sessions can still go stale relative t
 
 ## 9. Launch polish (demo GIF + Office Hours one-pager)
 
+**Status:** implemented locally for [#38](https://github.com/Hrithik-Gavankar/engineer-brain/issues/38) — `docs/team-brain-demo.md` (Office Hours one-pager + demo script + screenshot sequence). GIF placeholder pending visual recording.
+
 ### Title
 
 ```
@@ -374,9 +380,11 @@ Collaborative memory + sync mode are demo-ready in code/docs, but README/social 
 
 ## Acceptance criteria
 
-- [ ] Demo asset in repo or docs site
-- [ ] README / website link
-- [ ] Office Hours one-pager checked in under `docs/` (or website)
+- [x] Demo asset in repo or docs site
+- [x] README / website link
+- [x] Office Hours one-pager checked in under `docs/` (or website)
+
+> Implemented in branch `feat/launch-readiness-32-38-42` (issue #38).
 
 ## References
 
@@ -393,6 +401,10 @@ Collaborative memory + sync mode are demo-ready in code/docs, but README/social 
 ## 11. View vs write roles (+ invite-only admin)
 
 **Status:** implemented locally for [#40](https://github.com/Hrithik-Gavankar/engineer-brain/issues/40) — roles `admin`\|`member`\|`viewer`; write RPCs gated; `rotate_invite` / `set_member_role`; join `--role viewer`.
+
+## 12. Hands-on tutorial and demo project walkthrough
+
+**Status:** implemented locally for [#42](https://github.com/Hrithik-Gavankar/engineer-brain/issues/42) — `docs/team-brain-tutorial.md` with three paths (admin, joiner CLI, MCP-only), verification checklist, and cross-links from README and onboarding.
 
 ---
 

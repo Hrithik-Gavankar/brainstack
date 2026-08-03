@@ -434,6 +434,8 @@ bash core/scripts/team-brain-api.sh metrics <JIRA-KEY>
 
 ## Next reading (when you are ready)
 
+- [team-brain-tutorial.md](team-brain-tutorial.md) — hands-on walkthrough with verification checklist  
+- [team-brain-demo.md](team-brain-demo.md) — demo script and Office Hours one-pager  
 - [team-brain.md](team-brain.md) — how sync layers fit together  
 - [team-brain-memory.md](team-brain-memory.md) — full product plan  
 - [supabase/README.md](../supabase/README.md) — admin / new project setup  

@@ -225,6 +225,8 @@ Commands (`sync`, `quarterly`, `attach`, …) are **verbs under a skill**, not s
 
 - Scopes guide: **[docs/scopes.md](docs/scopes.md)**
 - Team Brain **beginner onboarding:** **[docs/team-brain-onboarding.md](docs/team-brain-onboarding.md)**
+- Team Brain **demo & Office Hours:** **[docs/team-brain-demo.md](docs/team-brain-demo.md)**
+- Team Brain **tutorial:** **[docs/team-brain-tutorial.md](docs/team-brain-tutorial.md)**
 - Team Brain overview: **[docs/team-brain.md](docs/team-brain.md)** · Memory plan: **[docs/team-brain-memory.md](docs/team-brain-memory.md)**
 - Supabase setup: **[supabase/README.md](supabase/README.md)** · MCP: **[mcp/team-brain/](mcp/team-brain/)**
 - Demo fixture: **[examples/team-spike-crew/](examples/team-spike-crew/)**
