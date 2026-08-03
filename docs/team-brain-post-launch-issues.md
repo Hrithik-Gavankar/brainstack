@@ -314,6 +314,8 @@ v1 enforcement is soft (Cursor rule + skill + MCP instructions). Models can stil
 
 ## 8. Long-session watch hint
 
+**Status:** implemented locally for [#37](https://github.com/Hrithik-Gavankar/brainstack/issues/37) — skill/rule long-session refresh nudge + onboarding `watch` blurb; consistent with sync sleep/wake.
+
 ### Title
 
 ```
@@ -339,9 +341,9 @@ Sync mode background pull helps, but long sessions can still go stale relative t
 
 ## Acceptance criteria
 
-- [ ] Skill/rule text for long-session refresh nudge
-- [ ] Onboarding blurb for optional background `watch`
-- [ ] Consistent with sync-mode sleep/wake (no conflicting advice)
+- [x] Skill/rule text for long-session refresh nudge
+- [x] Onboarding blurb for optional background `watch`
+- [x] Consistent with sync-mode sleep/wake (no conflicting advice)
 
 ## References
 

@@ -113,7 +113,7 @@ Reason: captures revoke SELECT from anon; auth is custom `p_api_key` on RPCs. Re
 - [x] Doc note migration `20260728000002_team_brain_watch_notes.sql`
 - [x] Prototype push: migration `20260804000001_team_brain_realtime_broadcast.sql` + `team-brain-realtime.py`
 - [x] Fallback: poll / `watch` / sync-mode loop if Realtime or `websockets` unavailable (`TEAM_BRAIN_REALTIME=off`)
-- [ ] Skill: during long sessions, suggest `watch` in background or periodic `recall` (#37)
+- [x] Skill: during long sessions, suggest `watch` in background or periodic `recall` (#37)
 - [ ] Later optional: private Broadcast + Supabase Auth–linked members
 
 ### P2 — Semantic recall

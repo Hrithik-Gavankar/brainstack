@@ -61,7 +61,8 @@ API="${SKILL_DIR}/scripts/team-brain-api.sh"
 2. **Automatic while active** — background pull into cache; you summarize + work  
 3. **Save findings** — `remember` with `source_ref` (merge-safe)  
 4. **On human correction** — `correct` (or re-`remember` same `source_ref`) + optional `learning`  
-5. **Idle sleep** — after ~1h no activity, sync sleeps; prompt user to `wake`
+5. **Long spikes** — periodic `recall` (or optional background `watch`); do not spam every turn  
+6. **Idle sleep** — after ~1h no activity, sync sleeps; prompt user to `wake`
 
 ---
 
@@ -112,6 +113,33 @@ Merge rules (server):
 | New finding | insert |
 | Same body / hash | `deduped` no-op |
 | Same `source_ref`, new body | `updated` (merge — no second row) |
+
+### Long sessions — refresh without spam (#37)
+
+Sync-mode background pull + peer push help, but long spikes can still go stale vs teammates.
+
+**When to refresh** (pick one trigger; do **not** do this every turn):
+
+- After a long research block (multi-file dig, spike write-up, or “keep going” stretch), **or**
+- Roughly every **8–10 turns** of continuous work on the same key
+
+Then run a quiet refresh:
+
+```bash
+bash "$API" recall <JIRA-KEY>          # or MCP prepare_research / recall
+# if .team-brain/notify/<KEY>.json updated → summarize new peer memories first
+```
+
+**Optional (human / once per spike):** suggest background `watch` so the cache stays warm without relying only on idle sleep / next `start`:
+
+```bash
+bash "$API" watch <JIRA-KEY> &           # poll
+# or: bash "$API" watch <JIRA-KEY> --push &
+```
+
+**Do not spam:** at most one soft nudge per stretch (“cache may be stale — refresh?”). Prefer silent `recall` over asking every turn.
+
+**Sleep / wake still wins:** if `sync-status` is `sleep`, prompt `wake` (do not treat `watch` as a substitute). If `stopped`, offer `start`.
 
 ### Memory body style
 
@@ -209,5 +237,6 @@ Beginner guide: `docs/team-brain-onboarding.md`
 - `remember` with `source_ref`; never clobber unrelated rows
 - On human correction: **update** the matching `source_ref` (never fork)
 - Memory bodies: prefer/avoid prose — **no** TODO/NO-TODO dumps
-- Prompt on sleep; never commit `credentials.json`
+- Long sessions: refresh via `recall` after research blocks / ~8–10 turns — **never** every turn
+- Prompt on sleep; `watch` does not replace `wake`; never commit `credentials.json`
 - Never upload personal `BRAIN.md`

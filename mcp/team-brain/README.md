@@ -88,13 +88,15 @@ WHILE active
   → touch(KEY) each turn
   → if compliance.agent_action set → follow it
   → prepare_research(KEY[, query]) before deep dives when unsure
+  → after long research / ~every 8–10 turns → quiet recall (do not spam every turn)
+  → optional once-per-spike CLI: `watch KEY &` (poll or --push); not a wake substitute
   → remember(KEY, body, source_ref) after findings
       identical → no-op | same source_ref + new body → update
   → on human correction: correct(KEY, source_ref, corrected_body[, was_wrong, learning])
       or re-remember same source_ref (never fork a second row)
 
 IDLE ~1h
-  → mode=sleep; prompt user → wake(KEY) or start again
+  → mode=sleep; prompt user → wake(KEY) or start again (watch ≠ wake)
 ```
 
 Memory bodies: natural-language prefer/avoid guidance — not TODO/NO-TODO dumps.  
