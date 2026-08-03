@@ -114,9 +114,11 @@ bash core/scripts/team-brain-api.sh breakdown AAP-81423
 | Invite codes 16 hex chars | ✅ |
 | Live project URL/anon **not** committed to OSS | ✅ placeholders only |
 | `join_team` omits `invite_code`; `whoami` returns it only for admin | ✅ |
-| Anon `register_team` / `join_team` **rate limiting** | ⚠️ known gap — use Edge Function / plan limits / Auth for register in a follow-up |
+| Anon `register_team` / `join_team` **rate limiting** | ✅ DB-level sliding window (default 5 register/h, 15 join/h) |
 
 Do not commit `service_role` keys or live anon keys to public repos. Rotate invite codes / anon keys if leaked.
+
+**Rate limiting (#32):** `register_team` and `join_team` are rate-limited via a DB-level sliding window (`…_rate_limits.sql`). Defaults: 5 registers/hour, 15 joins/hour per fingerprint. Tunable via Postgres settings (`app.rate_limit_register`, `app.rate_limit_join`). Run `select tb_cleanup_rate_limits()` periodically (or via `pg_cron`) to purge old entries. Monitor: `select * from tb_rate_limit_stats` (authenticated/service_role only).
 
 **Existing projects:** apply any new migration files once (… → **realtime_broadcast** → **roles_and_invites**).
 
