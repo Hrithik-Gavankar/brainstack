@@ -386,6 +386,16 @@ Collaborative memory + sync mode are demo-ready in code/docs, but README/social 
 
 ---
 
+## 10. Repo-pinned project wiring
+
+**Status:** implemented locally for [#39](https://github.com/Hrithik-Gavankar/engineer-brain/issues/39) — commit-safe `.team-brain/project.json`; `start`/`attach`/`onboard` honor pin; example in `examples/team-spike-crew/`.
+
+## 11. View vs write roles (+ invite-only admin)
+
+**Status:** implemented locally for [#40](https://github.com/Hrithik-Gavankar/engineer-brain/issues/40) — roles `admin`\|`member`\|`viewer`; write RPCs gated; `rotate_invite` / `set_member_role`; join `--role viewer`.
+
+---
+
 ## Filing checklist
 
 After creating issues on GitHub:
@@ -393,4 +403,3 @@ After creating issues on GitHub:
 - [ ] Link each issue back to #2 and/or PR #29
 - [ ] Update `docs/roadmap.md` checkboxes / links if desired
 - [ ] Optionally close or comment on #2 with “collaborative memory shipped; remaining work tracked in …”
-```

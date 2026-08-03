@@ -7,11 +7,13 @@
 #   bash team-brain-api.sh <command> [args...]
 #
 # Commands: onboard | register | join | whoami | attach | start | stop | wake |
-#           bootstrap | remember | correct | history | restore | recall | capture |
+#           bootstrap | pin | remember | correct | history | restore | recall | capture |
 #           sync | watch | breakdown | metrics | compliance | list | mirror | status |
-#           sync-status | touch | broadcast-topic
+#           sync-status | touch | broadcast-topic | rotate-invite | set-role
 # Plan: docs/team-brain-memory.md — memories are SoT; md is optional export.
 # Realtime (#31): signal Broadcast + poll fallback — see migration …_realtime_broadcast.sql
+# Pin (#39): commit-safe .team-brain/project.json — never secrets.
+# Roles (#40): admin | member (write) | viewer (read-only).
 
 set -euo pipefail
 
@@ -33,8 +35,65 @@ fi
 
 CRED_FILE="${TEAM_BRAIN_CREDENTIALS:-$TEAM_DIR/credentials.json}"
 CONFIG_YAML="${TEAM_BRAIN_CONFIG:-$TEAM_DIR/team.yaml}"
+PIN_FILE="${TEAM_BRAIN_PIN:-$TEAM_DIR/project.json}"
 
 die() { echo "error: $*" >&2; exit 1; }
+
+# Commit-safe pin (#39). Never put anon / api_key / invite here.
+pin_path() { echo "$PIN_FILE"; }
+
+load_pin() {
+  local path
+  path=$(pin_path)
+  [ -f "$path" ] || { echo "{}"; return 1; }
+  if ! jq -e 'type == "object"' "$path" >/dev/null 2>&1; then
+    die "invalid pin file: $path (must be a JSON object)"
+  fi
+  # Soft-reject secrets if someone mistakenly committed them
+  if jq -e '
+      (.api_key // .anon_key // .supabase_anon_key // .invite_code // .invite // "")
+      | tostring | length > 0
+    ' "$path" >/dev/null 2>&1; then
+    die "pin file must not contain secrets (api_key / anon / invite). Remove them from $path"
+  fi
+  cat "$path"
+}
+
+pinned_jira_key() {
+  local pin key
+  pin=$(load_pin 2>/dev/null) || return 1
+  key=$(jq -r '
+    .default_jira_key // .jira_key //
+    (if (.jira_keys|type)=="array" and (.jira_keys|length)>0 then .jira_keys[0] else empty end) //
+    empty
+  ' <<<"$pin")
+  [ -n "$key" ] && [ "$key" != "null" ] || return 1
+  echo "$key" | tr '[:lower:]' '[:upper:]'
+}
+
+resolve_jira_key() {
+  # Prefer explicit arg; else pin default.
+  local key="${1:-}"
+  if [ -n "$key" ]; then
+    echo "$key" | tr '[:lower:]' '[:upper:]'
+    return 0
+  fi
+  if key=$(pinned_jira_key); then
+    echo "→ Using pinned Jira key from $(pin_path): $key" >&2
+    echo "$key"
+    return 0
+  fi
+  return 1
+}
+
+rpc_forbidden_hint() {
+  local err="${1:-}"
+  if echo "$err" | grep -qi 'viewer role is read-only\|forbidden: viewer'; then
+    echo "→ Your role is viewer (read-only). Ask an admin for member/write access." >&2
+  elif echo "$err" | grep -qi 'forbidden: admin only'; then
+    echo "→ Admin only — ask a crew admin (rotate-invite / set-role)." >&2
+  fi
+}
 
 need_cmd() {
   command -v "$1" >/dev/null 2>&1 || die "missing dependency: $1"
@@ -165,6 +224,7 @@ rpc_try() {
   resp_body=$(echo "$resp" | sed '$d')
   if [ "$http" -lt 200 ] || [ "$http" -ge 300 ]; then
     echo "$resp_body" >&2
+    rpc_forbidden_hint "$resp_body"
     echo "RPC $fn failed (HTTP $http)" >&2
     return 1
   fi
@@ -174,7 +234,9 @@ rpc_try() {
 
 rpc() {
   local out
-  out=$(rpc_try "$1" "$2") || die "RPC $1 failed"
+  if ! out=$(rpc_try "$1" "$2"); then
+    die "RPC $1 failed"
+  fi
   echo "$out"
 }
 
@@ -878,7 +940,7 @@ cmd_start() {
       --foreground|-f) foreground=1; shift ;;
       --interval) interval="${2:-5}"; shift 2 ;;
       --idle-hours) idle_hours="${2:-1}"; shift 2 ;;
-      -h|--help) die "usage: start <JIRA-KEY> [interval-sec] [idle-hours] [--foreground]" ;;
+      -h|--help) die "usage: start [JIRA-KEY] [interval-sec] [idle-hours] [--foreground]  (JIRA-KEY optional if project.json pin set)" ;;
       *) positional+=("$1"); shift ;;
     esac
   done
@@ -886,8 +948,9 @@ cmd_start() {
   if [ ${#positional[@]} -ge 2 ]; then interval="${positional[1]}"; fi
   if [ ${#positional[@]} -ge 3 ]; then idle_hours="${positional[2]}"; fi
 
-  [ -n "$key" ] || die "usage: start <JIRA-KEY> [interval-sec] [idle-hours] [--foreground]"
-  key=$(echo "$key" | tr '[:lower:]' '[:upper:]')
+  if ! key=$(resolve_jira_key "$key"); then
+    die "usage: start [JIRA-KEY] … — pass a key or commit .team-brain/project.json with default_jira_key"
+  fi
   [[ "$interval" =~ ^[0-9]+$ ]] && [ "$interval" -ge 2 ] || die "interval must be integer >= 2"
   local idle_sec
   idle_sec=$(awk -v h="$idle_hours" 'BEGIN{printf "%d", (h+0)*3600}')
@@ -1233,12 +1296,30 @@ EOF
 }
 
 cmd_join() {
-  local invite="${1:-}"
-  local display="${2:-${USER:-engineer}}"
-  [ -n "$invite" ] || die "usage: join <invite-code> [display-name]"
+  local invite=""
+  local display="${USER:-engineer}"
+  local role="member"
+  local positional=()
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --role) role="${2:-member}"; shift 2 ;;
+      -h|--help) die "usage: join <invite-code> [display-name] [--role member|viewer]" ;;
+      *) positional+=("$1"); shift ;;
+    esac
+  done
+  if [ ${#positional[@]} -ge 1 ]; then invite="${positional[0]}"; fi
+  if [ ${#positional[@]} -ge 2 ]; then display="${positional[1]}"; fi
+  [ -n "$invite" ] || die "usage: join <invite-code> [display-name] [--role member|viewer]"
+  role=$(echo "$role" | tr '[:upper:]' '[:lower:]')
+  case "$role" in
+    member|viewer) ;;
+    *) die "role must be member or viewer (admin comes from register)" ;;
+  esac
   seed_team_yaml_from_public
   local out
-  out=$(rpc join_team "$(jq -n --arg c "$invite" --arg d "$display" '{p_invite_code:$c, p_display_name:$d}')")
+  out=$(rpc join_team "$(jq -n \
+    --arg c "$invite" --arg d "$display" --arg r "$role" \
+    '{p_invite_code:$c, p_display_name:$d, p_role:$r}')")
   save_credentials "$out"
   # Refresh team name in yaml if present
   if [ -f "$CONFIG_YAML" ]; then
@@ -1251,18 +1332,36 @@ cmd_join() {
     fi
   fi
   mkdir -p "$TEAM_DIR/initiatives"
+  if [ "$role" = "viewer" ]; then
+    echo "→ Joined as viewer (read-only). recall/list/breakdown OK; remember/correct forbidden." >&2
+  fi
   echo "$out" | jq .
 }
 
-# One-command teammate onboarding: invite + name + optional Jira key
+# One-command teammate onboarding: invite + name + optional Jira key (or pin)
 cmd_onboard() {
-  local invite="${1:-}"
-  local display="${2:-}"
-  local jira_key="${3:-}"
-  [ -n "$invite" ] && [ -n "$display" ] || die "usage: onboard <invite-code> \"Your Name\" [JIRA-KEY]"
+  local invite=""
+  local display=""
+  local jira_key=""
+  local role="member"
+  local positional=()
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --role) role="${2:-member}"; shift 2 ;;
+      -h|--help)
+        die "usage: onboard <invite-code> \"Your Name\" [JIRA-KEY] [--role member|viewer]"
+        ;;
+      *) positional+=("$1"); shift ;;
+    esac
+  done
+  if [ ${#positional[@]} -ge 1 ]; then invite="${positional[0]}"; fi
+  if [ ${#positional[@]} -ge 2 ]; then display="${positional[1]}"; fi
+  if [ ${#positional[@]} -ge 3 ]; then jira_key="${positional[2]}"; fi
+  [ -n "$invite" ] && [ -n "$display" ] || \
+    die "usage: onboard <invite-code> \"Your Name\" [JIRA-KEY] [--role member|viewer]"
 
   echo "→ Seeding config from public project + joining team…" >&2
-  cmd_join "$invite" "$display" >/dev/null
+  cmd_join "$invite" "$display" --role "$role" >/dev/null
   # Reload api key after join
   TEAM_BRAIN_API_KEY=$(jq -r .api_key "$CRED_FILE")
   export TEAM_BRAIN_API_KEY
@@ -1270,23 +1369,134 @@ cmd_onboard() {
   echo "→ whoami" >&2
   cmd_whoami
 
+  if [ -z "$jira_key" ]; then
+    jira_key=$(pinned_jira_key 2>/dev/null || true)
+    [ -n "$jira_key" ] && echo "→ Using pinned Jira key: $jira_key" >&2
+  fi
+
   if [ -n "$jira_key" ]; then
     jira_key=$(echo "$jira_key" | tr '[:lower:]' '[:upper:]')
     load_public_env
     local site="${TEAM_BRAIN_JIRA_SITE:-https://your-org.atlassian.net}"
     local url="${site%/}/browse/${jira_key}"
     echo "→ attach + recall recent memories for $jira_key" >&2
-    if ! cmd_attach "$jira_key" "$jira_key" "active" "$url" >/dev/null; then
-      die "attach failed for $jira_key"
+    if [ "$role" = "viewer" ]; then
+      # Viewers cannot upsert_initiative — pull if already attached by a writer
+      if ! cmd_sync "$jira_key" >/dev/null 2>&1; then
+        echo "→ Viewer cannot attach a new initiative. Ask a writer/admin to attach $jira_key first, then: recall $jira_key" >&2
+      else
+        echo "→ memories:" >&2
+        cmd_sync "$jira_key" | jq '{initiative: .initiative, memory_count: ((.memories // .captures)//[] | length), authors: [((.memories // .captures)//[])[].author_name] | unique}'
+      fi
+    else
+      if ! cmd_attach "$jira_key" "$jira_key" "active" "$url" >/dev/null; then
+        die "attach failed for $jira_key"
+      fi
+      echo "→ memories:" >&2
+      cmd_sync "$jira_key" | jq '{initiative: .initiative, memory_count: ((.memories // .captures)//[] | length), authors: [((.memories // .captures)//[])[].author_name] | unique}'
+      echo "" >&2
+      echo "Onboard complete. Cache: $TEAM_DIR/cache/${jira_key}.json  Export: $TEAM_DIR/initiatives/${jira_key}.md" >&2
     fi
-    echo "→ memories:" >&2
-    cmd_sync "$jira_key" | jq '{initiative: .initiative, memory_count: ((.memories // .captures)//[] | length), authors: [((.memories // .captures)//[])[].author_name] | unique}'
-    echo "" >&2
-    echo "Onboard complete. Cache: $TEAM_DIR/cache/${jira_key}.json  Export: $TEAM_DIR/initiatives/${jira_key}.md" >&2
   else
     echo "" >&2
-    echo "Onboard complete (no Jira key). Next: bash $0 attach <JIRA-KEY> && bash $0 sync <JIRA-KEY>" >&2
+    echo "Onboard complete (no Jira key). Next: bash \$0 attach <JIRA-KEY> && bash \$0 sync <JIRA-KEY>" >&2
+    echo "Or commit .team-brain/project.json with default_jira_key and re-run onboard / start." >&2
   fi
+}
+
+cmd_pin() {
+  local sub="${1:-show}"
+  shift || true
+  case "$sub" in
+    show|get|"")
+      if [ ! -f "$(pin_path)" ]; then
+        echo "No pin at $(pin_path). Create with: pin set --jira KEY [--team-name NAME] [--project-ref REF]" >&2
+        jq -n '{pinned:false, path:"'"$(pin_path)"'", hint:"Commit project.json (non-secret). Keep credentials.json gitignored."}'
+        return 0
+      fi
+      load_pin | jq --arg p "$(pin_path)" '. + {path:$p, pinned:true}'
+      ;;
+    set|init|write)
+      local jira="" team_name="" project_ref="" keys_json="[]"
+      while [ $# -gt 0 ]; do
+        case "$1" in
+          --jira|--jira-key) jira="${2:-}"; shift 2 ;;
+          --team-name|--team) team_name="${2:-}"; shift 2 ;;
+          --project-ref|--ref) project_ref="${2:-}"; shift 2 ;;
+          --jira-keys)
+            keys_json=$(jq -c --arg s "${2:-}" '$s | split(",") | map(ascii_upcase|gsub("^\\s+|\\s+$";"")) | map(select(length>0))' 2>/dev/null || echo '[]')
+            shift 2
+            ;;
+          -h|--help)
+            die "usage: pin set --jira KEY [--team-name NAME] [--project-ref REF] [--jira-keys K1,K2]"
+            ;;
+          *) die "unknown pin set option: $1" ;;
+        esac
+      done
+      [ -n "$jira" ] || die "usage: pin set --jira KEY [--team-name NAME] [--project-ref REF]"
+      jira=$(echo "$jira" | tr '[:lower:]' '[:upper:]')
+      mkdir -p "$TEAM_DIR"
+      ensure_team_gitignore
+      local existing="{}"
+      [ -f "$(pin_path)" ] && existing=$(load_pin)
+      if [ -z "$team_name" ]; then
+        team_name=$(jq -r '.team_name // empty' <<<"$existing")
+        [ -z "$team_name" ] && [ -f "$CRED_FILE" ] && team_name=$(jq -r '.team_name // empty' "$CRED_FILE")
+      fi
+      if [ -z "$project_ref" ]; then
+        project_ref=$(jq -r '.supabase_project_ref // empty' <<<"$existing")
+      fi
+      if [ "$keys_json" = "[]" ]; then
+        keys_json=$(jq -c --arg j "$jira" '.jira_keys // [$j]' <<<"$existing" 2>/dev/null || jq -n --arg j "$jira" '[$j]')
+      fi
+      jq -n \
+        --arg j "$jira" \
+        --arg tn "${team_name:-}" \
+        --arg pr "${project_ref:-}" \
+        --argjson keys "$keys_json" \
+        '{
+          version: 1,
+          team_name: (if $tn=="" then null else $tn end),
+          default_jira_key: $j,
+          jira_keys: (($keys + [$j]) | unique),
+          supabase_project_ref: (if $pr=="" then null else $pr end),
+          notes: "Commit-safe crew pin. NEVER put anon key, api_key, or invite_code here. Secrets stay in env / credentials.json (gitignored)."
+        }' >"$(pin_path)"
+      chmod 644 "$(pin_path)" 2>/dev/null || true
+      echo "→ Wrote commit-safe pin → $(pin_path)" >&2
+      echo "  Commit this file. Do NOT commit credentials.json or anon keys." >&2
+      jq . "$(pin_path)"
+      ;;
+    *)
+      die "usage: pin show | pin set --jira KEY [--team-name NAME] [--project-ref REF]"
+      ;;
+  esac
+}
+
+cmd_rotate_invite() {
+  require_api_key
+  rpc rotate_invite "$(jq -n --arg k "$TEAM_BRAIN_API_KEY" '{p_api_key:$k}')" | jq .
+}
+
+cmd_set_role() {
+  require_api_key
+  local name=""
+  local role=""
+  local positional=()
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --role) role="${2:-}"; shift 2 ;;
+      -h|--help) die "usage: set-role \"Display Name\" --role admin|member|viewer" ;;
+      *) positional+=("$1"); shift ;;
+    esac
+  done
+  if [ ${#positional[@]} -ge 1 ]; then name="${positional[0]}"; fi
+  if [ ${#positional[@]} -ge 2 ] && [ -z "$role" ]; then role="${positional[1]}"; fi
+  [ -n "$name" ] && [ -n "$role" ] || die "usage: set-role \"Display Name\" --role admin|member|viewer"
+  role=$(echo "$role" | tr '[:upper:]' '[:lower:]')
+  rpc set_member_role "$(jq -n \
+    --arg k "$TEAM_BRAIN_API_KEY" --arg d "$name" --arg r "$role" \
+    '{p_api_key:$k, p_display_name:$d, p_role:$r}')" | jq .
 }
 
 cmd_whoami() {
@@ -1297,11 +1507,13 @@ cmd_whoami() {
 cmd_attach() {
   require_api_key
   local key="${1:-}"
-  local title="${2:-$key}"
+  local title="${2:-}"
   local status="${3:-active}"
   local url="${4:-}"
-  [ -n "$key" ] || die "usage: attach <JIRA-KEY> [title] [status] [jira-url]"
-  key=$(echo "$key" | tr '[:lower:]' '[:upper:]')
+  if ! key=$(resolve_jira_key "$key"); then
+    die "usage: attach [JIRA-KEY] [title] [status] [jira-url] — or set project.json pin"
+  fi
+  title="${title:-$key}"
   local body out
   body=$(jq -n \
     --arg k "$TEAM_BRAIN_API_KEY" \
@@ -2090,15 +2302,21 @@ Team Brain — collaborative memory client (Supabase)
   bootstrap --team NAME --admin "Name" [options…]
       Admin one-shot: configure → migrate → register → print joiner share bundle.
       See: bash core/scripts/team-brain-bootstrap.sh --help
-  onboard <invite-code> "Your Name" [JIRA-KEY]
+  onboard <invite-code> "Your Name" [JIRA-KEY] [--role member|viewer]
   register <team-name> [display-name]
-  join <invite-code> [display-name]
+  join <invite-code> [display-name] [--role member|viewer]
   whoami
-  attach <JIRA-KEY> [title] [status] [jira-url]
-      Upsert initiative, then pull recent memories into cache/
+  pin show | pin set --jira KEY [--team-name NAME] [--project-ref REF]
+      Commit-safe .team-brain/project.json (#39). Never secrets (anon/api_key/invite).
+  rotate-invite              Admin-only: rotate invite code (#40)
+  set-role "Name" --role admin|member|viewer
+      Admin-only: change a teammate's role (#40)
+  attach [JIRA-KEY] [title] [status] [jira-url]
+      Upsert initiative (writers only). Jira key optional if project.json pin set.
 
-  start <JIRA-KEY> [interval-sec] [idle-hours] [--foreground]
+  start [JIRA-KEY] [interval-sec] [idle-hours] [--foreground]
       ONE manual step: load crew memory + enter sync mode (background pull).
+      Jira key optional when .team-brain/project.json has default_jira_key.
       Merge-safe: new inserts; identical → no-op; same source_ref + new body → update.
       Sleeps after idle-hours (default 1h) with warning; wake/start to resume.
   stop [JIRA-KEY]           Leave sync mode (all sessions if no key)
@@ -2108,7 +2326,7 @@ Team Brain — collaborative memory client (Supabase)
   compliance [JIRA-KEY]     MCP-first soft gate status (issue #36)
 
   remember <JIRA-KEY> <research|decision|note|learning> [--source-ref REF] [--body-file PATH | - | <body...>]
-      Write shared memory. Dedupes identical; UPDATES same source_ref when body changes.
+      Write shared memory (admin/member only; viewers forbidden). Dedupes / source_ref merge.
   correct <JIRA-KEY> --source-ref REF [--kind research|decision|note] [--was TEXT] [--learning TEXT] [--body-file PATH | - | <body...>]
       Human correction: UPDATE memory at source_ref; optional learning row at REF/learning.
       Bodies: natural-language prefer/avoid guidance — not TODO/NO-TODO dumps.
@@ -2144,9 +2362,18 @@ Realtime push (#31 — signal Broadcast; poll always remains fallback):
   pip install websockets                   # required for push listener
   Apply migration 20260804000001_team_brain_realtime_broadcast.sql
 
+Roles / invites (#40):
+  Apply migration 20260805000001_team_brain_roles_and_invites.sql
+  Roles: admin | member (write) | viewer (read-only)
+  Admin: rotate-invite · set-role
+
+Repo pin (#39):
+  Commit .team-brain/project.json (non-secret). Keep credentials.json gitignored.
+
 SoT: Supabase memories + .team-brain/cache/<KEY>.json
 Sync state: .team-brain/sync/<KEY>.json
 Push notify: .team-brain/notify/<KEY>.json
+Pin: .team-brain/project.json (commit-safe)
 Export: .team-brain/initiatives/<KEY>.md (optional)
 Plan: docs/team-brain-memory.md
 EOF
@@ -2167,6 +2394,9 @@ main() {
     register) cmd_register "$@" ;;
     join) cmd_join "$@" ;;
     whoami) cmd_whoami "$@" ;;
+    pin) cmd_pin "$@" ;;
+    rotate-invite|rotate_invite) cmd_rotate_invite "$@" ;;
+    set-role|set_role) cmd_set_role "$@" ;;
     attach) cmd_attach "$@" ;;
     start) cmd_start "$@" ;;
     stop) cmd_stop "$@" ;;

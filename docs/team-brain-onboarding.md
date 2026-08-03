@@ -40,17 +40,18 @@ Enforced strongest in **Cursor** (`team-brain.mdc` + skill + optional MCP).
 
 ## Before you start — checklist
 
-Ask a teammate (crew admin) for **three things** (Slack/chat is fine):
+Ask a teammate (crew admin) for **secrets** (Slack/chat is fine). The **Jira key** may already be in a committed pin:
 
 | Ask for | Example | Notes |
 |---------|---------|--------|
-| **Invite code** | 16 hex chars | From admin’s `register` — not in the public repo |
-| **Jira key** | `AAP-81423` | The ticket you will work on |
-| **Supabase URL + anon key** | `https://….supabase.co` + anon JWT | Crew’s project — put in local `supabase/project.public.env` or `.team-brain/team.yaml` |
+| **Invite code** | 16 hex chars | From admin’s `register` / `rotate-invite` — never in git |
+| **Supabase URL + anon key** | `https://….supabase.co` + anon JWT | Crew’s project — local env / `project.public.env` only |
+| **Jira key** (if no pin) | `AAP-81423` | Or pull `.team-brain/project.json` from the product repo (#39) |
+| **Role** (optional) | `member` (write) or `viewer` (read-only) | Admin tells you which; default is write |
 
 Also make sure you have:
 
-- [ ] This repo cloned (`engineer-brain`)
+- [ ] This repo cloned (`engineer-brain`) **and/or** the product repo with `.team-brain/project.json`
 - [ ] A terminal (macOS Terminal, iTerm, VS Code/Cursor terminal)
 - [ ] `curl` and `jq` installed (`brew install jq` if needed)
 - [ ] Placeholders in `supabase/project.public.env` replaced with the crew’s URL + anon (or set env / `team.yaml`)
@@ -61,24 +62,42 @@ You do **not** need your own Supabase account or the dashboard.
 
 ## Path A — Join an existing team (most juniors)
 
+### Step 0 — Pull the commit-safe pin (when the product repo has one)
+
+Many crews commit **only** `.team-brain/project.json` (Jira key + team name — **no** anon/api_key/invite):
+
+```bash
+# In the product workspace (example shape):
+cat .team-brain/project.json
+# { "default_jira_key": "AAP-81423", "team_name": "Spike Crew", … }
+```
+
+Example fixture: [examples/team-spike-crew/project.json](../examples/team-spike-crew/project.json).  
+Admin creates/updates the pin with: `bash core/scripts/team-brain-api.sh pin set --jira AAP-81423 --team-name "Spike Crew"`.
+
 ### Step 1 — Open a terminal in the right place
 
 ```bash
 cd /path/to/engineer-brain
 ```
 
-Use the real path on your machine (where you cloned the repo).
+Use the real path on your machine (where you cloned the repo). Work with `TEAM_BRAIN_DIR` pointing at the product workspace `.team-brain/` when the pin lives there.
 
-### Step 1b — Point at the crew’s Supabase project
+### Step 1b — Point at the crew’s Supabase project (secrets — not in the pin)
 
-Edit `supabase/project.public.env` (or export env / fill `.team-brain/team.yaml`) with the URL + anon key your admin shared. Leave placeholders → onboard will fail with a clear error.
+Edit `supabase/project.public.env` (or export env / fill `.team-brain/team.yaml`) with the URL + anon key your admin shared. Leave placeholders → onboard will fail with a clear error. **Never** put these into `project.json`.
 
 ### Step 2 — Run one onboard command
 
-Replace the three placeholders with **your** values:
-
 ```bash
-bash core/scripts/team-brain-api.sh onboard INVITE_CODE "Your Name" JIRA-KEY
+# Write member (default) — Jira from pin when omitted:
+bash core/scripts/team-brain-api.sh onboard INVITE_CODE "Your Name"
+
+# Or explicit Jira + write role:
+bash core/scripts/team-brain-api.sh onboard INVITE_CODE "Your Name" AAP-81423
+
+# Read-only viewer:
+bash core/scripts/team-brain-api.sh onboard INVITE_CODE "Your Name" --role viewer
 ```
 
 **Real example:**
@@ -92,14 +111,16 @@ Tips:
 - Keep your name in quotes if it has a space: `"Ada Junior"`
 - Jira key can be upper or lower case; the tool normalizes it
 - Use a **display name that nobody else on the team already used** (duplicates are rejected)
+- Viewers can `recall` / `breakdown` but not `remember` / `attach` (ask admin for `set-role … member`)
 
 ### Step 3 — Check that it worked
 
 ```bash
 bash core/scripts/team-brain-api.sh whoami
+bash core/scripts/team-brain-api.sh pin show
 ```
 
-You should see JSON with your `display_name`, `team_name`, and `role` (usually `member`).
+You should see JSON with your `display_name`, `team_name`, and `role` (`member`, `viewer`, or `admin`).
 
 Then:
 
@@ -119,8 +140,9 @@ Team Brain created a folder next to your work (often the parent workspace), for 
 
 ```text
 .team-brain/
+├── project.json        ← commit-safe pin (Jira key / team name) — OK to commit
 ├── credentials.json    ← YOUR secret — never commit or paste in Slack
-├── team.yaml
+├── team.yaml           ← often has URL+anon locally — do not commit anon
 ├── cache/
 │   └── AAP-81423.json  ← what agents should read
 └── initiatives/

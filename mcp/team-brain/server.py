@@ -152,8 +152,32 @@ def whoami() -> str:
 
 
 @mcp.tool()
+def pin_show() -> str:
+    """Show commit-safe repo pin (.team-brain/project.json) — non-secret crew attach (#39)."""
+    return _as_json(_run("pin", "show"))
+
+
+@mcp.tool()
+def rotate_invite() -> str:
+    """Admin-only: rotate the team invite code (#40). Members/viewers cannot invite."""
+    return _as_json(_run("rotate-invite"))
+
+
+@mcp.tool()
+def set_role(display_name: str, role: str) -> str:
+    """Admin-only: set a teammate role to admin|member|viewer (#40)."""
+    name = display_name.strip()
+    role_n = role.strip().lower()
+    if not name:
+        raise ValueError("display_name is required")
+    if role_n not in ("admin", "member", "viewer"):
+        raise ValueError("role must be admin, member, or viewer")
+    return _as_json(_run("set-role", name, "--role", role_n))
+
+
+@mcp.tool()
 def attach(
-    jira_key: str,
+    jira_key: str = "",
     title: str = "",
     status: str = "active",
     jira_url: str = "",
@@ -161,8 +185,13 @@ def attach(
     """Attach a Jira initiative and pull recent shared memories into the local cache.
 
     Prefer start() when beginning a work session — it attaches if needed and enters sync mode.
+    jira_key optional when project.json pin is present. Writers only (viewers cannot attach).
     """
-    key = jira_key.strip().upper()
+    key = jira_key.strip().upper() or _pinned_jira_key()
+    if not key:
+        raise ValueError(
+            "jira_key required (or commit .team-brain/project.json with default_jira_key)"
+        )
     title = title.strip() or key
     args = ["attach", key, title, status or "active"]
     if jira_url.strip():
@@ -170,9 +199,25 @@ def attach(
     return _as_json(_run(*args))
 
 
+def _pinned_jira_key() -> str:
+    """Read commit-safe .team-brain/project.json default key if present."""
+    team_dir = Path(os.environ.get("TEAM_BRAIN_DIR", Path.cwd() / ".team-brain"))
+    pin = team_dir / "project.json"
+    if not pin.is_file():
+        return ""
+    try:
+        data = json.loads(pin.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return ""
+    key = data.get("default_jira_key") or data.get("jira_key") or ""
+    if not key and isinstance(data.get("jira_keys"), list) and data["jira_keys"]:
+        key = data["jira_keys"][0]
+    return str(key).strip().upper()
+
+
 @mcp.tool()
 def start(
-    jira_key: str,
+    jira_key: str = "",
     interval_sec: int = 5,
     idle_hours: float = 1.0,
 ) -> str:
@@ -181,16 +226,15 @@ def start(
     Loads crew memory into cache, starts background merge-safe pull, returns session JSON.
     Call when the user starts team work on a ticket. Summarize memories before researching.
     Sets research_ok (context load counts as recall for the soft compliance gate).
+    jira_key optional when .team-brain/project.json pin has default_jira_key (#39).
     """
-    key = jira_key.strip().upper()
-    payload = _parse_obj(
-        _run(
-            "start",
-            key,
-            str(max(2, int(interval_sec))),
-            str(idle_hours),
+    key = jira_key.strip().upper() or _pinned_jira_key()
+    if not key:
+        raise ValueError(
+            "jira_key required (or commit .team-brain/project.json with default_jira_key)"
         )
-    )
+    args = ["start", key, str(max(2, int(interval_sec))), str(idle_hours)]
+    payload = _parse_obj(_run(*args))
     return _with_compliance(key, payload)
 
 
@@ -280,6 +324,7 @@ def remember(
     For human corrections prefer correct(); or re-remember with the same source_ref.
     Memory bodies: natural-language prefer/avoid guidance — never TODO/NO-TODO dumps.
     Response includes compliance (marks last_remember_at on the sync session).
+    Viewers (read-only) cannot remember — RPC returns forbidden.
     """
     key = jira_key.strip().upper()
     kind_n = (kind or "research").strip().lower()

@@ -13,6 +13,8 @@ Agent-native tools for collaborative initiative memory. Wraps [`team-brain-api.s
 | `prepare_research` | Recall/list + compliance — call before deep research |
 | `broadcast_topic` | Realtime signal topic for a Jira key (#31) |
 | `peer_notify` | Latest push notify file (`.team-brain/notify/<KEY>.json`) |
+| `pin_show` | Commit-safe repo pin (`project.json`) (#39) |
+| `rotate_invite` / `set_role` | Admin-only invite rotate / role change (#40) |
 | `whoami` | Current member / team |
 | `attach` | Upsert Jira initiative + pull recent memories |
 | `remember` | Write memory (`source_ref`; update on overlap; kinds include `learning`) |
@@ -98,7 +100,9 @@ IDLE ~1h
 Memory bodies: natural-language prefer/avoid guidance — not TODO/NO-TODO dumps.  
 Apply migration `20260802000001_team_brain_learning_kind.sql` for the `learning` kind.  
 Apply `20260803000001_team_brain_memory_history.sql` for revision archive + `history` / `restore`.  
-Apply `20260804000001_team_brain_realtime_broadcast.sql` for peer push signals (`start` / `watch --push`; poll remains fallback).
+Apply `20260804000001_team_brain_realtime_broadcast.sql` for peer push signals (`start` / `watch --push`; poll remains fallback).  
+Apply `20260805000001_team_brain_roles_and_invites.sql` for `viewer` + admin invite rotate.  
+Commit `.team-brain/project.json` for repo pin (#39); `start`/`attach` accept an empty key when pinned.
 
 ### Chat examples (Cursor)
 
