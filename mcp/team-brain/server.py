@@ -33,6 +33,8 @@ mcp = FastMCP(
         "no TODO/NO-TODO dumps). "
         "source_ref updates archive the prior body; history() / restore() for soft rollback. "
         "If sync_status mode is sleep, prompt the user to wake before deep research. "
+        "Peer push: start() may run Realtime Broadcast listener; check notify/<KEY>.json "
+        "or sync_status.realtime_daemon after teammate remembers (poll/watch still fallback). "
         "Never upload personal BRAIN.md or credentials.json. "
         "CLI humans may bypass the soft gate; agents must not."
     ),
@@ -394,6 +396,46 @@ def list_recent(jira_key: str, since: str = "") -> str:
     if since.strip():
         return _as_json(_run("sync", key, since.strip()))
     return _as_json(_run("sync", key))
+
+
+@mcp.tool()
+def broadcast_topic(jira_key: str) -> str:
+    """Return Realtime Broadcast topic for peer push signals (#31).
+
+    Signal-only channel (no memory bodies). Requires migration
+    20260804000001_team_brain_realtime_broadcast.sql. Content still via recall/list_recent.
+    """
+    key = jira_key.strip().upper()
+    if not key:
+        raise ValueError("jira_key is required")
+    return _as_json(_run("broadcast-topic", key))
+
+
+@mcp.tool()
+def peer_notify(jira_key: str) -> str:
+    """Read latest peer-push notification for a Jira key (if Realtime pull wrote one).
+
+    Path: .team-brain/notify/<KEY>.json. Empty/missing means no push yet — use recall.
+    """
+    key = jira_key.strip().upper()
+    if not key:
+        raise ValueError("jira_key is required")
+    team_dir = Path(os.environ.get("TEAM_BRAIN_DIR", Path.cwd() / ".team-brain"))
+    path = team_dir / "notify" / f"{key}.json"
+    if not path.is_file():
+        return json.dumps(
+            {
+                "jira_key": key,
+                "notify": None,
+                "agent_hint": "No push notify yet — recall() or wait for sync poll.",
+            },
+            indent=2,
+        )
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        data = {"raw": path.read_text(encoding="utf-8", errors="replace")}
+    return json.dumps({"jira_key": key, "path": str(path), "notify": data}, indent=2)
 
 
 @mcp.tool()

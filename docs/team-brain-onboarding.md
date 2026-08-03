@@ -245,6 +245,7 @@ bash core/scripts/team-brain-api.sh attach AAP-81423 "Short title" "active" "htt
 | **Cache merge** — no blind wipe of other memories on pull | ✅ |
 | **Idle sleep + warn** — default 1h; `wake` to resume | ✅ |
 | **Agent prompts on sleep** | ✅ Cursor rule/skill |
+| **Peer push while sync/`watch` active** | ✅ Signal Broadcast (#31) + poll fallback; needs `start` or `watch` once |
 | **Push into open chat with zero `start`** | ❌ Still needs you (or the agent) to enter sync mode once |
 
 **Cursor:** say *“I’m starting on AAP-81423 — start Team Brain sync.”*  

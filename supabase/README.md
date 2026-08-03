@@ -118,10 +118,12 @@ bash core/scripts/team-brain-api.sh breakdown AAP-81423
 
 Do not commit `service_role` keys or live anon keys to public repos. Rotate invite codes / anon keys if leaked.
 
-**Existing projects:** apply any new migration files once (memory → embeddings → security → sync_mode → invite_hygiene → **learning_kind** → **memory_history**).
+**Existing projects:** apply any new migration files once (memory → embeddings → security → sync_mode → invite_hygiene → **learning_kind** → **memory_history** → **realtime_broadcast**).
 
 **Sync mode:** `bash core/scripts/team-brain-api.sh start <JIRA-KEY>` — one entry, background pull, idle sleep. Requires `…_sync_mode.sql` for merge-on-`source_ref` updates.
 
 **Correction / history:** `correct` + `learning` kind (`…_learning_kind.sql`); `history` / `restore` soft rollback (`…_memory_history.sql` — revisions team-scoped via RPCs, no anon table SELECT).
+
+**Realtime push (#31):** signal-only Broadcast on remember (`…_realtime_broadcast.sql`) — no anon SELECT on captures, no bodies on the wire. Peers: `start` / `watch --push` + `pip install websockets`. Fallback: poll/`watch` always work (`TEAM_BRAIN_REALTIME=off` to disable push).
 
 **Semantic recall (optional):** `TEAM_BRAIN_EMBED_PROVIDER=openai|ollama` — otherwise `recall` uses FTS.

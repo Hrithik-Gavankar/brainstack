@@ -47,7 +47,7 @@ flowchart LR
   MCP --> EngB
 ```
 
-**Honesty:** sync is not automatic chat sync. Shared memory requires `remember`, then `recall` (or the Cursor agent loop / MCP / optional `watch` poll). Agents get a soft MCP-first compliance gate (`compliance` / `prepare_research`); the CLI is not hard-blocked.
+**Honesty:** sync is not automatic chat sync. Shared memory requires `remember`, then `recall` (or the Cursor agent loop / MCP / optional `watch` poll). Agents get a soft MCP-first compliance gate (`compliance` / `prepare_research`); the CLI is not hard-blocked. Peer push (#31) is signal-only Realtime Broadcast + authenticated pull — poll remains the fallback.
 
 ## Onboard (new teammate)
 

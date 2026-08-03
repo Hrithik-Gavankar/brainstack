@@ -5,7 +5,7 @@ Brain is the **product umbrella**. Two scopes ship as skills:
 | Scope | Skill | Living documents | Typical commands |
 |-------|-------|------------------|------------------|
 | **Engineer** | `engineer-brain` | `BRAIN.md` | `sync`, `update`, `quarterly`, `reflect`, `scan`, `doctor` |
-| **Team** | `team-brain` | Supabase memories + `cache/<KEY>.json` (+ optional md export) | `onboard`, `attach`, `remember`, `correct`, `history`, `restore`, `recall`, `breakdown`, `watch` |
+| **Team** | `team-brain` | Supabase memories + `cache/<KEY>.json` (+ optional md export) | `onboard`, `attach`, `remember`, `correct`, `history`, `restore`, `recall`, `breakdown`, `watch`, `broadcast-topic` |
 
 ```mermaid
 flowchart TB

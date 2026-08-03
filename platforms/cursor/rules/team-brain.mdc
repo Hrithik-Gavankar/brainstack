@@ -90,7 +90,7 @@ Check `sync-status <KEY>`:
 
 ## Prefer MCP tools if connected
 
-`start` / `stop` / `wake` / `touch` / `sync_status` / `compliance` / `prepare_research` / `recall` / `remember` / `correct` / `history` / `restore`
+`start` / `stop` / `wake` / `touch` / `sync_status` / `compliance` / `prepare_research` / `peer_notify` / `recall` / `remember` / `correct` / `history` / `restore`
 
 ## Never
 

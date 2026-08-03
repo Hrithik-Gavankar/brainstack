@@ -9,8 +9,9 @@
 # Commands: onboard | register | join | whoami | attach | start | stop | wake |
 #           bootstrap | remember | correct | history | restore | recall | capture |
 #           sync | watch | breakdown | metrics | compliance | list | mirror | status |
-#           sync-status | touch
+#           sync-status | touch | broadcast-topic
 # Plan: docs/team-brain-memory.md — memories are SoT; md is optional export.
+# Realtime (#31): signal Broadcast + poll fallback — see migration …_realtime_broadcast.sql
 
 set -euo pipefail
 
@@ -341,10 +342,10 @@ EOF
 ensure_team_gitignore() {
   mkdir -p "$TEAM_DIR"
   if [ ! -f "$TEAM_DIR/.gitignore" ]; then
-    printf '%s\n' 'credentials.json' 'cache/' 'metrics.json' 'sync/' >"$TEAM_DIR/.gitignore"
+    printf '%s\n' 'credentials.json' 'cache/' 'metrics.json' 'sync/' 'notify/' >"$TEAM_DIR/.gitignore"
     return
   fi
-  for entry in cache/ metrics.json sync/; do
+  for entry in cache/ metrics.json sync/ notify/; do
     grep -qx "$entry" "$TEAM_DIR/.gitignore" 2>/dev/null || echo "$entry" >>"$TEAM_DIR/.gitignore"
   done
 }
@@ -374,9 +375,201 @@ write_memory_cache() {
 # ---------------------------------------------------------------------------
 
 SYNC_DIR() { echo "$TEAM_DIR/sync"; }
+NOTIFY_DIR() { echo "$TEAM_DIR/notify"; }
 sync_state_path() { echo "$(SYNC_DIR)/${1}.json"; }
 sync_pid_path() { echo "$(SYNC_DIR)/${1}.pid"; }
 sync_log_path() { echo "$(SYNC_DIR)/${1}.log"; }
+realtime_pid_path() { echo "$(SYNC_DIR)/${1}.realtime.pid"; }
+realtime_log_path() { echo "$(SYNC_DIR)/${1}.realtime.log"; }
+REALTIME_SCRIPT() { echo "$SCRIPT_DIR/team-brain-realtime.py"; }
+
+# TEAM_BRAIN_REALTIME=auto|on|off — push sidecar for sync mode / watch --push
+realtime_mode() {
+  local m
+  m=$(echo "${TEAM_BRAIN_REALTIME:-auto}" | tr '[:upper:]' '[:lower:]')
+  case "$m" in
+    on|1|true|yes) echo on ;;
+    off|0|false|no) echo off ;;
+    *) echo auto ;;
+  esac
+}
+
+stop_realtime_daemon() {
+  local key="$1"
+  local pidfile
+  pidfile=$(realtime_pid_path "$key")
+  if [ -f "$pidfile" ]; then
+    local pid
+    pid=$(cat "$pidfile" 2>/dev/null || true)
+    if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+      kill "$pid" 2>/dev/null || true
+      sleep 0.2
+      kill -9 "$pid" 2>/dev/null || true
+    fi
+    rm -f "$pidfile"
+  fi
+}
+
+# Best-effort Broadcast sidecar. Never fails start/watch — poll remains SoT fallback.
+start_realtime_daemon() {
+  local key="$1"
+  key=$(echo "$key" | tr '[:lower:]' '[:upper:]')
+  local mode
+  mode=$(realtime_mode)
+  if [ "$mode" = "off" ]; then
+    echo "→ Realtime push off (TEAM_BRAIN_REALTIME=off) — poll/watch only" >&2
+    return 0
+  fi
+  need_cmd python3
+  if [ ! -f "$(REALTIME_SCRIPT)" ]; then
+    echo "→ Realtime script missing — poll fallback" >&2
+    return 0
+  fi
+  if ! python3 -c 'import websockets' 2>/dev/null; then
+    if [ "$mode" = "on" ]; then
+      echo "→ Realtime requested but websockets missing — pip install websockets (poll continues)" >&2
+    else
+      echo "→ Realtime auto-skip (pip install websockets for push; poll continues)" >&2
+    fi
+    return 0
+  fi
+  # Probe topic RPC (migration applied?)
+  if ! rpc_try memory_broadcast_topic "$(jq -n \
+    --arg k "$TEAM_BRAIN_API_KEY" --arg j "$key" \
+    '{p_api_key:$k, p_jira_key:$j}')" >/dev/null 2>&1; then
+    if [ "$mode" = "on" ]; then
+      echo "→ Realtime on but memory_broadcast_topic failed — apply …_realtime_broadcast.sql (poll continues)" >&2
+    else
+      echo "→ Realtime auto-skip (broadcast migration not applied; poll continues)" >&2
+    fi
+    return 0
+  fi
+  stop_realtime_daemon "$key"
+  mkdir -p "$(SYNC_DIR)"
+  local logfile pidfile
+  logfile=$(realtime_log_path "$key")
+  pidfile=$(realtime_pid_path "$key")
+  nohup python3 "$(REALTIME_SCRIPT)" "$key" >>"$logfile" 2>&1 &
+  echo $! >"$pidfile"
+  echo "→ Realtime push listener pid $(cat "$pidfile") (log: $logfile)" >&2
+}
+
+# Client-side signal if DB trigger unavailable (best-effort; never fails remember).
+maybe_client_broadcast() {
+  local key="$1"
+  local out_json="${2:-}"
+  [ -n "$key" ] || return 0
+  key=$(echo "$key" | tr '[:lower:]' '[:upper:]')
+  load_config
+  [ -n "${TEAM_BRAIN_SUPABASE_URL:-}" ] && [ -n "${TEAM_BRAIN_SUPABASE_ANON_KEY:-}" ] || return 0
+  supabase_config_is_placeholder && return 0
+  local team_id=""
+  if [ -f "$CRED_FILE" ]; then
+    team_id=$(jq -r '.team_id // empty' "$CRED_FILE")
+  fi
+  [ -n "$team_id" ] || return 0
+  if jq -e '.deduped == true' >/dev/null 2>&1 <<<"$out_json"; then
+    return 0
+  fi
+  local topic payload mem_json
+  topic="team-brain:${team_id}:${key}"
+  mem_json=$(jq -c '{
+      capture_id:(.id // .capture_id // null),
+      source_ref:(.source_ref // null),
+      kind:(.kind // null),
+      updated_at:(.updated_at // null),
+      op:(if .updated==true then "UPDATE" else "INSERT" end)
+    }' <<<"$out_json" 2>/dev/null || echo '{}')
+  payload=$(jq -n \
+    --arg tid "$team_id" \
+    --arg jk "$key" \
+    --argjson mem "$mem_json" \
+    '{
+      team_id: $tid,
+      jira_key: $jk,
+      capture_id: $mem.capture_id,
+      source_ref: $mem.source_ref,
+      kind: $mem.kind,
+      updated_at: $mem.updated_at,
+      op: $mem.op,
+      via: "client_broadcast"
+    }')
+  # Topic may contain ':' — encode path segments safely via batch endpoint
+  local url="${TEAM_BRAIN_SUPABASE_URL%/}/realtime/v1/api/broadcast"
+  curl -sS -o /dev/null -X POST "$url" \
+    -H "apikey: ${TEAM_BRAIN_SUPABASE_ANON_KEY}" \
+    -H "Authorization: Bearer ${TEAM_BRAIN_SUPABASE_ANON_KEY}" \
+    -H "Content-Type: application/json" \
+    -d "$(jq -n --arg t "$topic" --argjson p "$payload" \
+      '{messages:[{topic:$t, event:"memory_changed", payload:$p}]}')" \
+    2>/dev/null || true
+}
+
+# Authenticated cache refresh after a push signal (merge-safe; used by realtime listener).
+cmd_pull_signal() {
+  require_api_key
+  local key="${1:-}"
+  [ -n "$key" ] || die "usage: _pull_signal <JIRA-KEY>"
+  key=$(echo "$key" | tr '[:lower:]' '[:upper:]')
+  local since="" delta payload new_count
+  if [ -f "$(sync_state_path "$key")" ]; then
+    since=$(jq -r '.cursor // empty' "$(sync_state_path "$key")")
+  fi
+  if [ -n "$since" ]; then
+    delta=$(fetch_memories "$key" "$since" 2>/dev/null || echo '{}')
+  else
+    delta=$(fetch_memories "$key" 2>/dev/null || echo '{}')
+  fi
+  new_count=$(jq '((.memories // .captures) // []) | length' <<<"$delta" 2>/dev/null || echo 0)
+  payload=$(fetch_memories "$key" 2>/dev/null || true)
+  if [ -n "${payload:-}" ]; then
+    merge_memory_cache "$key" "$payload"
+    mirror_captures_to_md "$key" "$payload" >/dev/null 2>&1 || true
+    since=$(jq -r '[((.memories // .captures) // [])[] | (.updated_at // .created_at)] | max // empty' <<<"$payload")
+  fi
+  mkdir -p "$(NOTIFY_DIR)"
+  ensure_team_gitignore
+  local notify_path
+  notify_path="$(NOTIFY_DIR)/${key}.json"
+  jq -n \
+    --arg key "$key" \
+    --arg now "$(iso_now)" \
+    --argjson n "${new_count:-0}" \
+    --arg cur "${since:-}" \
+    --argjson delta "$(jq -c '((.memories // .captures) // [])[:10] | map({id, kind, source_ref, updated_at, author_name})' <<<"${delta:-{}}" 2>/dev/null || echo '[]')" \
+    '{
+      jira_key: $key,
+      notified_at: $now,
+      pull_count: $n,
+      cursor: (if $cur=="" then null else $cur end),
+      source: "realtime_broadcast",
+      memories: $delta,
+      agent_hint: "Peer memory landed — summarize notify/cache before continuing deep research."
+    }' >"$notify_path"
+  if [ -f "$(sync_state_path "$key")" ]; then
+    local tmp
+    tmp=$(mktemp)
+    jq --arg now "$(iso_now)" --arg cur "${since:-}" --argjson n "${new_count:-0}" '
+      .last_pull_at = $now
+      | .last_push_at = $now
+      | .cursor = (if $cur == "" then .cursor else $cur end)
+      | .last_pull_count = $n
+      | .push = ((.push // {}) + {last_signal_at: $now, last_pull_count: $n})
+    ' "$(sync_state_path "$key")" >"$tmp" && mv "$tmp" "$(sync_state_path "$key")"
+  fi
+  echo "→ push pull ${key}: +${new_count:-0} (notify: $notify_path)" >&2
+  jq . "$notify_path"
+}
+
+cmd_broadcast_topic() {
+  require_api_key
+  local key="${1:-}"
+  [ -n "$key" ] || die "usage: broadcast-topic <JIRA-KEY>"
+  key=$(echo "$key" | tr '[:lower:]' '[:upper:]')
+  rpc memory_broadcast_topic "$(jq -n \
+    --arg k "$TEAM_BRAIN_API_KEY" --arg j "$key" \
+    '{p_api_key:$k, p_jira_key:$j}')" | jq .
+}
 
 iso_now() { date -u +%Y-%m-%dT%H:%M:%SZ; }
 epoch_now() { date -u +%s; }
@@ -565,6 +758,7 @@ stop_sync_daemon() {
     fi
     rm -f "$pidfile"
   fi
+  stop_realtime_daemon "$key"
 }
 
 # Background pull loop — invoked as: team-brain-api.sh _sync_loop <KEY>
@@ -750,6 +944,7 @@ cmd_start() {
   echo "  Loaded ${summary_n} crew memories into cache" >&2
   echo "  Poll every ${interval}s · sleep after ${idle_hours}h idle" >&2
   echo "  Cache: $TEAM_DIR/cache/${key}.json" >&2
+  echo "  Push:  Realtime Broadcast signal (TEAM_BRAIN_REALTIME=$(realtime_mode); poll = fallback)" >&2
   echo "══════════════════════════════════════════════" >&2
   if [ "$summary_n" -gt 0 ]; then
     echo "Crew memory (latest):" >&2
@@ -762,7 +957,9 @@ cmd_start() {
 
   if [ "$foreground" -eq 1 ]; then
     echo "→ Foreground sync loop (Ctrl+C stops). Use touch/recall/remember to stay awake." >&2
+    start_realtime_daemon "$key" || true
     cmd_sync_loop "$key"
+    stop_realtime_daemon "$key"
     return 0
   fi
 
@@ -772,9 +969,16 @@ cmd_start() {
   pidfile=$(sync_pid_path "$key")
   nohup bash "$SCRIPT_DIR/team-brain-api.sh" _sync_loop "$key" >>"$logfile" 2>&1 &
   echo $! >"$pidfile"
-  local tmp
+  start_realtime_daemon "$key" || true
+  local tmp rpid
+  rpid=""
+  [ -f "$(realtime_pid_path "$key")" ] && rpid=$(cat "$(realtime_pid_path "$key")")
   tmp=$(mktemp)
-  jq --argjson pid "$(cat "$pidfile")" '.pid = $pid' "$(sync_state_path "$key")" >"$tmp" \
+  jq --argjson pid "$(cat "$pidfile")" --arg rpid "${rpid:-}" '
+    .pid = $pid
+    | .realtime_pid = (if $rpid=="" then null else ($rpid|tonumber) end)
+    | .push = ((.push // {}) + {policy: "signal_broadcast", mode: (if $rpid=="" then "poll_only" else "broadcast+poll" end)})
+  ' "$(sync_state_path "$key")" >"$tmp" \
     && mv "$tmp" "$(sync_state_path "$key")"
   echo "Background sync pid $(cat "$pidfile") (log: $logfile)" >&2
   echo "Stop:  bash team-brain-api.sh stop $key" >&2
@@ -870,8 +1074,19 @@ _sync_status_one() {
   elif [ "$mode" = "active" ]; then
     daemon="dead"
   fi
-  jq --arg d "$daemon" --argjson c "$(compliance_payload "$key")" \
-    '. + {daemon: $d, compliance: $c}' "$(sync_state_path "$key")"
+  local rpid rdaemon
+  rpid=$(jq -r '.realtime_pid // empty' "$(sync_state_path "$key")")
+  if [ -z "$rpid" ] && [ -f "$(realtime_pid_path "$key")" ]; then
+    rpid=$(cat "$(realtime_pid_path "$key")" 2>/dev/null || true)
+  fi
+  rdaemon="stopped"
+  if [ -n "$rpid" ] && kill -0 "$rpid" 2>/dev/null; then
+    rdaemon="running"
+  elif [ -n "$rpid" ]; then
+    rdaemon="dead"
+  fi
+  jq --arg d "$daemon" --arg rd "$rdaemon" --argjson c "$(compliance_payload "$key")" \
+    '. + {daemon: $d, realtime_daemon: $rd, compliance: $c}' "$(sync_state_path "$key")"
 }
 
 cmd_sync_status() {
@@ -1240,6 +1455,8 @@ cmd_remember() {
   elif jq -e '.deduped == true' >/dev/null 2>&1 <<<"$out"; then
     echo "→ memory unchanged (deduped — identical content)" >&2
   fi
+  # Best-effort peer signal (DB trigger preferred; client covers pre-migration projects)
+  maybe_client_broadcast "$key" "$out"
   echo "$out" | jq .
 }
 
@@ -1567,14 +1784,29 @@ cmd_sync() {
   echo "$out" | jq .
 }
 
-# Near-realtime watch: poll list_recent with a cursor (member api_key auth).
-# True postgres_changes Realtime cannot use our custom api_key RLS model safely
-# with the anon JWT — see docs/team-brain-memory.md P1.
+# Near-realtime watch: authenticated poll (default) + optional Broadcast push (#31).
+# postgres_changes CDC is intentionally NOT used — would require anon SELECT on captures.
+# See docs/team-brain-memory.md P1 + Realtime push section.
 cmd_watch() {
   require_api_key
-  local key="${1:-}"
-  local interval="${2:-5}"
-  [ -n "$key" ] || die "usage: watch <JIRA-KEY> [interval-seconds]"
+  local key=""
+  local interval=5
+  local mode="auto" # auto|push|poll
+  local positional=()
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --push) mode="push"; shift ;;
+      --poll) mode="poll"; shift ;;
+      --interval) interval="${2:-5}"; shift 2 ;;
+      -h|--help)
+        die "usage: watch <JIRA-KEY> [interval-seconds] [--push|--poll]"
+        ;;
+      *) positional+=("$1"); shift ;;
+    esac
+  done
+  if [ ${#positional[@]} -ge 1 ]; then key="${positional[0]}"; fi
+  if [ ${#positional[@]} -ge 2 ]; then interval="${positional[1]}"; fi
+  [ -n "$key" ] || die "usage: watch <JIRA-KEY> [interval-seconds] [--push|--poll]"
   key=$(echo "$key" | tr '[:lower:]' '[:upper:]')
   [[ "$interval" =~ ^[0-9]+$ ]] && [ "$interval" -ge 2 ] || die "interval must be an integer >= 2"
 
@@ -1585,8 +1817,20 @@ cmd_watch() {
   # Cursor must track updated_at (source_ref merges) — same as cmd_sync_loop
   since=$(jq -r '[((.memories // .captures) // [])[] | (.updated_at // .created_at)] | max // empty' <<<"$payload")
   new_count=$(jq '((.memories // .captures) // []) | length' <<<"$payload")
-  echo "Watching $key every ${interval}s (${new_count} memories). Ctrl+C to stop." >&2
+
+  if [ "$mode" = "push" ] || [ "$mode" = "auto" ]; then
+    # Foreground push listener; poll still runs as safety net unless --push-only later
+    if [ "$mode" = "push" ]; then
+      export TEAM_BRAIN_REALTIME=on
+    fi
+    start_realtime_daemon "$key" || true
+  fi
+
+  echo "Watching $key every ${interval}s (${new_count} memories; mode=${mode}). Ctrl+C to stop." >&2
   echo "Cursor: ${since:-none}" >&2
+  echo "Fallback poll always on — push is additive when Realtime is available." >&2
+
+  trap 'stop_realtime_daemon "'"$key"'"; exit 0' INT TERM
 
   while true; do
     sleep "$interval"
@@ -1877,7 +2121,11 @@ Team Brain — collaborative memory client (Supabase)
   recall <JIRA-KEY> [query…]
       With query: FTS search. Without: same as sync (list recent).
   sync <JIRA-KEY> [since]   Pull memories → cache/<KEY>.json (+ md export)
-  watch <JIRA-KEY> [secs]   Foreground poll only (prefer start for sync mode)
+  watch <JIRA-KEY> [secs] [--push|--poll]
+      Near-realtime: authenticated poll (always) + optional Broadcast push (#31).
+      --push prefers Realtime listener; --poll disables it. Default: auto.
+  broadcast-topic <JIRA-KEY>
+      Show signal Broadcast topic (apply …_realtime_broadcast.sql).
   breakdown <JIRA-KEY> [q]  Recall memories → initiatives/<KEY>-breakdown.md (stories/spikes)
   metrics [JIRA-KEY]        Reuse stats (recall hits, remembers, breakdowns)
   reembed <JIRA-KEY> [n]    Backfill embeddings (requires TEAM_BRAIN_EMBED_PROVIDER)
@@ -1891,8 +2139,14 @@ Embeddings (optional semantic recall):
   # ollama: TEAM_BRAIN_EMBED_BASE_URL=http://127.0.0.1:11434 MODEL=nomic-embed-text
   Vectors are 768-d. Without a provider, recall uses FTS.
 
+Realtime push (#31 — signal Broadcast; poll always remains fallback):
+  export TEAM_BRAIN_REALTIME=auto           # auto | on | off
+  pip install websockets                   # required for push listener
+  Apply migration 20260804000001_team_brain_realtime_broadcast.sql
+
 SoT: Supabase memories + .team-brain/cache/<KEY>.json
 Sync state: .team-brain/sync/<KEY>.json
+Push notify: .team-brain/notify/<KEY>.json
 Export: .team-brain/initiatives/<KEY>.md (optional)
 Plan: docs/team-brain-memory.md
 EOF
@@ -1932,6 +2186,8 @@ main() {
     metrics) cmd_metrics "$@" ;;
     sync|mirror) cmd_sync "$@" ;;
     watch) cmd_watch "$@" ;;
+    broadcast-topic|broadcast_topic) cmd_broadcast_topic "$@" ;;
+    _pull_signal) cmd_pull_signal "$@" ;;
     list) cmd_list "$@" ;;
     status) cmd_status "$@" ;;
     -h|--help|help|"") usage ;;
