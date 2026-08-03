@@ -9,6 +9,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- Team Brain **memory version history / soft rollback** (#34): `capture_revisions`; `history` / `restore` CLI + MCP
+- Migration `20260803000001_team_brain_memory_history.sql` — archive prior body on `source_ref` update
 - Team Brain **correction / learning loop** (#30): `correct` CLI + MCP; `learning` kind; skill/onboarding guidance
 - Migration `20260802000001_team_brain_learning_kind.sql` — `captures.kind` includes `learning`
 - `engineer-brain doctor` command — brain health check with weighted scoring, cooling repo detection, and growth suggestions

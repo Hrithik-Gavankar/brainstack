@@ -27,6 +27,7 @@ mcp = FastMCP(
         "or re-remember with the same source_ref — never invent a second row for the topic. "
         "Optional learning kind records what was wrong → what to prefer (natural language, "
         "no TODO/NO-TODO dumps). "
+        "source_ref updates archive the prior body; use history() / restore() for soft rollback. "
         "If sync_status mode is sleep, prompt the user to wake before deep research. "
         "Never upload personal BRAIN.md or credentials.json."
     ),
@@ -185,7 +186,8 @@ def remember(
 
     kind: research | decision | note | learning.
     Always pass source_ref (e.g. AAP-81423#cli-schema).
-    Identical body → deduped=true. Same source_ref + new body → updated=true (merge).
+    Identical body → deduped=true. Same source_ref + new body → updated=true (merge);
+    prior body is archived (archived_revision) when the history migration is applied.
     For human corrections prefer correct(); or re-remember with the same source_ref.
     Memory bodies: natural-language prefer/avoid guidance — never TODO/NO-TODO dumps.
     """
@@ -236,6 +238,43 @@ def correct(
         args.extend(["--learning", learning.strip()])
     args.append("-")
     return _as_json(_run(*args, stdin_data=body))
+
+
+@mcp.tool()
+def history(jira_key: str, source_ref: str) -> str:
+    """List archived revisions + current body for a source_ref (audit trail).
+
+    Use after correct/remember updates when the crew needs to see what changed
+    or pick a revision to restore(). Only revisions[] entries with restorable=true
+    are valid restore targets (current.revision is null). Requires history migration.
+    """
+    key = jira_key.strip().upper()
+    ref = source_ref.strip()
+    if not ref:
+        raise ValueError("source_ref is required for history")
+    return _as_json(_run("history", key, "--source-ref", ref))
+
+
+@mcp.tool()
+def restore(jira_key: str, source_ref: str, revision: int) -> str:
+    """Soft-rollback a memory to an archived revision (audit trail preserved).
+
+    Archives the current body as a new revision, then restores body/kind from
+    the chosen revision. Call history() first to pick a revision number.
+    """
+    key = jira_key.strip().upper()
+    ref = source_ref.strip()
+    if not ref:
+        raise ValueError("source_ref is required for restore")
+    try:
+        rev = int(revision)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("revision must be a positive integer") from exc
+    if rev < 1:
+        raise ValueError("revision must be a positive integer")
+    return _as_json(
+        _run("restore", key, "--source-ref", ref, "--revision", str(rev))
+    )
 
 
 @mcp.tool()

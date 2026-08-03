@@ -206,10 +206,12 @@ Merge-safe updates overwrite the current body. Without history, crews cannot see
 
 ## Acceptance criteria
 
-- [ ] Schema + RPC design for revisions (or equivalent)
-- [ ] Update-via-`source_ref` records prior body
-- [ ] CLI/MCP: list history + restore (or documented SQL/admin path for v1)
-- [ ] Privacy: history stays team-scoped like memories
+- [x] Schema + RPC design for revisions (or equivalent)
+- [x] Update-via-`source_ref` records prior body
+- [x] CLI/MCP: list history + restore (or documented SQL/admin path for v1)
+- [x] Privacy: history stays team-scoped like memories
+
+> Implemented in branch `feat/team-brain-memory-version-history` (issue #34).
 
 ## References
 

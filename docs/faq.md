@@ -159,6 +159,10 @@ Not by chat alone. Shared memory requires `remember`, then `recall` (or MCP / op
 
 Paste the correction in chat (or run CLI). The agent should **`correct`** (or re-`remember`) the **same** `source_ref` so the row updates — never a second topic slug. Optional `learning` kind records “was wrong → prefer …”. See [team-brain-onboarding.md](team-brain-onboarding.md) and example in `examples/team-spike-crew/`.
 
+### Can I undo a memory update?
+
+Yes — after the history migration, each `source_ref` update archives the prior body. Use `history <KEY> --source-ref REF` then `restore <KEY> --source-ref REF --revision N`. Restore archives the current body first so the audit trail stays intact.
+
 ### Is semantic search required?
 
 No. Default recall is full-text search. Optional embeddings (OpenAI/Ollama) are documented in [team-brain-memory.md](team-brain-memory.md).

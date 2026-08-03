@@ -7,8 +7,8 @@ description: >-
   Jira crew work, remember, recall, breakdown (not personal standups).
 argument-hint: >-
   <command> — start | stop | wake | touch | sync-status | onboard | register |
-    join | whoami | init | attach | remember | correct | recall | capture |
-    sync | watch | breakdown | status | detach
+    join | whoami | init | attach | remember | correct | history | restore |
+    recall | capture | sync | watch | breakdown | status | detach
 tools: Read, Write, Shell, Glob, Grep
 ---
 
@@ -18,7 +18,7 @@ Part of **Brain**: personal=`engineer-brain`, crew=`team-brain`.
 
 | Prefer | Fallback |
 |--------|----------|
-| MCP `start` / `recall` / `remember` / `correct` / `touch` | `bash …/team-brain-api.sh …` |
+| MCP `start` / `recall` / `remember` / `correct` / `history` / `restore` / `touch` | `bash …/team-brain-api.sh …` |
 
 ```bash
 API="${SKILL_DIR}/scripts/team-brain-api.sh"
@@ -123,6 +123,15 @@ bash "$API" remember <JIRA-KEY> learning --source-ref "<JIRA-KEY>#<short-slug>/l
 | 3 | Optionally record `learning` at `REF/learning` (what was wrong → what to prefer) |
 | 4 | Confirm briefly to the user; continue with corrected context |
 
+`source_ref` updates **archive** the prior body (when the history migration is applied). To inspect or undo:
+
+```bash
+bash "$API" history <JIRA-KEY> --source-ref "<JIRA-KEY>#<short-slug>"
+bash "$API" restore <JIRA-KEY> --source-ref "<JIRA-KEY>#<short-slug>" --revision 1
+```
+
+`restore` soft-rollbacks and archives the current body first — audit trail is preserved.
+
 Personal standup corrections follow the same absorb-and-learn pattern in `/engineer-brain` (update `BRAIN.md`, close scanner gaps).
 
 ## 4) STOP / SLEEP
@@ -155,6 +164,7 @@ Never invent stories without recalled memories.
 | `attach` | Bind Jira key |
 | `recall` / `remember` | Search / save (`learning` kind ok) |
 | `correct` | Update `source_ref` + optional learning |
+| `history` / `restore` | Revision audit trail / soft rollback |
 | `breakdown` / `metrics` / `status` | Plan / stats / config |
 
 Beginner guide: `docs/team-brain-onboarding.md`
