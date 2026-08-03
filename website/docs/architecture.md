@@ -40,4 +40,4 @@ flowchart TD
 
 ## Full documentation
 
-See the [complete architecture document](https://github.com/Hrithik-Gavankar/engineer-brain/blob/main/docs/architecture.md) for detailed diagrams, security notes, and extensibility.
+See the [complete architecture document](https://github.com/Hrithik-Gavankar/brainstack/blob/main/docs/architecture.md) for detailed diagrams, security notes, and extensibility.

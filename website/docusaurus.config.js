@@ -28,7 +28,7 @@ const config = {
         docs: {
           sidebarPath: "./sidebars.js",
           editUrl:
-            "https://github.com/Hrithik-Gavankar/engineer-brain/tree/main/website/",
+            "https://github.com/Hrithik-Gavankar/brainstack/tree/main/website/",
         },
         blog: false,
         theme: {
@@ -51,7 +51,7 @@ const config = {
             label: "Docs",
           },
           {
-            href: "https://github.com/Hrithik-Gavankar/engineer-brain",
+            href: "https://github.com/Hrithik-Gavankar/brainstack",
             label: "GitHub",
             position: "right",
           },
@@ -73,11 +73,11 @@ const config = {
             items: [
               {
                 label: "GitHub Discussions",
-                href: "https://github.com/Hrithik-Gavankar/engineer-brain/discussions",
+                href: "https://github.com/Hrithik-Gavankar/brainstack/discussions",
               },
               {
                 label: "Issues",
-                href: "https://github.com/Hrithik-Gavankar/engineer-brain/issues",
+                href: "https://github.com/Hrithik-Gavankar/brainstack/issues",
               },
             ],
           },
@@ -86,7 +86,7 @@ const config = {
             items: [
               {
                 label: "GitHub",
-                href: "https://github.com/Hrithik-Gavankar/engineer-brain",
+                href: "https://github.com/Hrithik-Gavankar/brainstack",
               },
               {
                 label: "Roadmap",

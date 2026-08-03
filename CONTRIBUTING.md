@@ -1,4 +1,4 @@
-# Contributing to Engineer Brain
+# Contributing to Brainstack
 
 Thank you for your interest in contributing! Engineer Brain is an open-source project and we welcome contributions of all kinds.
 
@@ -32,9 +32,9 @@ Thank you for your interest in contributing! Engineer Brain is an open-source pr
 Fork this repository on GitHub first, then clone **your** fork:
 
 ```bash
-git clone https://github.com/<your-username>/engineer-brain.git
-cd engineer-brain
-git remote add upstream https://github.com/Hrithik-Gavankar/engineer-brain.git
+git clone https://github.com/<your-username>/brainstack.git
+cd brainstack
+git remote add upstream https://github.com/Hrithik-Gavankar/brainstack.git
 ```
 
 - `origin` = your fork (you push here)

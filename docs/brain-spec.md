@@ -297,6 +297,6 @@ BRAIN.md is designed to be forward-compatible:
 
 ## References
 
-- [Engineer Brain Repository](https://github.com/Hrithik-Gavankar/engineer-brain)
+- [Engineer Brain Repository](https://github.com/Hrithik-Gavankar/brainstack)
 - [Architecture Documentation](architecture.md)
 - [Vision Document](vision.md)

@@ -2,7 +2,7 @@
 
 Shared, opt-in **collaborative AI memory** for crews on the same spike, epic, or initiative.
 
-Part of **Brain** alongside [engineer-brain](scopes.md). See also [#2](https://github.com/Hrithik-Gavankar/engineer-brain/issues/2).
+Part of **Brainstack** alongside [engineer-brain](scopes.md). See also [#2](https://github.com/Hrithik-Gavankar/brainstack/issues/2).
 
 | Doc | Audience |
 |-----|----------|

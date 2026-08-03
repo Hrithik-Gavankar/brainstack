@@ -1,4 +1,4 @@
-# Engineer Brain Dashboard
+# Brainstack Dashboard
 
 Local / demo web UI that visualizes engineer-brain data — work patterns, expertise maps, velocity trends, and growth tracking.
 
@@ -89,5 +89,5 @@ dashboard/
 
 ## Related
 
-- Issue [#26](https://github.com/Hrithik-Gavankar/engineer-brain/issues/26) — LTS follow-ups
-- PR [#25](https://github.com/Hrithik-Gavankar/engineer-brain/pull/25) — MVP merge
+- Issue [#26](https://github.com/Hrithik-Gavankar/brainstack/issues/26) — LTS follow-ups
+- PR [#25](https://github.com/Hrithik-Gavankar/brainstack/pull/25) — MVP merge

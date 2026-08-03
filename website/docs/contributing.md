@@ -4,7 +4,7 @@ sidebar_position: 9
 
 # Contributing
 
-We welcome contributions! See the full [Contributing Guide](https://github.com/Hrithik-Gavankar/engineer-brain/blob/main/CONTRIBUTING.md) on GitHub.
+We welcome contributions! See the full [Contributing Guide](https://github.com/Hrithik-Gavankar/brainstack/blob/main/CONTRIBUTING.md) on GitHub.
 
 ## Quick ways to contribute
 
@@ -17,8 +17,8 @@ We welcome contributions! See the full [Contributing Guide](https://github.com/H
 ## Development setup
 
 ```bash
-git clone https://github.com/<your-username>/engineer-brain.git
-cd engineer-brain
+git clone https://github.com/<your-username>/brainstack.git
+cd brainstack
 git checkout -b feat/your-feature
 ```
 

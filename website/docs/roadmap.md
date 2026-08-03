@@ -4,7 +4,7 @@ sidebar_position: 8
 
 # Roadmap
 
-See the full [roadmap on GitHub](https://github.com/Hrithik-Gavankar/engineer-brain/blob/main/docs/roadmap.md).
+See the full [roadmap on GitHub](https://github.com/Hrithik-Gavankar/brainstack/blob/main/docs/roadmap.md).
 
 ## Highlights
 

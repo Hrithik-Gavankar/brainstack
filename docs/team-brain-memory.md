@@ -1,7 +1,7 @@
 # Team Brain — Collaborative AI Memory (plan)
 
 Status: **P0–P4 + sync mode + Realtime signal push (#31) shipped** (anon rate limits still open)  
-Related: [#2](https://github.com/Hrithik-Gavankar/engineer-brain/issues/2), [team-brain.md](team-brain.md), [team-brain-onboarding.md](team-brain-onboarding.md), [scopes.md](scopes.md)
+Related: [#2](https://github.com/Hrithik-Gavankar/brainstack/issues/2), [team-brain.md](team-brain.md), [team-brain-onboarding.md](team-brain-onboarding.md), [scopes.md](scopes.md)
 
 This document captures the original Team Brain intent, what shipped for collaborative AI memory (FTS + optional semantic recall + agent loop), and remaining gaps — without depending on external memory products.
 
@@ -147,9 +147,9 @@ bash core/scripts/team-brain-api.sh recall AAP-81423 "where is decision_environm
 - [x] **Mandatory agent loop** — recall *before* research; remember *immediately after* findings  
       (`platforms/cursor/rules/team-brain.mdc` + skill + MCP instructions)
 - [x] **Correction / learning loop** — `correct` CLI/MCP; `learning` kind; skill + onboarding  
-      (`20260802000001_team_brain_learning_kind.sql`, issue [#30](https://github.com/Hrithik-Gavankar/engineer-brain/issues/30))
+      (`20260802000001_team_brain_learning_kind.sql`, issue [#30](https://github.com/Hrithik-Gavankar/brainstack/issues/30))
 - [x] **Memory version history / soft rollback** — `capture_revisions`; archive on `source_ref` update;  
-      `history` / `restore` CLI+MCP (`20260803000001_team_brain_memory_history.sql`, issue [#34](https://github.com/Hrithik-Gavankar/engineer-brain/issues/34))
+      `history` / `restore` CLI+MCP (`20260803000001_team_brain_memory_history.sql`, issue [#34](https://github.com/Hrithik-Gavankar/brainstack/issues/34))
 - [x] Optional long-lived push into the other agent session — signal Broadcast + `notify/<KEY>.json` (#31); poll remains fallback
 
 ### Agent loop (what makes it a shared brain)
@@ -245,7 +245,7 @@ Use this as the build board (check off in PRs):
 
 ## References
 
-- Issue: feat Team Brain — [#2](https://github.com/Hrithik-Gavankar/engineer-brain/issues/2)
+- Issue: feat Team Brain — [#2](https://github.com/Hrithik-Gavankar/brainstack/issues/2)
 - Overview: [team-brain.md](team-brain.md)
 - Beginner onboarding: [team-brain-onboarding.md](team-brain-onboarding.md)
 - Architecture: [architecture.md](architecture.md)

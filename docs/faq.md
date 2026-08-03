@@ -4,13 +4,28 @@
 
 ## General
 
-### What is Engineer Brain?
+### What is Brainstack?
 
-Engineer Brain is a persistent engineering context layer for AI coding assistants. It creates a living, versioned profile of you as an engineer — your skills, work patterns, active projects, and growth trajectory — and feeds it into every AI tool you use.
+Brainstack is a persistent context layer for AI coding assistants — with two scopes:
+
+| Scope | What it does |
+|-------|--------------|
+| **Engineer Brain** | Your personal profile — skills, patterns, career trajectory |
+| **Team Brain** | Shared crew memory on a Jira initiative — realtime sync across agents |
+
+Together, they give AI deep context about *you* and *your team's work*.
+
+### What's the difference between Engineer Brain and Team Brain?
+
+**Engineer Brain** = personal. Your `BRAIN.md` stays local, tracks your growth, generates standups and quarterly reviews. Never uploaded.
+
+**Team Brain** = crew collaboration. When three engineers spike the same Jira initiative, their agents share memory via Supabase. Engineer A learns something → Engineer B's agent knows it instantly.
+
+You can use Engineer Brain standalone. Team Brain is opt-in for crews who want shared AI context.
 
 ### Is this another AI coding tool?
 
-No. Engineer Brain doesn't write code, debug, or autocomplete. It provides *context* to tools that do those things. Think of it as the memory layer that makes every AI tool better at helping you specifically.
+No. Brainstack doesn't write code, debug, or autocomplete. It provides *context* to tools that do those things. Think of it as the memory layer that makes every AI tool better at helping you specifically.
 
 ### How is this different from just writing a system prompt?
 
@@ -28,14 +43,16 @@ Yes — that's a primary design goal. Install once, and every AI tool gets the s
 
 ## Privacy & Security
 
-### Does Engineer Brain send my data anywhere?
+### Does Brainstack send my data anywhere?
 
-**Personal engineer-brain:** no. Everything stays local:
-- The scanner reads only your local git history
-- `BRAIN.md` lives in your workspace
-- Context files live in your workspace
+| Scope | Data location | What syncs |
+|-------|---------------|------------|
+| **Engineer Brain** | 100% local | Nothing — git history, `BRAIN.md`, context files stay on your machine |
+| **Team Brain** | Your Supabase project | Initiative memories + membership (you own the project) |
 
-**Team Brain (opt-in):** initiative memories and membership sync to *your* Supabase project so the crew can `recall` shared findings. Personal `BRAIN.md` is never uploaded. See [team-brain.md](team-brain.md) and [supabase/README.md](../supabase/README.md).
+**Personal `BRAIN.md` is never uploaded to Team Brain.** Team Brain syncs only crew findings on a Jira key — research decisions, architectural choices, spike learnings.
+
+See [team-brain.md](team-brain.md) and [supabase/README.md](../supabase/README.md).
 
 ### What data does the scanner collect?
 

@@ -1,6 +1,6 @@
 # Architecture
 
-Brain is composed of three layers: data collection, intelligence, and delivery —
+Brainstack is composed of three layers: data collection, intelligence, and delivery —
 with two **scopes** (skills): engineer-brain (personal) and team-brain (team/initiative).
 
 See also [scopes.md](scopes.md) and [team-brain.md](team-brain.md).

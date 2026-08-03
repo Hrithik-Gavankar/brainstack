@@ -59,6 +59,26 @@ Without persistent context, AI is just a very fast stranger.
 
 ---
 
+## Why teams need shared AI memory
+
+Personal context solves half the problem. Teams have a different failure mode.
+
+When three engineers spike the same Jira initiative, each opens a fresh AI session. They research the same questions. They rediscover the same constraints. They make decisions in Slack threads that evaporate.
+
+**Team context is duplicated, fragmented, and lost.**
+
+Imagine instead: Engineer A's agent learns "prefer OAuth2 over SAML for this integration." That finding syncs to Supabase. Engineer B's agent picks it up in realtime — no re-research, no contradictory conclusions, no forgotten decisions.
+
+**Shared AI memory enables:**
+- Research that compounds across the crew, not restarts per engineer
+- Decisions that persist beyond chat threads
+- Onboarding context that transfers instantly to new team members
+- Breakdown artifacts generated from collective crew knowledge
+
+This is Team Brain: collaborative AI memory tied to a Jira initiative. Opt-in, crew-visible, and synced in realtime.
+
+---
+
 ## Why context should belong to the developer
 
 Today's AI tools store your interaction history on their servers. They learn about you inside their systems. That knowledge is inaccessible to you and locked inside their platform.
@@ -67,45 +87,52 @@ This is backwards.
 
 **Your engineering identity should be yours.** A file in your workspace. Versioned in your git repo. Readable, editable, deletable by you. Sharable only if you choose to share it.
 
-Engineer Brain takes the position that:
+Brainstack takes the position that:
 - Context is a personal asset, not vendor data
 - The engineer decides what AI knows about them
 - The format should be open, not proprietary
-- No data should leave the developer's machine without explicit consent
+- Personal data never leaves the developer's machine without explicit consent
+- Team data syncs only to infrastructure the team owns
 
 ---
 
-## The future of BRAIN.md as an open ecosystem
+## The future of Brainstack as an open ecosystem
 
-`BRAIN.md` starts as a file. It becomes a standard.
+Brainstack starts as a context layer. It becomes a standard.
 
-**Phase 1: Individual adoption**
-Engineers maintain their own BRAIN.md. AI tools load it as context. Individual productivity improves.
+**Phase 1: Individual adoption** ✅
+Engineers maintain their own `BRAIN.md`. AI tools load it as context. Individual productivity improves.
 
-**Phase 2: Tool integration**
-AI coding assistants natively recognize BRAIN.md. They read it automatically, suggest updates, and use it to personalize every interaction without configuration.
+**Phase 2: Team collaboration** ✅
+- **Team Brain** ships with realtime sync, role-based access, rate limits, and MCP integration
+- Crews share AI memory on Jira initiatives — research compounds, decisions persist
+- Agent loop enforces recall-before-research, remember-after-findings
 
-**Phase 3: Ecosystem tooling**
-- Importers that bootstrap BRAIN.md from GitHub profiles, LinkedIn, or existing resumes
-- Validators that check BRAIN.md completeness and freshness
+**Phase 3: Tool integration**
+AI coding assistants natively recognize `BRAIN.md` and Team Brain. They read context automatically, suggest updates, and personalize every interaction without configuration.
+
+**Phase 4: Ecosystem tooling**
+- Importers that bootstrap `BRAIN.md` from GitHub profiles, LinkedIn, or existing resumes
+- Validators that check brain completeness and freshness
 - Visualizers that render growth trajectories and pattern analytics
-- **Team Brain** — collaborative AI memory on a Jira key (Supabase SoT + local cache + MCP + agent recall/remember loop); not a second personal brain
 - Team-level aggregation for engineering managers (opt-in metrics)
 
-**Phase 4: Community standard**
-BRAIN.md becomes what package.json is to Node or pyproject.toml is to Python — a universally recognized file that tools expect to find and know how to consume.
+**Phase 5: Community standard**
+`BRAIN.md` becomes what `package.json` is to Node or `pyproject.toml` is to Python — a universally recognized file that tools expect to find and know how to consume.
 
 ---
 
 ## The future isn't smarter AI.
 
-## It's AI that understands engineers.
+## It's AI that understands engineers — and teams.
 
 ---
 
 Every improvement in model intelligence is wasted if the model doesn't know who it's talking to. Context isn't a feature — it's the foundation.
 
-Engineer Brain exists to build that foundation. Open, portable, self-evolving, and owned by the engineer.
+Brainstack exists to build that foundation:
+- **Personal context** that's open, portable, self-evolving, and owned by the engineer
+- **Team context** that compounds across a crew, syncs in realtime, and persists beyond chat threads
 
 We're building the context layer for the age of AI-assisted engineering.
 

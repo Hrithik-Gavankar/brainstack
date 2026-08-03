@@ -1,6 +1,6 @@
-# Brain Scopes
+# Brainstack Scopes
 
-Brain is the **product umbrella**. Two scopes ship as skills:
+Brainstack is the **product umbrella**. Two scopes ship as skills:
 
 | Scope | Skill | Living documents | Typical commands |
 |-------|-------|------------------|------------------|
@@ -9,7 +9,7 @@ Brain is the **product umbrella**. Two scopes ship as skills:
 
 ```mermaid
 flowchart TB
-  subgraph Product["Brain product"]
+  subgraph Product["Brainstack"]
     CORE[Shared core]
     subgraph Eng["engineer-brain"]
       PB[BRAIN.md]

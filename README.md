@@ -1,12 +1,15 @@
 <p align="center">
-  <h1 align="center">Engineer Brain</h1>
+  <h1 align="center">Brainstack</h1>
   <p align="center">
-    <strong>A persistent engineering context layer for AI coding assistants.</strong>
+    <strong>Persistent context for AI coding assistants — personal and team.</strong>
   </p>
   <p align="center">
-    <a href="https://github.com/Hrithik-Gavankar/engineer-brain/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
-    <a href="https://github.com/Hrithik-Gavankar/engineer-brain/stargazers"><img src="https://img.shields.io/github/stars/Hrithik-Gavankar/engineer-brain?style=social" alt="Stars"></a>
-    <a href="https://github.com/Hrithik-Gavankar/engineer-brain/issues"><img src="https://img.shields.io/github/issues/Hrithik-Gavankar/engineer-brain" alt="Issues"></a>
+    <code>engineer-brain</code> for you &nbsp;·&nbsp; <code>team-brain</code> for your crew
+  </p>
+  <p align="center">
+    <a href="https://github.com/Hrithik-Gavankar/brainstack/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
+    <a href="https://github.com/Hrithik-Gavankar/brainstack/stargazers"><img src="https://img.shields.io/github/stars/Hrithik-Gavankar/brainstack?style=social" alt="Stars"></a>
+    <a href="https://github.com/Hrithik-Gavankar/brainstack/issues"><img src="https://img.shields.io/github/issues/Hrithik-Gavankar/brainstack" alt="Issues"></a>
     <img src="https://img.shields.io/badge/platforms-6-green" alt="Platforms">
     <img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs Welcome">
   </p>
@@ -14,13 +17,11 @@
 
 <p align="center">
   <a href="#quick-start">Quick Start</a> •
-  <a href="#how-it-works">How It Works</a> •
-  <a href="#brain-scopes">Scopes</a> •
-  <a href="docs/brain-spec.md">BRAIN.md Spec</a> •
-  <a href="docs/scopes.md">Engineer + Team</a> •
-  <a href="docs/team-brain-onboarding.md">Team Brain Onboard</a> •
+  <a href="#two-scopes-one-product">Two Scopes</a> •
+  <a href="#engineer-brain">Engineer Brain</a> •
+  <a href="#team-brain">Team Brain</a> •
   <a href="docs/architecture.md">Architecture</a> •
-  <a href="dashboard/README.md">Dashboard</a> •
+  <a href="docs/team-brain-onboarding.md">Onboarding</a> •
   <a href="docs/roadmap.md">Roadmap</a> •
   <a href="docs/faq.md">FAQ</a>
 </p>
@@ -29,63 +30,100 @@
 
 ## The Problem
 
-AI coding assistants understand code. They don't understand *engineers*.
+AI coding assistants understand code. They don't understand *engineers* — or *teams*.
 
-Every session starts from zero. Your AI doesn't know your expertise, your active projects, your team conventions, or your career trajectory. You re-explain context dozens of times a day across multiple tools — burning cognitive energy on something a machine should handle.
+**Personal context is lost.** Every session starts from zero. Your AI doesn't know your expertise, your active projects, or your career trajectory. You re-explain context dozens of times a day.
 
-Prompts are ephemeral. Chat history is tool-locked. System instructions go stale the moment you write them.
+**Team knowledge stays siloed.** When three engineers spike the same Jira initiative, each AI assistant starts fresh. Research is duplicated. Decisions are forgotten. Context lives in Slack threads that nobody can find.
 
-**Engineering context should be portable, persistent, and self-evolving.**
+Prompts are ephemeral. Chat history is tool-locked. System instructions go stale. Team learnings evaporate.
+
+**Engineering context should be portable, persistent, and shared when it matters.**
 
 ---
 
 ## The Solution
 
-Engineer Brain creates a **versioned engineering profile** — stored as a simple Markdown file called `BRAIN.md` — that follows you across every AI coding assistant you use.
+Brainstack is a **context layer** for AI coding assistants — with two scopes:
 
-It's not another AI tool. It's a **context layer** that makes every AI tool better.
+| Scope | What it solves | Living document |
+|-------|----------------|-----------------|
+| **Engineer Brain** | Personal context — your skills, patterns, career | `BRAIN.md` (local) |
+| **Team Brain** | Crew context — shared memory on a Jira initiative | Supabase + local cache |
 
+```mermaid
+flowchart TB
+    subgraph Personal["Engineer Brain (you)"]
+        GIT[Git History] --> SCAN[Scanner]
+        SCAN --> BRAIN[BRAIN.md]
+    end
+
+    subgraph Team["Team Brain (crew)"]
+        JIRA[Jira Key] --> INIT[Initiative]
+        ENGA[Engineer A] -->|remember| SB[(Supabase)]
+        ENGB[Engineer B] -->|recall| SB
+        SB -->|realtime push| ENGA
+        SB -->|realtime push| ENGB
+    end
+
+    BRAIN --> AI[AI Assistants]
+    SB --> AI
 ```
-┌─────────────────────────────────────────────────────┐
-│                   Your Git History                    │
-└─────────────────────┬───────────────────────────────┘
-                      │
-                      ▼
-┌─────────────────────────────────────────────────────┐
-│              Engineer Brain Scanner                   │
-│   (commits, branches, patterns, velocity, expertise) │
-└─────────────────────┬───────────────────────────────┘
-                      │
-                      ▼
-┌─────────────────────────────────────────────────────┐
-│                    BRAIN.md                           │
-│   (your living, versioned engineering profile)       │
-└─────────────────────┬───────────────────────────────┘
-                      │
-          ┌───────────┼───────────┐
-          ▼           ▼           ▼
-     ┌─────────┐ ┌─────────┐ ┌─────────┐
-     │ Cursor  │ │ Claude  │ │ Copilot │  ...
-     │         │ │  Code   │ │         │
-     └─────────┘ └─────────┘ └─────────┘
-```
+
+It's not another AI tool. It's what makes every AI tool smarter — for you and your team.
 
 ---
 
-## Why Engineer Brain Exists
+## Two Scopes, One Product
 
-| Without Engineer Brain | With Engineer Brain |
-|------------------------|---------------------|
+```mermaid
+flowchart LR
+    subgraph Brain["Brainstack"]
+        subgraph EB["engineer-brain"]
+            PB[BRAIN.md]
+            SYNC[sync]
+            UPDATE[update]
+            QUARTERLY[quarterly]
+        end
+        subgraph TB["team-brain"]
+            CACHE["cache/KEY.json"]
+            SB[(Supabase)]
+            REMEMBER[remember]
+            RECALL[recall]
+            BREAKDOWN[breakdown]
+        end
+    end
+    PB -.->|"never uploaded"| TB
+```
+
+| | Engineer Brain | Team Brain |
+|--|----------------|------------|
+| **For** | You | Your crew on a Jira initiative |
+| **Stores** | `BRAIN.md` (local, versioned) | Supabase memories + local cache |
+| **Syncs** | Never (stays private) | Realtime push to peers |
+| **Typical use** | Standups, quarterly reviews, growth tracking | Spike research, shared decisions, onboarding context |
+
+**Principle:** Personal brain stays personal. Team brain is opt-in, crew-visible, and tied to a Jira key.
+
+---
+
+## Why Brainstack Exists
+
+| Without Brainstack | With Brainstack |
+|---------------|------------|
 | Re-explain your stack every session | AI loads your full profile automatically |
 | Generic suggestions that ignore your expertise | Responses tailored to your skill level and goals |
 | Standups written from memory | Paste-ready standups generated from git history |
 | Quarterly reviews are a scramble | Structured reviews with real metrics, auto-generated |
 | Context locked inside one tool | Same brain across 6+ platforms |
-| Static system prompts that decay | Self-updating profile that evolves with your work |
+| Team research duplicated across engineers | Shared memory — Engineer A learns, Engineer B knows |
+| Spike decisions lost in Slack threads | Durable memories tied to Jira keys |
 
 ---
 
-## How It Works
+## Engineer Brain
+
+Your personal engineering profile — skills, patterns, career trajectory — that follows you across AI tools.
 
 ```mermaid
 flowchart TD
@@ -112,6 +150,68 @@ flowchart TD
 1. **Scanner** — Collects raw data from your git history across all repositories
 2. **Brain** — A living Markdown document (`BRAIN.md`) that structures your engineering identity
 3. **Adapters** — Platform-specific context files that feed your brain into each AI tool
+
+---
+
+## Team Brain
+
+Shared AI memory for crews working on the same Jira initiative. When one engineer's agent learns something, everyone's agent knows it — in realtime.
+
+```mermaid
+flowchart LR
+    subgraph Crew["Crew on AAP-81423"]
+        A1[Alice's Agent]
+        A2[Bob's Agent]
+        A3[Carol's Agent]
+    end
+
+    subgraph Cloud["Team Brain Cloud"]
+        SB[(Supabase<br/>Memories)]
+        RT{{Realtime<br/>Broadcast}}
+    end
+
+    subgraph Local["Each Engineer"]
+        CACHE["cache/AAP-81423.json"]
+        MCP[MCP Tools]
+    end
+
+    A1 -->|remember| SB
+    SB -->|signal| RT
+    RT -->|push| A2
+    RT -->|push| A3
+    SB -->|recall| CACHE
+    MCP --> SB
+```
+
+### Key Features
+
+| Feature | What it does |
+|---------|--------------|
+| **Realtime sync** | `remember` → instant push to peer agents (no polling) |
+| **Merge-safe updates** | Same `source_ref` + new body = update, not duplicate |
+| **Learning loop** | Human corrections become durable memory |
+| **Role-based access** | `admin` / `member` / `viewer` with invite rotation |
+| **Rate limits** | Per-member, per-team, per-initiative guardrails |
+| **MCP integration** | `attach`, `remember`, `recall`, `breakdown` tools |
+| **Repo pin** | Commit `project.json` (no secrets) for portable crew config |
+
+### How It Works
+
+1. **Admin creates team** — `register "Team Atlas" "Alice"` → Supabase project + invite code
+2. **Teammates join** — `onboard <invite> "Bob" AAP-81423` → credentials + Jira key
+3. **Start sync mode** — "I'm starting on AAP-81423 — start Team Brain sync"
+4. **Agents collaborate** — `remember` findings → peers get realtime push → `recall` when needed
+5. **Generate artifacts** — `breakdown AAP-81423` → story/spike draft from crew memory
+
+```
+Alice researches auth options → remember "prefer OAuth2 over SAML for SSO"
+    ↓ (instant)
+Bob's agent knows → suggests OAuth2 without re-researching
+    ↓
+Carol runs breakdown → draft includes Alice's auth decision
+```
+
+> **Docs:** [Team Brain Overview](docs/team-brain.md) · [Onboarding](docs/team-brain-onboarding.md) · [Tutorial](docs/team-brain-tutorial.md) · [Demo](docs/team-brain-demo.md)
 
 ---
 
@@ -152,44 +252,60 @@ It's a structured Markdown file that documents *you* — your skills, your work 
 
 ---
 
-## Architecture
+## Full Architecture
 
 ```mermaid
-graph LR
-    subgraph "Data Sources"
+graph TB
+    subgraph Sources["Data Sources"]
         GIT[Git History]
-        JIRA[Jira / Linear]
-        SESSION[Session Analytics]
+        JIRA[Jira / Tracker]
     end
 
-    subgraph "Core Engine"
+    subgraph Personal["Engineer Brain (local)"]
         SCAN[Scanner]
         DETECT[Pattern Detection]
         BRAIN[BRAIN.md]
-        CMD[Command Engine]
     end
 
-    subgraph "Platform Adapters"
-        CUR[Cursor .mdc + SKILL.md]
-        CLA[Claude Code CLAUDE.md]
-        COP[Copilot copilot-instructions.md]
-        WIN[Windsurf .windsurfrules]
-        AID[Aider CONVENTIONS.md]
-        CON[Continue.dev rules.md]
+    subgraph Team["Team Brain (cloud)"]
+        API[team-brain-api.sh]
+        SB[(Supabase)]
+        MCP[MCP Server]
+        RT{{Realtime Broadcast}}
+        CACHE["cache/KEY.json"]
+    end
+
+    subgraph Adapters["Platform Adapters"]
+        CUR[Cursor]
+        CLA[Claude Code]
+        COP[GitHub Copilot]
+        WIN[Windsurf]
+        AID[Aider]
+        CON[Continue.dev]
     end
 
     GIT --> SCAN
-    JIRA --> CMD
-    SESSION --> CMD
     SCAN --> DETECT
     DETECT --> BRAIN
-    BRAIN --> CUR
-    BRAIN --> CLA
-    BRAIN --> COP
-    BRAIN --> WIN
-    BRAIN --> AID
-    BRAIN --> CON
+    
+    JIRA -->|attach| API
+    API --> SB
+    MCP --> SB
+    SB --> RT
+    SB --> CACHE
+    
+    BRAIN --> Adapters
+    CACHE --> CUR
+    
+    BRAIN -.->|"never uploaded"| Team
 ```
+
+| Layer | Engineer Brain | Team Brain |
+|-------|----------------|------------|
+| **Data source** | Git history | Jira identity + agent findings |
+| **Storage** | `BRAIN.md` (local) | Supabase (cloud) + `cache/` (local) |
+| **Sync** | None (private) | Realtime push + poll fallback |
+| **Delivery** | Platform adapters | MCP tools + Cursor skill |
 
 > Full architecture documentation: **[docs/architecture.md](docs/architecture.md)**
 
@@ -197,39 +313,20 @@ graph LR
 
 ## Platform Support
 
-Engineer Brain works with every major AI coding assistant. Same brain, native format.
+Both scopes work with every major AI coding assistant. Same brain, native format.
 
-| Platform | Context File | Status |
-|----------|-------------|--------|
-| [Cursor](https://cursor.sh) | `.cursor/rules/engineer-brain.mdc` + `SKILL.md` | ✅ Supported |
-| [Claude Code](https://claude.ai/code) | `CLAUDE.md` | ✅ Supported |
-| [GitHub Copilot](https://github.com/features/copilot) | `.github/copilot-instructions.md` | ✅ Supported |
-| [Windsurf](https://codeium.com/windsurf) | `.windsurfrules` | ✅ Supported |
-| [Aider](https://aider.chat) | `CONVENTIONS.md` | ✅ Supported |
-| [Continue.dev](https://continue.dev) | `.continue/rules.md` | ✅ Supported |
-| [Zed](https://zed.dev) | — | 🗓️ Planned |
-| [JetBrains AI](https://www.jetbrains.com/ai/) | — | 🗓️ Planned |
+| Platform | Engineer Brain | Team Brain | Status |
+|----------|----------------|------------|--------|
+| [Cursor](https://cursor.sh) | `.cursor/rules/engineer-brain.mdc` | `team-brain.mdc` + MCP | ✅ Full support |
+| [Claude Code](https://claude.ai/code) | `CLAUDE.md` | MCP tools | ✅ Supported |
+| [GitHub Copilot](https://github.com/features/copilot) | `.github/copilot-instructions.md` | CLI | ✅ Supported |
+| [Windsurf](https://codeium.com/windsurf) | `.windsurfrules` | CLI | ✅ Supported |
+| [Aider](https://aider.chat) | `CONVENTIONS.md` | CLI | ✅ Supported |
+| [Continue.dev](https://continue.dev) | `.continue/rules.md` | CLI | ✅ Supported |
+| [Zed](https://zed.dev) | — | — | 🗓️ Planned |
+| [JetBrains AI](https://www.jetbrains.com/ai/) | — | — | 🗓️ Planned |
 
----
-
-## Brain scopes
-
-**Brain** is the product umbrella. Two skills = two scopes:
-
-| Skill | For | Living docs |
-|-------|-----|-------------|
-| `engineer-brain` | You — standups, growth, personal patterns | `BRAIN.md` |
-| `team-brain` | Crew — collaborative AI memory on a Jira key | Supabase + `cache/<KEY>.json` (+ optional md) |
-
-Commands (`sync`, `quarterly`, `attach`, …) are **verbs under a skill**, not separate skills.
-
-- Scopes guide: **[docs/scopes.md](docs/scopes.md)**
-- Team Brain **beginner onboarding:** **[docs/team-brain-onboarding.md](docs/team-brain-onboarding.md)**
-- Team Brain **demo & Office Hours:** **[docs/team-brain-demo.md](docs/team-brain-demo.md)**
-- Team Brain **tutorial:** **[docs/team-brain-tutorial.md](docs/team-brain-tutorial.md)**
-- Team Brain overview: **[docs/team-brain.md](docs/team-brain.md)** · Memory plan: **[docs/team-brain-memory.md](docs/team-brain-memory.md)**
-- Supabase setup: **[supabase/README.md](supabase/README.md)** · MCP: **[mcp/team-brain/](mcp/team-brain/)**
-- Demo fixture: **[examples/team-spike-crew/](examples/team-spike-crew/)**
+> **Note:** Cursor has the richest Team Brain integration (always-on rules + MCP + skills). Other platforms use CLI + manual recall.
 
 ## Features
 
@@ -279,8 +376,8 @@ Commands (`sync`, `quarterly`, `attach`, …) are **verbs under a skill**, not s
 ### Install
 
 ```bash
-git clone https://github.com/Hrithik-Gavankar/engineer-brain.git
-cd engineer-brain
+git clone https://github.com/Hrithik-Gavankar/brainstack.git
+cd brainstack
 bash install.sh <platform> [workspace_path]
 ```
 
@@ -336,7 +433,7 @@ bash install.sh cursor ~/my-workspace
 ## Project Structure
 
 ```
-engineer-brain/
+brainstack/
 ├── README.md                          # You are here
 ├── LICENSE                            # MIT
 ├── CONTRIBUTING.md                    # Contribution guidelines
@@ -456,13 +553,19 @@ We welcome contributions! See **[CONTRIBUTING.md](CONTRIBUTING.md)** for guideli
 See **[docs/faq.md](docs/faq.md)** for the full FAQ.
 
 **Is this another AI coding tool?**
-No. Engineer Brain doesn't write code. It provides context to tools that do.
+No. Brain doesn't write code. It provides context to tools that do.
 
 **Does it send my data anywhere?**
-No. Everything stays local — your git history, your BRAIN.md, your context files. Nothing leaves your machine.
+Engineer Brain stays 100% local. Team Brain syncs to *your* Supabase project (you own the data). Personal `BRAIN.md` is never uploaded.
 
 **Can I use it with multiple AI tools simultaneously?**
 Yes. That's the point. Install once, use everywhere.
+
+**What's the difference between Engineer Brain and Team Brain?**
+Engineer Brain = you (personal profile, standups, career). Team Brain = your crew on a Jira initiative (shared memory, realtime sync).
+
+**Do I need Team Brain?**
+No. Engineer Brain works standalone. Team Brain is opt-in for crews who want shared AI context.
 
 ---
 
@@ -473,7 +576,7 @@ MIT — use it, fork it, make it yours.
 ---
 
 <p align="center">
-  <strong>The future isn't smarter AI. It's AI that understands engineers.</strong>
+  <strong>The future isn't smarter AI. It's AI that understands engineers — and teams.</strong>
 </p>
 
 <p align="center">

@@ -47,4 +47,4 @@ Stop Team Brain sync for AAP-81423.
 
 Personal context loads automatically. Team Brain sync mode loads crew memory first, then the agent remembers durable findings.
 
-Optional MCP: see [mcp/team-brain](https://github.com/Hrithik-Gavankar/engineer-brain/blob/main/mcp/team-brain/README.md).
+Optional MCP: see [mcp/team-brain](https://github.com/Hrithik-Gavankar/brainstack/blob/main/mcp/team-brain/README.md).

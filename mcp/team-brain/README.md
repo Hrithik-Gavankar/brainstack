@@ -54,7 +54,7 @@ Requires an onboarded `.team-brain/` (credentials + `team.yaml`) in the workspac
 
 ```bash
 export TEAM_BRAIN_DIR=/path/to/.team-brain
-export TEAM_BRAIN_API_SCRIPT=/path/to/engineer-brain/core/scripts/team-brain-api.sh
+export TEAM_BRAIN_API_SCRIPT=/path/to/brainstack/core/scripts/team-brain-api.sh
 ```
 
 ## Cursor (`mcp.json`)
@@ -63,8 +63,8 @@ export TEAM_BRAIN_API_SCRIPT=/path/to/engineer-brain/core/scripts/team-brain-api
 {
   "mcpServers": {
     "team-brain": {
-      "command": "/path/to/engineer-brain/mcp/team-brain/.venv/bin/python",
-      "args": ["/path/to/engineer-brain/mcp/team-brain/server.py"],
+      "command": "/path/to/brainstack/mcp/team-brain/.venv/bin/python",
+      "args": ["/path/to/brainstack/mcp/team-brain/server.py"],
       "env": {
         "TEAM_BRAIN_DIR": "/path/to/your/workspace/.team-brain"
       }

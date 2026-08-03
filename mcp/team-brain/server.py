@@ -53,7 +53,7 @@ def _api_script() -> Path:
     if candidate.is_file():
         return candidate
     raise FileNotFoundError(
-        "team-brain-api.sh not found; set TEAM_BRAIN_API_SCRIPT or run from engineer-brain checkout"
+        "team-brain-api.sh not found; set TEAM_BRAIN_API_SCRIPT or run from brainstack checkout"
     )
 
 

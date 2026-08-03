@@ -40,4 +40,4 @@ Every BRAIN.md contains:
 
 ## Full Specification
 
-See the complete [BRAIN.md Specification](https://github.com/Hrithik-Gavankar/engineer-brain/blob/main/docs/brain-spec.md) for the RFC-style document with implementation guidance.
+See the complete [BRAIN.md Specification](https://github.com/Hrithik-Gavankar/brainstack/blob/main/docs/brain-spec.md) for the RFC-style document with implementation guidance.

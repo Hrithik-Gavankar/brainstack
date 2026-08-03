@@ -51,7 +51,7 @@ Ask a teammate (crew admin) for **secrets** (Slack/chat is fine). The **Jira key
 
 Also make sure you have:
 
-- [ ] This repo cloned (`engineer-brain`) **and/or** the product repo with `.team-brain/project.json`
+- [ ] This repo cloned (`brainstack`) **and/or** the product repo with `.team-brain/project.json`
 - [ ] A terminal (macOS Terminal, iTerm, VS Code/Cursor terminal)
 - [ ] `curl` and `jq` installed (`brew install jq` if needed)
 - [ ] Placeholders in `supabase/project.public.env` replaced with the crew’s URL + anon (or set env / `team.yaml`)

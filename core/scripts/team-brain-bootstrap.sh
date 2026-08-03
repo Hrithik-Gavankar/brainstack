@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Team Brain — one-command crew bootstrap (admin, ~10 minutes)
-# Issue: https://github.com/Hrithik-Gavankar/engineer-brain/issues/41
+# Issue: https://github.com/Hrithik-Gavankar/brainstack/issues/41
 #
 # Collapses: configure Supabase → apply migrations → register → print share bundle.
 # Never commits live keys. Joiners still use onboard (no Supabase account).
@@ -301,7 +301,7 @@ Jira key: ${jira:-"(give teammates the ticket key)"}
 Jira:     ${site}
 
 Joiner checklist (no Supabase account needed):
-  1. Clone engineer-brain (or use installed skills)
+  1. Clone brainstack (or use installed skills)
   2. Put URL + anon in local supabase/project.public.env (or .team-brain/team.yaml / env)
   3. Run:
        bash core/scripts/team-brain-api.sh onboard ${invite} "Their Name" ${jira:-JIRA-KEY}

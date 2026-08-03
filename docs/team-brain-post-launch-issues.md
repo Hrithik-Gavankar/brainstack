@@ -1,10 +1,10 @@
 # Team Brain — post-launch GitHub issues
 
-Ready-to-file issues after [#29](https://github.com/Hrithik-Gavankar/engineer-brain/pull/29) merges.
+Ready-to-file issues after [#29](https://github.com/Hrithik-Gavankar/brainstack/pull/29) merges.
 
 **How to use:** for each block below, create a GitHub issue with the **Title** as the issue title and the **Body** as the issue body (copy from the fenced section). Suggested labels: `enhancement`, `team-brain`.
 
-**Parent context:** [#2](https://github.com/Hrithik-Gavankar/engineer-brain/issues/2), [team-brain-memory.md](team-brain-memory.md), [roadmap.md](roadmap.md).
+**Parent context:** [#2](https://github.com/Hrithik-Gavankar/brainstack/issues/2), [team-brain-memory.md](team-brain-memory.md), [roadmap.md](roadmap.md).
 
 ---
 
@@ -60,7 +60,7 @@ Agents and sync summaries can be wrong. Today there is no first-class path to:
 
 ## 2. Realtime push into peer agent context
 
-**Status:** implemented locally for [#31](https://github.com/Hrithik-Gavankar/engineer-brain/issues/31) — **signal-only Broadcast** (public topic keyed by `team_id`; bodies via `list_recent`). Auth-private channels deferred. Poll/`watch` remain fallback.
+**Status:** implemented locally for [#31](https://github.com/Hrithik-Gavankar/brainstack/issues/31) — **signal-only Broadcast** (public topic keyed by `team_id`; bodies via `list_recent`). Auth-private channels deferred. Poll/`watch` remain fallback.
 
 ### Title
 
@@ -102,7 +102,7 @@ v1 uses authenticated polling (`watch` / sync-mode background pull). That is sec
 
 ## 3. Anon register/join rate limits
 
-**Status:** implemented locally for [#32](https://github.com/Hrithik-Gavankar/engineer-brain/issues/32) — **DB-level sliding window rate limiting** (default 5 register/h, 15 join/h). Fingerprint from request headers; tunable via Postgres settings; monitoring view for abuse detection.
+**Status:** implemented locally for [#32](https://github.com/Hrithik-Gavankar/brainstack/issues/32) — **DB-level sliding window rate limiting** (default 5 register/h, 15 join/h). Fingerprint from request headers; tunable via Postgres settings; monitoring view for abuse detection.
 
 ### Title
 
@@ -271,7 +271,7 @@ Initiative memory + local reuse metrics exist. Tech leads still lack skill cover
 
 ## 7. Stronger MCP-first compliance
 
-**Status:** implemented locally for [#36](https://github.com/Hrithik-Gavankar/engineer-brain/issues/36) — **decision: stronger prompts + soft session gate** (`policy=stronger_prompts`). Hard CLI gate deferred.
+**Status:** implemented locally for [#36](https://github.com/Hrithik-Gavankar/brainstack/issues/36) — **decision: stronger prompts + soft session gate** (`policy=stronger_prompts`). Hard CLI gate deferred.
 
 ### Title
 
@@ -353,7 +353,7 @@ Sync mode background pull helps, but long sessions can still go stale relative t
 
 ## 9. Launch polish (demo GIF + Office Hours one-pager)
 
-**Status:** implemented locally for [#38](https://github.com/Hrithik-Gavankar/engineer-brain/issues/38) — `docs/team-brain-demo.md` (Office Hours one-pager + demo script + screenshot sequence). GIF placeholder pending visual recording.
+**Status:** implemented locally for [#38](https://github.com/Hrithik-Gavankar/brainstack/issues/38) — `docs/team-brain-demo.md` (Office Hours one-pager + demo script + screenshot sequence). GIF placeholder pending visual recording.
 
 ### Title
 
@@ -396,15 +396,15 @@ Collaborative memory + sync mode are demo-ready in code/docs, but README/social 
 
 ## 10. Repo-pinned project wiring
 
-**Status:** implemented locally for [#39](https://github.com/Hrithik-Gavankar/engineer-brain/issues/39) — commit-safe `.team-brain/project.json`; `start`/`attach`/`onboard` honor pin; example in `examples/team-spike-crew/`.
+**Status:** implemented locally for [#39](https://github.com/Hrithik-Gavankar/brainstack/issues/39) — commit-safe `.team-brain/project.json`; `start`/`attach`/`onboard` honor pin; example in `examples/team-spike-crew/`.
 
 ## 11. View vs write roles (+ invite-only admin)
 
-**Status:** implemented locally for [#40](https://github.com/Hrithik-Gavankar/engineer-brain/issues/40) — roles `admin`\|`member`\|`viewer`; write RPCs gated; `rotate_invite` / `set_member_role`; join `--role viewer`.
+**Status:** implemented locally for [#40](https://github.com/Hrithik-Gavankar/brainstack/issues/40) — roles `admin`\|`member`\|`viewer`; write RPCs gated; `rotate_invite` / `set_member_role`; join `--role viewer`.
 
 ## 12. Hands-on tutorial and demo project walkthrough
 
-**Status:** implemented locally for [#42](https://github.com/Hrithik-Gavankar/engineer-brain/issues/42) — `docs/team-brain-tutorial.md` with three paths (admin, joiner CLI, MCP-only), verification checklist, and cross-links from README and onboarding.
+**Status:** implemented locally for [#42](https://github.com/Hrithik-Gavankar/brainstack/issues/42) — `docs/team-brain-tutorial.md` with three paths (admin, joiner CLI, MCP-only), verification checklist, and cross-links from README and onboarding.
 
 ---
 

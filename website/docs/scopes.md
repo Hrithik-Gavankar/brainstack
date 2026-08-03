@@ -2,7 +2,7 @@
 sidebar_position: 3
 ---
 
-# Brain scopes
+# Brainstack scopes
 
 **Brain** is the product umbrella. Two skills = two scopes:
 
@@ -22,7 +22,7 @@ Commands (`sync`, `attach`, `remember`, …) are **verbs under a skill**, not se
 
 Full guides on GitHub:
 
-- [scopes.md](https://github.com/Hrithik-Gavankar/engineer-brain/blob/main/docs/scopes.md)
-- [team-brain-onboarding.md](https://github.com/Hrithik-Gavankar/engineer-brain/blob/main/docs/team-brain-onboarding.md)
-- [team-brain.md](https://github.com/Hrithik-Gavankar/engineer-brain/blob/main/docs/team-brain.md)
-- [architecture.md](https://github.com/Hrithik-Gavankar/engineer-brain/blob/main/docs/architecture.md)
+- [scopes.md](https://github.com/Hrithik-Gavankar/brainstack/blob/main/docs/scopes.md)
+- [team-brain-onboarding.md](https://github.com/Hrithik-Gavankar/brainstack/blob/main/docs/team-brain-onboarding.md)
+- [team-brain.md](https://github.com/Hrithik-Gavankar/brainstack/blob/main/docs/team-brain.md)
+- [architecture.md](https://github.com/Hrithik-Gavankar/brainstack/blob/main/docs/architecture.md)

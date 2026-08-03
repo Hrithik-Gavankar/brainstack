@@ -35,7 +35,7 @@ Full plan: [docs/team-brain-memory.md](../docs/team-brain-memory.md) · MCP: [mc
 4. Register and share the **invite code** (and privately share URL + anon with joiners):
 
 ```bash
-cd engineer-brain
+cd brainstack
 bash core/scripts/team-brain-api.sh register "Team Atlas" "Your Name"
 ```
 
@@ -53,7 +53,7 @@ bash core/scripts/team-brain-api.sh register "Team Atlas" "Your Name"
 Collapses owner setup into one script ([`core/scripts/team-brain-bootstrap.sh`](../core/scripts/team-brain-bootstrap.sh)):
 
 ```bash
-cd engineer-brain
+cd brainstack
 
 # Hosted project (URL + anon + DB password URI for migrations):
 bash core/scripts/team-brain-api.sh bootstrap \
@@ -90,7 +90,7 @@ Dry-run (no mutations): add `--dry-run`.
 Ask your admin for: **invite code**, **Jira key**, and the crew’s **Supabase URL + anon key**. Put URL/anon in `project.public.env` (or `.team-brain/team.yaml` / env), then:
 
 ```bash
-cd engineer-brain
+cd brainstack
 bash core/scripts/team-brain-api.sh onboard <INVITE> "Your Name" AAP-81423
 ```
 

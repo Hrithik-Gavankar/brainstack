@@ -16,8 +16,8 @@ Get Engineer Brain running in 5 minutes.
 ## Install
 
 ```bash
-git clone https://github.com/Hrithik-Gavankar/engineer-brain.git
-cd engineer-brain
+git clone https://github.com/Hrithik-Gavankar/brainstack.git
+cd brainstack
 bash install.sh <platform> [workspace_path]
 ```
 
@@ -78,7 +78,7 @@ I'm starting on AAP-81423 — start Team Brain sync.
 I'm starting on AAP-81423 — start Team Brain sync, summarize crew memory, then help me.
 ```
 
-Junior guide: [team-brain-onboarding.md](https://github.com/Hrithik-Gavankar/engineer-brain/blob/main/docs/team-brain-onboarding.md).
+Junior guide: [team-brain-onboarding.md](https://github.com/Hrithik-Gavankar/brainstack/blob/main/docs/team-brain-onboarding.md).
 
 ## Verify it works
 
