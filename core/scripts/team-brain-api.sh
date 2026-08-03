@@ -7,8 +7,8 @@
 #   bash team-brain-api.sh <command> [args...]
 #
 # Commands: onboard | register | join | whoami | attach | start | stop | wake |
-#           remember | correct | history | restore | recall | capture | sync |
-#           watch | breakdown | metrics | list | mirror | status | sync-status | touch
+#           bootstrap | remember | correct | history | restore | recall | capture |
+#           sync | watch | breakdown | metrics | list | mirror | status | sync-status | touch
 # Plan: docs/team-brain-memory.md — memories are SoT; md is optional export.
 
 set -euo pipefail
@@ -1721,6 +1721,9 @@ usage() {
   cat <<EOF
 Team Brain — collaborative memory client (Supabase)
 
+  bootstrap --team NAME --admin "Name" [options…]
+      Admin one-shot: configure → migrate → register → print joiner share bundle.
+      See: bash core/scripts/team-brain-bootstrap.sh --help
   onboard <invite-code> "Your Name" [JIRA-KEY]
   register <team-name> [display-name]
   join <invite-code> [display-name]
@@ -1772,10 +1775,17 @@ Plan: docs/team-brain-memory.md
 EOF
 }
 
+cmd_bootstrap() {
+  local boot="${SCRIPT_DIR}/team-brain-bootstrap.sh"
+  [ -f "$boot" ] || die "team-brain-bootstrap.sh missing at $boot"
+  bash "$boot" "$@"
+}
+
 main() {
   local cmd="${1:-}"
   shift || true
   case "$cmd" in
+    bootstrap) cmd_bootstrap "$@" ;;
     onboard) cmd_onboard "$@" ;;
     register) cmd_register "$@" ;;
     join) cmd_join "$@" ;;

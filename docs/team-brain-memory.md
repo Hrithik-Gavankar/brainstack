@@ -79,6 +79,7 @@ The product must deliver this **core memory loop**:
 
 - Jira-native attach
 - Zero Supabase account for joiners (admin hosts one project; share invite + URL/anon out of band — repo ships placeholders only)
+- Admin **bootstrap** one-shot (`team-brain-bootstrap.sh` / `bootstrap`) for migrate + register + share bundle (#41)
 - Clear personal vs team privacy
 - Agent loop: `recall` before research, `remember` after findings
 - Correction loop: human paste → `correct` / same `source_ref` update + optional `learning`

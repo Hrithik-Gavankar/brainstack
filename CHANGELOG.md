@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- Team Brain **crew bootstrap** (#41): `bootstrap` / `team-brain-bootstrap.sh` — migrate + register + share bundle for admins
 - Team Brain **memory version history / soft rollback** (#34): `capture_revisions`; `history` / `restore` CLI + MCP
 - Migration `20260803000001_team_brain_memory_history.sql` — archive prior body on `source_ref` update
 - Team Brain **correction / learning loop** (#30): `correct` CLI + MCP; `learning` kind; skill/onboarding guidance

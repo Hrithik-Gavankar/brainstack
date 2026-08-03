@@ -195,31 +195,42 @@ If sync slept: `wake AAP-81423` (or `start` again).
 
 Only one person does this for a new crew. **You need a Supabase account** (free tier is fine). Joiners do not.
 
-### B1 — Create a Supabase project
+### Preferred — one-command bootstrap (~10 minutes)
+
+1. Create a project at [supabase.com](https://supabase.com) (skip if using `--local` Docker).
+2. From the repo root:
+
+```bash
+cd /path/to/engineer-brain
+bash core/scripts/team-brain-api.sh bootstrap \
+  --team "Team Name" --admin "Your Name" \
+  --url "https://YOUR_REF.supabase.co" \
+  --anon "eyJ..." \
+  --db-url "postgresql://postgres:YOUR_DB_PASSWORD@db.YOUR_REF.supabase.co:5432/postgres" \
+  --jira AAP-81423 \
+  --write-env
+```
+
+3. Copy the printed **share bundle** to Slack (invite + URL + anon + Jira key).  
+4. Tell juniors to use **Path A**.
+
+Details / other modes (`--local`, linked CLI, `--skip-migrations`): [supabase/README.md](../supabase/README.md) · `bash core/scripts/team-brain-bootstrap.sh --help`.
+
+**Do not commit** live URL/anon/DB password.
+
+### Manual path (same outcome)
 
 1. Create a project at [supabase.com](https://supabase.com).
 2. Copy **Project URL** + **anon** key into local `supabase/project.public.env` (replace placeholders). Set `TEAM_BRAIN_JIRA_SITE`.
 3. Apply migrations in timestamp order — see [supabase/README.md](../supabase/README.md) and [migrations/README.md](../supabase/migrations/README.md).
-4. **Do not commit** your live URL/anon to a public fork.
-
-### B2 — Register and share
+4. Register and share:
 
 ```bash
-cd /path/to/engineer-brain
 bash core/scripts/team-brain-api.sh register "Team Name" "Your Name"
-```
-
-The command prints an **invite code**. Share with teammates: **invite code + URL + anon key + Jira key** (Slack is fine). Do not put live keys in the public GitHub repo.
-
-Then attach the Jira work:
-
-```bash
 bash core/scripts/team-brain-api.sh attach AAP-81423 "Short title" "active" "https://your-org.atlassian.net/browse/AAP-81423"
 ```
 
-Tell juniors to use **Path A**.
-
-> **Note:** New teams get 16-character invite codes. Only admins see the invite via `register` / `whoami` — joiners’ `credentials.json` does not store it.
+> **Note:** New teams get 16-character invite codes. Only admins see the invite via `register` / `whoami` / bootstrap share bundle — joiners’ `credentials.json` does not store it.
 
 ---
 
