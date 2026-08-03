@@ -314,7 +314,7 @@ v1 enforcement is soft (Cursor rule + skill + MCP instructions). Models can stil
 
 ## 8. Long-session watch hint
 
-**Status:** implemented locally for [#37](https://github.com/Hrithik-Gavankar/engineer-brain/issues/37) — skill/rule long-session refresh nudge + onboarding `watch` blurb; consistent with sync sleep/wake.
+**Status:** implemented locally for [#37](https://github.com/Hrithik-Gavankar/brainstack/issues/37) — skill/rule long-session refresh nudge + onboarding `watch` blurb; consistent with sync sleep/wake.
 
 ### Title
 
