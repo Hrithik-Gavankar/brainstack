@@ -235,6 +235,38 @@ Check the health and completeness of your engineering brain.
 2. Display the output directly to the user. Do not modify, summarize, or reformat the report.
 3. If the overall score is below 80%, suggest the user run `engineer-brain update` to improve data freshness.
 
+### `watch` (PR digest across repos)
+
+Scan GitHub repos for open PRs and generate a prioritized digest.
+
+**Scope: All GitHub repos in the workspace (or specified repos).**
+Requires the `gh` CLI to be installed and authenticated (`gh auth login`).
+
+**Usage:** `watch [--repos owner/repo,...] [--stale-days N] [--loop N]`
+
+**Flags:**
+- `--repos` : comma-separated `owner/repo` slugs (default: auto-discover from workspace git remotes)
+- `--stale-days` : days of inactivity before a PR is classified as stale (default: 14)
+- `--loop` : re-run every N minutes (default: run once and exit)
+
+1. Run:
+   ```bash
+   bash <path-to-scripts>/watch.sh "$HOME/path/to/workspace" [--repos ...] [--stale-days N] [--loop N]
+   ```
+2. Display the output directly.
+
+The script classifies each PR into buckets:
+- **Needs Your Review** : you (or a team you belong to) are a requested reviewer, PR is not a draft. Sorted oldest-first, smallest-first.
+- **Your Open PRs** : PRs you authored that are still open. Stale own PRs go to the Stale bucket instead.
+- **Contributor PRs** : human-authored PRs from other contributors. Bot PRs and drafts are excluded.
+- **Stale** : no updates in `--stale-days` days (default 14), including your own stale PRs. Sorted by idle time.
+
+Output includes PR size labels (S/M/L/XL based on lines changed), age, idle time, author, and labels.
+
+**Integration with other commands:**
+- When running `sync`, mention the count from `watch` (e.g., "3 PRs waiting for your review") in section 2 (planned work).
+- When running `reflect`, flag if your review queue is growing or if you have stale PRs of your own.
+
 ---
 
 ## Hard Rules

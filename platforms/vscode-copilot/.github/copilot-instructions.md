@@ -48,11 +48,13 @@ refer to `.engineer-brain/COMMANDS.md` for full command logic.
 - `reflect` — pattern analysis and recommendations
 - `scan [days]` — raw git scan output
 - `doctor` — brain health check and completeness score
+- `watch [--repos ...] [--stale-days N] [--loop N]` — PR digest across workspace repos
 
 **Data paths:**
 - Living document: `.engineer-brain/BRAIN.md`
 - Scanner: `.engineer-brain/scripts/scan.sh`
 - Doctor: `.engineer-brain/scripts/doctor.sh`
+- Watch: `.engineer-brain/scripts/watch.sh`
 - Commands: `.engineer-brain/COMMANDS.md`
 
 ## Hard Rules

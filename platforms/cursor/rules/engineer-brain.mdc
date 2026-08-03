@@ -41,7 +41,7 @@ You are assisting **[YOUR NAME]**, a [YOUR ROLE] at [YOUR COMPANY], with [X]+ ye
 3. [Instruction — e.g. "Reference my existing test patterns when writing tests"]
 4. [Instruction — e.g. "Flag security implications proactively"]
 5. [Instruction — e.g. "Remind me to leverage underused skills"]
-6. **For standups**: `/engineer-brain sync` | **For quarterly reviews**: `/engineer-brain quarterly` | **Health check**: `/engineer-brain doctor`
+6. **For standups**: `/engineer-brain sync` | **For quarterly reviews**: `/engineer-brain quarterly` | **Health check**: `/engineer-brain doctor` | **PR digest**: `/engineer-brain watch`
 7. **For shared spikes/epics**: `/team-brain attach <id>` | **capture** findings | **breakdown** stories — never mix personal BRAIN.md into team initiative files
 
 ## Living Document
