@@ -132,4 +132,6 @@ Do not commit `service_role` keys or live anon keys to public repos. Rotate invi
 
 **Repo pin (#39):** commit `.team-brain/project.json` (Jira key + team name only — never anon/api_key/invite). `start` / `attach` use the pin when the key is omitted.
 
+**Team aggregation (#35):** `team_aggregate_metrics` RPC + `metrics --team` / `aggregate`. Returns counts + `display_name` only — never memory bodies, never personal `BRAIN.md`, never uploads local `metrics.json`. Apply `…_aggregate_metrics.sql`.
+
 **Semantic recall (optional):** `TEAM_BRAIN_EMBED_PROVIDER=openai|ollama` — otherwise `recall` uses FTS.

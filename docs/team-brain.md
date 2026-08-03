@@ -105,11 +105,12 @@ Cursor rule/skill: summarize cache after `start`; prompt user if mode is `sleep`
 1. Attach (or let `start` attach) the Jira key.
 2. `start` — load crew memory + enter sync mode.
 3. Agents/`remember` with `source_ref`.
-4. `breakdown` / `metrics` when planning.
+4. `breakdown` / `metrics` when planning; `metrics --team` for crew coverage + reuse (#35).
 
 ```bash
 bash core/scripts/team-brain-api.sh breakdown AAP-81423
 bash core/scripts/team-brain-api.sh metrics AAP-81423
+bash core/scripts/team-brain-api.sh metrics --team
 ```
 
 `capture` / `sync` / `watch` remain as lower-level aliases.

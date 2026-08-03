@@ -508,10 +508,23 @@ def breakdown(jira_key: str, query: str = "") -> str:
 
 @mcp.tool()
 def metrics(jira_key: str = "") -> str:
-    """Show local reuse metrics (recall hits, remember writes, breakdown runs)."""
-    if jira_key.strip():
-        return _as_json(_run("metrics", jira_key.strip().upper()))
+    """Show local reuse metrics, or crew aggregation when jira_key is '--team' / 'team'.
+
+    Local (default): recall hits, remember writes, breakdown runs from metrics.json.
+    Team (#35): coverage matrix + reuse/activity — no memory bodies / no BRAIN.md.
+    """
+    key = jira_key.strip()
+    if key.lower() in ("--team", "team", "--aggregate", "aggregate"):
+        return _as_json(_run("metrics", "--team"))
+    if key:
+        return _as_json(_run("metrics", key.upper()))
     return _as_json(_run("metrics"))
+
+
+@mcp.tool()
+def aggregate() -> str:
+    """Crew aggregation metrics (#35): coverage + reuse. Privacy-first (no bodies / BRAIN.md)."""
+    return _as_json(_run("aggregate"))
 
 
 @mcp.tool()

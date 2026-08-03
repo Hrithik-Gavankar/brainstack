@@ -25,7 +25,8 @@ Agent-native tools for collaborative initiative memory. Wraps [`team-brain-api.s
 | `list_recent` | Sync / list with optional `since` cursor |
 | `list_initiatives` | Team initiative index |
 | `breakdown` | Recall → draft stories/spikes (`*-breakdown.md`) |
-| `metrics` | Local reuse stats (recall / remember / breakdown) |
+| `metrics` | Local reuse stats, or `metrics("--team")` for crew aggregation (#35) |
+| `aggregate` | Crew coverage + reuse (#35); no memory bodies / no BRAIN.md |
 | `status` | Client config |
 
 ## MCP-first compliance (#36)

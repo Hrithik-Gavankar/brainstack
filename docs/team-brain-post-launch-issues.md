@@ -229,6 +229,8 @@ Merge-safe updates overwrite the current body. Without history, crews cannot see
 
 ## 6. Team aggregation metrics
 
+**Status:** implemented locally for [#35](https://github.com/Hrithik-Gavankar/engineer-brain/issues/35) — v1 signals spec + `team_aggregate_metrics` RPC + `metrics --team` / `aggregate` CLI (+ MCP); privacy documented; collab graph deferred.
+
 ### Title
 
 ```
@@ -255,10 +257,10 @@ Initiative memory + local reuse metrics exist. Tech leads still lack skill cover
 
 ## Acceptance criteria
 
-- [ ] Spec which signals are in-scope for v1 of aggregation
-- [ ] CLI and/or dashboard surface for at least one aggregation view
-- [ ] Document privacy boundaries
-- [ ] Link from `docs/roadmap.md` / issue #2
+- [x] Spec which signals are in-scope for v1 of aggregation
+- [x] CLI and/or dashboard surface for at least one aggregation view
+- [x] Document privacy boundaries
+- [x] Link from `docs/roadmap.md` / issue #2
 
 ## References
 
