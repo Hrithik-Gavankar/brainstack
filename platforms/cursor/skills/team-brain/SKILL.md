@@ -19,7 +19,13 @@ Part of **Brain**: personal=`engineer-brain`, crew=`team-brain`.
 
 | Prefer | Fallback |
 |--------|----------|
-| MCP `start` / `prepare_research` / `recall` / `remember` / `compliance` / `correct` / `history` / `restore` / `touch` | `bash …/team-brain-api.sh …` |
+| MCP `start` / `prepare_research` / `recall` / `remember` / `compliance` / `peer_notify` / `correct` / `history` / `restore` / `touch` | `bash …/team-brain-api.sh …` |
+
+### Peer push (#31)
+
+`start` may attach a Realtime **signal** listener (bodies still via authenticated pull).  
+If `.team-brain/notify/<KEY>.json` updates mid-session, summarize new peer memories before continuing.  
+If push is unavailable (`TEAM_BRAIN_REALTIME=off` / no `websockets` / migration missing), poll/`watch`/`recall` still work.
 
 ## Compliance (policy=`stronger_prompts`)
 

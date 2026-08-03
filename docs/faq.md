@@ -163,7 +163,7 @@ You do **not** need your own Supabase account. Step-by-step: [team-brain-onboard
 
 ### Do agents sync automatically?
 
-Not by chat alone. Shared memory requires `remember`, then `recall` (or MCP / optional `watch`). In Cursor, the always-on Team Brain rule requires recall-before-research and remember-after-findings.
+Not by chat alone. Shared memory requires `remember`, then `recall` (or MCP / optional `watch`). With Realtime push (#31) enabled, peers get a signal + cache refresh while sync/`watch` is running; poll remains the fallback. In Cursor, the always-on Team Brain rule requires recall-before-research and remember-after-findings.
 
 ### How do I correct bad research in Team Brain?
 

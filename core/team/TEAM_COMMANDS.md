@@ -108,8 +108,10 @@ bash core/scripts/team-brain-api.sh correct AAP-81423 --source-ref "AAP-81423#cl
 |---------|---------|
 | `start` | **Enter sync mode** — load memory + background pull |
 | `stop` / `wake` / `touch` | Leave / resume / keep awake |
-| `sync-status` | Session state: active \| sleep \| stopped (+ `compliance`) |
+| `sync-status` | Session state: active \| sleep \| stopped (+ `compliance`, realtime daemon) |
 | `compliance` | Soft MCP-first gate (`research_ok`, `agent_action`) — agents follow; CLI not blocked |
+| `watch` | Near-realtime poll; `--push` adds Broadcast listener (poll always fallback) |
+| `broadcast-topic` | Show signal Broadcast topic for a Jira key (#31) |
 | `bootstrap` | **Admin one-shot** — migrate + register + share bundle |
 | `onboard` | Join + optional attach + recall |
 | `register` / `join` / `whoami` | Membership |

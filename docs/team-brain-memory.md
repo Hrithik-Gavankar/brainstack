@@ -1,6 +1,6 @@
 # Team Brain — Collaborative AI Memory (plan)
 
-Status: **P0–P4 + sync mode shipped** (Realtime push into open chat + anon rate limits still open)  
+Status: **P0–P4 + sync mode + Realtime signal push (#31) shipped** (anon rate limits still open)  
 Related: [#2](https://github.com/Hrithik-Gavankar/engineer-brain/issues/2), [team-brain.md](team-brain.md), [team-brain-onboarding.md](team-brain-onboarding.md), [scopes.md](scopes.md)
 
 This document captures the original Team Brain intent, what shipped for collaborative AI memory (FTS + optional semantic recall + agent loop), and remaining gaps — without depending on external memory products.
@@ -101,16 +101,20 @@ Later polish: version/rollback, snapshots, richer metrics.
 - [x] Skill + docs: memories are SoT; md is optional export
 - [x] Keep existing `capture` / `sync` as compatibility aliases
 
-### P1 — Near-realtime watch *(done — poll; push later)*
+### P1 — Near-realtime watch *(done — poll + signal Broadcast push)*
 
-**Decision:** use authenticated **polling** (`list_recent` + `p_since`), not `postgres_changes`.
+**Decision (poll):** use authenticated **polling** (`list_recent` + `p_since`), not `postgres_changes`.
 
-Reason: captures revoke SELECT from anon; auth is custom `p_api_key` on RPCs. Realtime CDC uses the JWT role and cannot see rows without opening SELECT to everyone (leak). Polling keeps member-key security.
+Reason: captures revoke SELECT from anon; auth is custom `p_api_key` on RPCs. Realtime CDC uses the JWT role and cannot see rows without opening SELECT to everyone (leak). Polling keeps member-key security for **content**.
+
+**Decision (push, #31):** **signal-only public Broadcast** from DB trigger + optional client broadcast — never bodies on the wire. Topic `team-brain:{team_id}:{JIRA_KEY}` (team_id already in `credentials.json`). Peers refresh via authenticated `list_recent` / `_pull_signal`. Private Auth-linked CDC deferred until membership uses Supabase Auth JWTs.
 
 - [x] `team-brain-api.sh watch <JIRA-KEY> [secs]` — poll, print deltas, refresh cache/md
 - [x] Doc note migration `20260728000002_team_brain_watch_notes.sql`
-- [ ] Skill: during long sessions, suggest `watch` in background or periodic `recall`
-- [ ] Later optional: private Broadcast / Supabase Auth–linked members for push CDC
+- [x] Prototype push: migration `20260804000001_team_brain_realtime_broadcast.sql` + `team-brain-realtime.py`
+- [x] Fallback: poll / `watch` / sync-mode loop if Realtime or `websockets` unavailable (`TEAM_BRAIN_REALTIME=off`)
+- [ ] Skill: during long sessions, suggest `watch` in background or periodic `recall` (#37)
+- [ ] Later optional: private Broadcast + Supabase Auth–linked members
 
 ### P2 — Semantic recall
 
@@ -146,7 +150,7 @@ bash core/scripts/team-brain-api.sh recall AAP-81423 "where is decision_environm
       (`20260802000001_team_brain_learning_kind.sql`, issue [#30](https://github.com/Hrithik-Gavankar/engineer-brain/issues/30))
 - [x] **Memory version history / soft rollback** — `capture_revisions`; archive on `source_ref` update;  
       `history` / `restore` CLI+MCP (`20260803000001_team_brain_memory_history.sql`, issue [#34](https://github.com/Hrithik-Gavankar/engineer-brain/issues/34))
-- [ ] Optional long-lived push into the other agent session (beyond poll/`watch`) — still open
+- [x] Optional long-lived push into the other agent session — signal Broadcast + `notify/<KEY>.json` (#31); poll remains fallback
 
 ### Agent loop (what makes it a shared brain)
 
@@ -204,7 +208,7 @@ Use this as the build board (check off in PRs):
 - RPCs stay security-definer; no direct anon table reads
 - Unique `(team_id, display_name)`; invite codes 16 hex chars
 - **Known v1 gap:** anon `register_team` / `join_team` have no app-level rate limit — document mitigations in [supabase/README.md](../supabase/README.md); prefer Edge Function / Auth for register later
-- Near-realtime uses authenticated poll (`watch`), not open postgres_changes
+- Near-realtime: authenticated poll (`watch`) + signal-only Broadcast (no anon SELECT / no bodies on the wire)
 
 ---
 
@@ -228,7 +232,7 @@ Use this as the build board (check off in PRs):
 | Correction / learning | ✅ `correct` + `learning` kind | — |
 | Version/history/soft rollback | ✅ `history` / `restore` + `capture_revisions` | Optional snapshots / UI |
 | Semantic search | Optional embeddings; FTS default | Enable when crews want it |
-| Live push into other agent context | Poll `watch` / next `recall` | Private Realtime/Broadcast if auth allows |
+| Live push into other agent context | ✅ Signal Broadcast + poll fallback (#31) | Private Auth-linked channels when membership moves to Supabase Auth |
 | Model compliance | ✅ Stronger prompts + soft session gate (`compliance` / `prepare_research`; CLI not hard-blocked) | Optional hard gate / metrics later |
 | Metrics | Local `metrics.json` | Optional team dashboard |
 

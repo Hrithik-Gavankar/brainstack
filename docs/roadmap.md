@@ -35,7 +35,7 @@ Growing beyond individual use into a richer tool.
 - [x] **Team Brain agent loop** — Cursor always-on `team-brain.mdc` + skill: recall before research, remember after findings
 - [x] **Team Brain onboarding** — invite + Jira key via `onboard`; beginner guide [team-brain-onboarding.md](team-brain-onboarding.md)
 - [x] **Team Brain sync mode** — `start` / `stop` / `wake` / idle sleep; merge-safe `source_ref` updates
-- [ ] **Team Brain Realtime push** — private broadcast into other agents (v1 uses sync-mode poll)
+- [x] **Team Brain Realtime push** — signal-only Broadcast + poll fallback (#31); Auth-private channels later
 - [ ] **Anon register/join rate limits** — Edge Function / Auth hardening (documented gap)
 - [ ] **Team aggregation metrics** — skill coverage matrix, workload heatmap, collaboration graph
 - [ ] **GitLab/Bitbucket support** — scanner support beyond GitHub

@@ -60,6 +60,8 @@ Agents and sync summaries can be wrong. Today there is no first-class path to:
 
 ## 2. Realtime push into peer agent context
 
+**Status:** implemented locally for [#31](https://github.com/Hrithik-Gavankar/engineer-brain/issues/31) — **signal-only Broadcast** (public topic keyed by `team_id`; bodies via `list_recent`). Auth-private channels deferred. Poll/`watch` remain fallback.
+
 ### Title
 
 ```
@@ -85,10 +87,10 @@ v1 uses authenticated polling (`watch` / sync-mode background pull). That is sec
 
 ## Acceptance criteria
 
-- [ ] Design note: why poll was chosen (security) and how push stays member-scoped
-- [ ] Prototype push path (Supabase Auth-linked members **or** private Broadcast channel)
-- [ ] Document fallback: poll/`watch` still works if push unavailable
-- [ ] No widening of anon table reads
+- [x] Design note: why poll was chosen (security) and how push stays member-scoped
+- [x] Prototype push path (signal Broadcast + DB trigger; Auth-private deferred)
+- [x] Document fallback: poll/`watch` still works if push unavailable
+- [x] No widening of anon table reads
 
 ## References
 

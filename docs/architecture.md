@@ -146,7 +146,7 @@ Commands are natural language triggers interpreted by the AI assistant.
 | team-brain | `attach` / `recall` | Jira identity + pull memories → cache / session brief |
 | team-brain | `remember` | Append shared memory (dedup by `source_ref` / content hash) |
 | team-brain | `breakdown` | Recall memories → story/spike draft (`*-breakdown.md`) |
-| team-brain | `watch` / `metrics` | Near-realtime poll; local reuse stats |
+| team-brain | `watch` / `metrics` | Near-realtime poll + signal Broadcast push; local reuse stats |
 
 ### Team Brain collaborative memory
 
