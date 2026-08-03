@@ -81,6 +81,7 @@ The product must deliver this **core memory loop**:
 - Zero Supabase account for joiners (admin hosts one project; share invite + URL/anon out of band — repo ships placeholders only)
 - Clear personal vs team privacy
 - Agent loop: `recall` before research, `remember` after findings
+- Correction loop: human paste → `correct` / same `source_ref` update + optional `learning`
 - `breakdown` consumes `recall`
 
 Later polish: version/rollback, snapshots, richer metrics.
@@ -140,6 +141,8 @@ bash core/scripts/team-brain-api.sh recall AAP-81423 "where is decision_environm
 - [x] `source_ref` / content-hash dedup (P0 RPCs; documented on MCP `remember`)
 - [x] **Mandatory agent loop** — recall *before* research; remember *immediately after* findings  
       (`platforms/cursor/rules/team-brain.mdc` + skill + MCP instructions)
+- [x] **Correction / learning loop** — `correct` CLI/MCP; `learning` kind; skill + onboarding  
+      (`20260802000001_team_brain_learning_kind.sql`, issue [#30](https://github.com/Hrithik-Gavankar/engineer-brain/issues/30))
 - [ ] Optional long-lived push into the other agent session (beyond poll/`watch`) — still open
 
 ### Agent loop (what makes it a shared brain)
@@ -219,10 +222,11 @@ Use this as the build board (check off in PRs):
 | Recall before research | ✅ Rule/skill/MCP | Keep mandatory |
 | Remember after findings | ✅ Direct save | Keep mandatory |
 | Dedup (`source_ref`) | ✅ | — |
+| Correction / learning | ✅ `correct` + `learning` kind | Version/history soft rollback (#34) |
 | Semantic search | Optional embeddings; FTS default | Enable when crews want it |
 | Live push into other agent context | Poll `watch` / next `recall` | Private Realtime/Broadcast if auth allows |
 | Model compliance | Soft (rules/skills) | Stronger MCP-first defaults |
-| Version/history/snapshots | — | Evaluate later |
+| Version/history/snapshots | — | Evaluate later (#34) |
 | Metrics | Local `metrics.json` | Optional team dashboard |
 
 ## 9. Out of scope (for now)

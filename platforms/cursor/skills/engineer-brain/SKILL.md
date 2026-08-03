@@ -110,15 +110,23 @@ weekend, skip — standups don't happen on weekends.
    - Absorb into BRAIN.md Current Sprint Context / Recent Achievements
    - Note any signal type the scanner missed (review/release/demo/event)
    - Do **not** argue with the correction — learn from it
+   - Prefer natural-language guidance in BRAIN.md (“prefer X”, “avoid Y”) —
+     not TODO/NO-TODO dump lists (same style as Team Brain corrections)
 
 ### Standup correction feedback (`sync` follow-up)
+
+Mirrors the Team Brain correction loop (`correct` / same `source_ref` update):
+human paste → absorb as ground truth → record what was wrong → close the gap.
 
 When the user pastes or describes their real standup after a generated sync:
 
 1. Diff what was missed vs what `scan.sh` + `gh` returned.
-2. Update BRAIN.md sprint context immediately.
-3. If a systemic gap remains (e.g. releases, demos, cross-team work), improve
+2. Update BRAIN.md sprint context immediately (overwrite stale bullets for that day).
+3. Capture a short **learning** in BRAIN.md Learning Log or Growth Areas:
+   what the sync got wrong → what to prefer next time.
+4. If a systemic gap remains (e.g. releases, demos, cross-team work), improve
    `scripts/scan.sh` config and/or the sync steps above in the same session.
+5. Confirm to the user what changed — do not re-litigate the correction.
 
 ### `update` (refresh the brain)
 

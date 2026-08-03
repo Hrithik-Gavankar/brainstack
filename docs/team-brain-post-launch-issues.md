@@ -40,12 +40,14 @@ Agents and sync summaries can be wrong. Today there is no first-class path to:
 
 ## Acceptance criteria
 
-- [ ] Documented correction flow in team-brain skill + onboarding (human pastes correction → agent updates memory)
-- [ ] CLI/MCP path: correct or re-`remember` with same `source_ref` → `updated`, not duplicate
-- [ ] Optional `learning` (or equivalent) kind / convention for “what we got wrong”
-- [ ] Skill guidance: no TODO/NO-TODO dump style in remembered bodies
-- [ ] Personal sync correction path mirrors existing standup correction feedback in engineer-brain skill
-- [ ] Example in docs or `examples/team-spike-crew`
+- [x] Documented correction flow in team-brain skill + onboarding (human pastes correction → agent updates memory)
+- [x] CLI/MCP path: correct or re-`remember` with same `source_ref` → `updated`, not duplicate
+- [x] Optional `learning` (or equivalent) kind / convention for “what we got wrong”
+- [x] Skill guidance: no TODO/NO-TODO dump style in remembered bodies
+- [x] Personal sync correction path mirrors existing standup correction feedback in engineer-brain skill
+- [x] Example in docs or `examples/team-spike-crew`
+
+> Implemented in branch `feat/team-brain-correction-learning-loop` (issue #30).
 
 ## References
 

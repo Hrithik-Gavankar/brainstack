@@ -41,4 +41,25 @@ cp -r examples/team-spike-crew /path/to/workspace/.team-brain
 
 Fill local `supabase/project.public.env` with **your** project URL + anon (placeholders only in git). Joiners do not need their own Supabase account — only the crew’s URL/anon + invite.
 
-Personal standups: `/engineer-brain sync` only.
+### Correction / learning example
+
+When research was wrong, update the **same** `source_ref` (do not fork a second topic):
+
+```bash
+# Bad research landed earlier:
+bash core/scripts/team-brain-api.sh remember DEMO-EE-1 research \
+  --source-ref "DEMO-EE-1#ee-schema" \
+  "Schema lives under tox-ansible (WRONG — for demo)."
+
+# Human corrects → merge update + learning row
+bash core/scripts/team-brain-api.sh correct DEMO-EE-1 \
+  --source-ref "DEMO-EE-1#ee-schema" \
+  --was "Schema lives under tox-ansible" \
+  --learning "Was wrong: schema under tox-ansible. Prefer: packages/ansible-language-server." \
+  "Prefer packages/ansible-language-server for EE schema paths; avoid assuming tox-ansible owns it."
+```
+
+Expect `corrected.updated: true` and a `learning` memory at `DEMO-EE-1#ee-schema/learning`.  
+Bodies use prefer/avoid prose — not TODO/NO-TODO dumps.
+
+Personal standups: `/engineer-brain sync` only (same absorb-and-learn correction pattern in the engineer-brain skill).

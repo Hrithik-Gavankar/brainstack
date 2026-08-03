@@ -1012,6 +1012,7 @@ PY
 
 # remember — collaborative memory write (preferred). capture is a compat alias.
 # Body: positional args, or "-" (stdin), or --body-file PATH (preferred for MCP / special chars).
+# Kinds: research | decision | note | learning
 cmd_remember() {
   require_api_key
   local key="${1:-}"
@@ -1021,7 +1022,7 @@ cmd_remember() {
   local body_file=""
   local from_stdin=0
   local args=()
-  local usage='usage: remember <JIRA-KEY> <research|decision|note> [--source-ref REF] [--body-file PATH | - | <body...>]'
+  local usage='usage: remember <JIRA-KEY> <research|decision|note|learning> [--source-ref REF] [--body-file PATH | - | <body...>]'
   while [ $# -gt 0 ]; do
     case "$1" in
       --source-ref)
@@ -1053,6 +1054,11 @@ cmd_remember() {
   fi
   [ -n "$key" ] || die "$usage"
   [ -n "$body_text" ] || die "memory body required ($usage)"
+  kind=$(echo "$kind" | tr '[:upper:]' '[:lower:]')
+  case "$kind" in
+    research|decision|note|learning) ;;
+    *) die "kind must be research, decision, note, or learning (got: $kind)" ;;
+  esac
   key=$(echo "$key" | tr '[:lower:]' '[:upper:]')
   local out sync_payload payload emb
   emb=""
@@ -1085,6 +1091,9 @@ cmd_remember() {
       --arg r "$source_ref" \
       '{p_api_key:$k, p_jira_key:$j, p_kind:$kind, p_body:$b, p_source_ref:(if $r=="" then null else $r end)}')
     if ! out=$(rpc_try remember "$payload" 2>/dev/null); then
+      if [ "$kind" = "learning" ]; then
+        die "remember(learning) failed — apply migration 20260802000001_team_brain_learning_kind.sql"
+      fi
       out=$(rpc add_capture "$(jq -n \
         --arg k "$TEAM_BRAIN_API_KEY" \
         --arg j "$key" \
@@ -1111,6 +1120,128 @@ cmd_remember() {
 cmd_capture() {
   # Compat alias for remember (no source_ref)
   cmd_remember "$@"
+}
+
+# correct — human correction loop: update memory at source_ref + optional learning.
+# Prefer natural-language guidance in bodies (avoid / prefer) — never TODO/NO-TODO dumps.
+cmd_correct() {
+  require_api_key
+  local key="${1:-}"
+  shift || true
+  local source_ref="${TEAM_BRAIN_SOURCE_REF:-}"
+  local kind="research"
+  local learning_text=""
+  local was_wrong=""
+  local body_file=""
+  local from_stdin=0
+  local args=()
+  local usage='usage: correct <JIRA-KEY> --source-ref REF [--kind research|decision|note] [--was TEXT] [--learning TEXT] [--body-file PATH | - | <corrected body...>]'
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --source-ref)
+        source_ref="${2:-}"
+        shift 2 || die "$usage"
+        ;;
+      --kind)
+        kind="${2:-}"
+        shift 2 || die "$usage"
+        ;;
+      --was|--was-wrong)
+        was_wrong="${2:-}"
+        shift 2 || die "$usage"
+        ;;
+      --learning)
+        learning_text="${2:-}"
+        shift 2 || die "$usage"
+        ;;
+      --body-file)
+        body_file="${2:-}"
+        shift 2 || die "$usage"
+        ;;
+      -)
+        from_stdin=1
+        shift
+        ;;
+      *)
+        args+=("$1")
+        shift
+        ;;
+    esac
+  done
+  local body_text=""
+  if [ -n "$body_file" ]; then
+    [ -f "$body_file" ] || die "body file not found: $body_file"
+    body_text=$(cat "$body_file")
+  elif [ "$from_stdin" -eq 1 ]; then
+    body_text=$(cat)
+  elif [ ${#args[@]} -gt 0 ]; then
+    body_text="${args[*]}"
+  fi
+  [ -n "$key" ] || die "$usage"
+  [ -n "$source_ref" ] || die "correct requires --source-ref (stable topic slug). $usage"
+  [ -n "$body_text" ] || die "corrected body required ($usage)"
+  kind=$(echo "$kind" | tr '[:upper:]' '[:lower:]')
+  case "$kind" in
+    research|decision|note) ;;
+    learning) die "correct --kind must be research|decision|note (use --learning for the learning row)" ;;
+    *) die "kind must be research, decision, or note (got: $kind)" ;;
+  esac
+  key=$(echo "$key" | tr '[:lower:]' '[:upper:]')
+
+  echo "→ correcting memory at source_ref=$source_ref" >&2
+  local corrected_out learning_out learning_ref learning_body tmp_body tmp_learn tmp_err
+  local got_ref learning_error
+  tmp_body=$(mktemp)
+  tmp_learn=""
+  tmp_err=""
+  trap 'rm -f "$tmp_body" "$tmp_learn" "$tmp_err"' RETURN
+  printf '%s' "$body_text" >"$tmp_body"
+  corrected_out=$(cmd_remember "$key" "$kind" --source-ref "$source_ref" --body-file "$tmp_body")
+
+  # Soft content-hash dedupe / old add_capture can return a different (or null) source_ref.
+  # Never report ok unless the intended topic slug was actually bound.
+  got_ref=$(jq -r '.source_ref // empty' <<<"$corrected_out")
+  if [ "$got_ref" != "$source_ref" ]; then
+    die "correct did not bind source_ref=$source_ref (got: ${got_ref:-none}). Apply sync-mode migration; avoid identical body already stored under a different ref."
+  fi
+
+  learning_out="null"
+  learning_error=""
+  if [ -n "$learning_text" ] || [ -n "$was_wrong" ]; then
+    learning_ref="${source_ref}/learning"
+    if [ -n "$learning_text" ]; then
+      learning_body="$learning_text"
+    else
+      learning_body=$(printf 'Was wrong: %s\nPrefer: %s\nTreat %s as ground truth; avoid repeating the incorrect claim.' \
+        "$was_wrong" "$body_text" "$source_ref")
+    fi
+    echo "→ recording learning at source_ref=$learning_ref" >&2
+    tmp_learn=$(mktemp)
+    tmp_err=$(mktemp)
+    printf '%s' "$learning_body" >"$tmp_learn"
+    # Correction already saved — learning failure must not abort the command (set -e safe via if).
+    if learning_out=$(cmd_remember "$key" learning --source-ref "$learning_ref" --body-file "$tmp_learn" 2>"$tmp_err"); then
+      :
+    else
+      learning_error=$(tr '\n' ' ' <"$tmp_err" | sed 's/[[:space:]]*$//')
+      [ -n "$learning_error" ] || learning_error="learning remember failed — apply 20260802000001_team_brain_learning_kind.sql"
+      echo "⚠ correction saved but learning write failed: $learning_error" >&2
+      learning_out="null"
+    fi
+  fi
+
+  jq -n \
+    --argjson corrected "$corrected_out" \
+    --argjson learning "$learning_out" \
+    --arg ref "$source_ref" \
+    --arg learning_error "$learning_error" \
+    '{
+      ok: true,
+      source_ref: $ref,
+      corrected: $corrected,
+      learning: (if $learning == null then null else $learning end),
+      learning_error: (if $learning_error == "" then null else $learning_error end)
+    }'
 }
 
 # recall — semantic (vector) when embed provider set; else FTS. No query → sync.
@@ -1503,8 +1634,11 @@ Team Brain — collaborative memory client (Supabase)
   touch <JIRA-KEY>          Mark activity (keeps sync awake); wakes if sleeping
   sync-status [JIRA-KEY]    Show sync mode (active | sleep | stopped)
 
-  remember <JIRA-KEY> <research|decision|note> [--source-ref REF] [--body-file PATH | - | <body...>]
+  remember <JIRA-KEY> <research|decision|note|learning> [--source-ref REF] [--body-file PATH | - | <body...>]
       Write shared memory. Dedupes identical; UPDATES same source_ref when body changes.
+  correct <JIRA-KEY> --source-ref REF [--kind research|decision|note] [--was TEXT] [--learning TEXT] [--body-file PATH | - | <body...>]
+      Human correction: UPDATE memory at source_ref; optional learning row at REF/learning.
+      Bodies: natural-language prefer/avoid guidance — not TODO/NO-TODO dumps.
   capture …                 Compat alias for remember
 
   recall <JIRA-KEY> [query…]
@@ -1547,6 +1681,7 @@ main() {
     sync-status|sync_status) cmd_sync_status "$@" ;;
     _sync_loop) cmd_sync_loop "$@" ;;
     remember) cmd_remember "$@" ;;
+    correct) cmd_correct "$@" ;;
     capture) cmd_capture "$@" ;;
     recall) cmd_recall "$@" ;;
     reembed) cmd_reembed "$@" ;;

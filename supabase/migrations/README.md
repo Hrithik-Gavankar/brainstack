@@ -9,6 +9,7 @@
 | [`20260729000002_team_brain_security.sql`](20260729000002_team_brain_security.sql) | **PR review** — unique members, stronger invites, `updated_at` trigger |
 | [`20260729000003_team_brain_sync_mode.sql`](20260729000003_team_brain_sync_mode.sql) | **Sync mode** — `remember` merge-on-`source_ref`; `list_recent` includes updates; enables `vector` if missing |
 | [`20260729000004_team_brain_invite_hygiene.sql`](20260729000004_team_brain_invite_hygiene.sql) | **PR review** — `join_team` omits invite; `whoami` invite only for admin |
+| [`20260802000001_team_brain_learning_kind.sql`](20260802000001_team_brain_learning_kind.sql) | **#30** — `learning` kind; `remember` accepts correction-loop learnings |
 
 Apply in timestamp order (`supabase db push` or SQL Editor).  
 Joiners do **not** run migrations. Existing projects: apply any new files once.

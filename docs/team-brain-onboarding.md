@@ -30,6 +30,7 @@ Your personal career notes (`BRAIN.md` / engineer-brain) stay **private**. Team 
 | You start team work on a ticket | You run **`start`** once → memory loads + sync mode on |
 | You (or AI) learn something durable | AI **saves immediately** (`remember` + `source_ref`) |
 | Same topic, updated finding | **Updates** that memory (no duplicate / no clobber of other refs) |
+| You correct bad research | AI **`correct`s** the same `source_ref` (+ optional `learning`) |
 | Teammate saved something | Background sync merges into your `cache/` |
 | You step away ~1h | Sync **sleeps** — AI should ask you to `wake` |
 
@@ -244,11 +245,33 @@ The always-on rule expects `start` → summarize cache → work → `remember` /
 |------|----------------|
 | **Starting work on the ticket** | `start JIRA-KEY` (once) |
 | You / AI learned something durable | `remember` with `source_ref` |
+| AI got research wrong — you correct it | `correct` (or re-`remember` same `source_ref`) |
 | Keep sync awake | automatic via recall/remember; or `touch` |
 | Sync slept | Prompt → `wake JIRA-KEY` |
 | Done for the day | `stop JIRA-KEY` |
 | Planning stories / spikes | `breakdown JIRA-KEY` |
 | “Am I connected?” | `whoami` / `sync-status` |
+
+### Correcting bad research (important)
+
+Agents can be wrong. When you paste a correction, the AI should **update** the matching memory (same `source_ref`) — not leave a stale row and not invent a second topic slug.
+
+```bash
+bash core/scripts/team-brain-api.sh correct AAP-81423 --source-ref "AAP-81423#cli-schema" \
+  --was "Claimed schema lived in tox-ansible" \
+  "EE schema path lives in packages/ansible-language-server."
+```
+
+Optional `--learning "Was wrong: … Prefer: …"` writes a `learning` row at `source_ref/learning`.  
+Memory bodies should be natural prefer/avoid guidance — not TODO/NO-TODO lists.
+
+In Cursor you can say:
+
+```text
+Correct Team Brain for AAP-81423#cli-schema — the schema is in packages/ansible-language-server, not tox-ansible.
+```
+
+Apply migration `20260802000001_team_brain_learning_kind.sql` once on the crew Supabase project for the `learning` kind.
 
 ---
 
@@ -289,8 +312,10 @@ Other useful lines:
 | Done for the day | `Stop Team Brain sync for AAP-81423.` |
 | Check state | `What's my Team Brain sync-status for AAP-81423?` |
 | Plan stories | `Breakdown AAP-81423 from Team Brain memory.` |
+| Fix bad research | `Correct Team Brain for AAP-81423#<slug> — …` |
 
 Then work. After findings the AI should `remember` (and `touch`) without you asking.  
+If you correct it, it should `correct` / re-`remember` the same `source_ref`.  
 If sync sleeps, it should ask before continuing.
 
 ### MCP tools (advanced)
