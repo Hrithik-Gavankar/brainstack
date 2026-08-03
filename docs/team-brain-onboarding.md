@@ -211,6 +211,17 @@ bash core/scripts/team-brain-api.sh stop AAP-81423
 
 If sync slept: `wake AAP-81423` (or `start` again).
 
+### Optional — background `watch` on long spikes
+
+Sync mode already pulls while active, but during a **long** research session you can keep the cache warmer without waiting for idle sleep or the next `start`:
+
+```bash
+bash core/scripts/team-brain-api.sh watch AAP-81423 &
+# or with Realtime signal push: watch AAP-81423 --push &
+```
+
+Run it **once** when the spike gets long — not every command. Cursor agents also refresh via periodic `recall` (see the team-brain skill); `watch` is the human/CLI companion. If sync **slept**, use `wake` (or `start`) — `watch` does not replace sleep/wake.
+
 ---
 
 ## Path B — You are creating the team (admin, once)
@@ -267,6 +278,7 @@ bash core/scripts/team-brain-api.sh attach AAP-81423 "Short title" "active" "htt
 | **Cache merge** — no blind wipe of other memories on pull | ✅ |
 | **Idle sleep + warn** — default 1h; `wake` to resume | ✅ |
 | **Agent prompts on sleep** | ✅ Cursor rule/skill |
+| **Long-session refresh nudge** | ✅ Skill/rule: periodic `recall` / optional `watch` (#37); not every turn |
 | **Peer push while sync/`watch` active** | ✅ Signal Broadcast (#31) + poll fallback; needs `start` or `watch` once |
 | **Push into open chat with zero `start`** | ❌ Still needs you (or the agent) to enter sync mode once |
 
@@ -281,7 +293,8 @@ The always-on rule expects `start` → summarize cache → work → `remember` /
 | You / AI learned something durable | `remember` with `source_ref` |
 | AI got research wrong — you correct it | `correct` (or re-`remember` same `source_ref`) |
 | Keep sync awake | automatic via recall/remember; or `touch` |
-| Sync slept | Prompt → `wake JIRA-KEY` |
+| Long spike / peer freshness | Optional once: `watch JIRA-KEY &` · agent: periodic `recall` (not every turn) |
+| Sync slept | Prompt → `wake JIRA-KEY` (not `watch`) |
 | Done for the day | `stop JIRA-KEY` |
 | Planning stories / spikes | `breakdown JIRA-KEY` |
 | “Am I connected?” | `whoami` / `sync-status` |
@@ -419,9 +432,10 @@ bash core/scripts/team-brain-api.sh remember <JIRA-KEY> research --source-ref "<
 bash core/scripts/team-brain-api.sh breakdown <JIRA-KEY>
 bash core/scripts/team-brain-api.sh stop <JIRA-KEY>
 
-# Sleep / wake
+|# Sleep / wake / long-session freshness
 bash core/scripts/team-brain-api.sh wake <JIRA-KEY>
 bash core/scripts/team-brain-api.sh touch <JIRA-KEY>
+bash core/scripts/team-brain-api.sh watch <JIRA-KEY> &   # optional; once per long spike
 bash core/scripts/team-brain-api.sh metrics <JIRA-KEY>
 
 # Or in Cursor chat:

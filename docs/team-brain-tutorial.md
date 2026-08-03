@@ -367,17 +367,17 @@ bash core/scripts/team-brain-api.sh sync-status DEMO-1
 
 ## Optional: Watch for Peer Updates
 
-During long sessions, keep sync fresh:
+During long sessions, keep sync fresh (same guidance as onboarding + Cursor skill #37):
 
 ```bash
-# Background watch (poll mode)
+# Background watch (poll mode) — once per long spike, not every command
 bash core/scripts/team-brain-api.sh watch DEMO-1 &
 
 # Or with push (requires Realtime migration)
 bash core/scripts/team-brain-api.sh watch DEMO-1 --push &
 ```
 
-When teammates `remember`, your cache updates.
+When teammates `remember`, your cache updates. Agents should also `recall` after long research blocks / ~every 8–10 turns — without nagging every turn. If sync **slept**, `wake` (or `start`); `watch` is not a substitute.
 
 ---
 

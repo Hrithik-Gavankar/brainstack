@@ -76,6 +76,12 @@ ON HUMAN CORRECTION (bad research / wrong sync summary)
   → correct(source_ref, corrected_body) or re-remember same source_ref → UPDATE
   → optional learning at source_ref/learning (was wrong → prefer …)
   → prior body archived; history/restore for soft rollback if needed
+
+LONG SESSION (do not spam every turn)
+  → after a long research block, OR about every 8–10 turns on this key
+  → quiet recall / prepare_research (or summarize notify/<KEY>.json if updated)
+  → optional once-per-spike: suggest background `watch <KEY> &` (poll or --push)
+  → at most one soft nudge per stretch — never nag every turn
 ```
 
 ## Sleep / wake
@@ -84,8 +90,8 @@ Check `sync-status <KEY>`:
 
 | mode | What you do |
 |------|-------------|
-| `active` | Continue; `touch` each turn |
-| `sleep` | **Prompt the user**: “Team Brain sync slept after idle — run `wake <KEY>` or `start`?” Do not silently research without waking. |
+| `active` | Continue; `touch` each turn; long-session refresh as above |
+| `sleep` | **Prompt the user**: “Team Brain sync slept after idle — run `wake <KEY>` or `start`?” Do not silently research without waking. `watch` is **not** a substitute for `wake`. |
 | `stopped` / `none` | Offer `start <KEY>` before deep work |
 
 ## Prefer MCP tools if connected
