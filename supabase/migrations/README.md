@@ -12,7 +12,8 @@
 | [`20260802000001_team_brain_learning_kind.sql`](20260802000001_team_brain_learning_kind.sql) | **#30** — `learning` kind; `remember` accepts correction-loop learnings |
 | [`20260803000001_team_brain_memory_history.sql`](20260803000001_team_brain_memory_history.sql) | **#34** — `capture_revisions`; archive on `source_ref` update; `list_memory_history` / `restore_memory` |
 
-Apply in timestamp order (`supabase db push` or SQL Editor).  
+Apply in timestamp order (`supabase db push`, `psql` via bootstrap `--db-url`, or SQL Editor).  
+**Admin shortcut:** `bash core/scripts/team-brain-api.sh bootstrap …` ([supabase/README.md](../README.md)).  
 Joiners do **not** run migrations. Existing projects: apply any new files once.
 
 | Doc | Link |

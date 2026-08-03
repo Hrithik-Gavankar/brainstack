@@ -6,9 +6,9 @@ description: >-
   Invoke for team-brain, start, stop, wake, sync, shared spike, initiative,
   Jira crew work, remember, recall, breakdown (not personal standups).
 argument-hint: >-
-  <command> — start | stop | wake | touch | sync-status | onboard | register |
-    join | whoami | init | attach | remember | correct | history | restore |
-    recall | capture | sync | watch | breakdown | status | detach
+  <command> — start | stop | wake | touch | sync-status | bootstrap | onboard |
+    register | join | whoami | init | attach | remember | correct | history |
+    restore | recall | capture | sync | watch | breakdown | status | detach
 tools: Read, Write, Shell, Glob, Grep
 ---
 
@@ -160,6 +160,7 @@ Never invent stories without recalled memories.
 | `start` | **Enter sync mode** — load memory + background pull |
 | `stop` / `wake` / `touch` | Leave / resume / keep awake |
 | `sync-status` | active \| sleep \| stopped |
+| `bootstrap` | Admin one-shot setup + share bundle |
 | `onboard` / `register` / `join` | Membership |
 | `attach` | Bind Jira key |
 | `recall` / `remember` | Search / save (`learning` kind ok) |

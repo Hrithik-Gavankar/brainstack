@@ -40,7 +40,18 @@ Jira = initiative **identity**. Memories = Supabase (+ cache).
 bash core/scripts/team-brain-api.sh onboard INVITECODE "Bob" AAP-81423
 ```
 
-**Admin (once):**
+**Admin (once) — preferred:**
+
+```bash
+bash core/scripts/team-brain-api.sh bootstrap \
+  --team "Crew" --admin "Alice" \
+  --url "https://….supabase.co" --anon "eyJ…" \
+  --db-url "postgresql://postgres:…@db….supabase.co:5432/postgres" \
+  --jira AAP-81423 --write-env
+# prints share bundle (invite + URL + anon + joiner checklist)
+```
+
+**Admin (once) — manual:**
 
 ```bash
 bash core/scripts/team-brain-api.sh register "Crew" "Alice"   # share invite_code
@@ -97,6 +108,7 @@ bash core/scripts/team-brain-api.sh correct AAP-81423 --source-ref "AAP-81423#cl
 | `start` | **Enter sync mode** — load memory + background pull |
 | `stop` / `wake` / `touch` | Leave / resume / keep awake |
 | `sync-status` | Session state: active \| sleep \| stopped |
+| `bootstrap` | **Admin one-shot** — migrate + register + share bundle |
 | `onboard` | Join + optional attach + recall |
 | `register` / `join` / `whoami` | Membership |
 | `attach` | Upsert Jira initiative + pull recent memories |

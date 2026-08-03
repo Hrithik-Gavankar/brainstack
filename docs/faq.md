@@ -141,6 +141,16 @@ No. Your BRAIN.md stays in your workspace. Just run the installer for your new p
 
 The **team / initiative scope** of Brain. Crews share collaborative AI memory on a Jira key (Supabase + local cache). It is not a second personal `BRAIN.md`.
 
+### How does a crew admin set up Team Brain quickly?
+
+Use **bootstrap** (configure → migrations → register → share bundle):
+
+```bash
+bash core/scripts/team-brain-api.sh bootstrap --team "Crew" --admin "Alice" --url … --anon … --db-url … --jira AAP-81423
+```
+
+See [supabase/README.md](../supabase/README.md). Joiners still use `onboard` and do **not** need a Supabase account.
+
 ### How do I join a crew?
 
 Ask your admin for an **invite code**, **Jira key**, and the crew’s **Supabase URL + anon key**. Put URL/anon in local `supabase/project.public.env` (or `team.yaml` / env), then:

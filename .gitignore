@@ -20,6 +20,9 @@ website/.docusaurus/
 .team-brain/**/credentials.json
 !.team-brain/**/.gitkeep
 
+# Bootstrap-generated combined SQL (may be large; never commit crew secrets beside it)
+supabase/.bootstrap-migrations.combined.sql
+
 # Personal data (uncomment if you fork and add your own data)
 # core/BRAIN.md
 # platforms/cursor/skills/engineer-brain/BRAIN.md

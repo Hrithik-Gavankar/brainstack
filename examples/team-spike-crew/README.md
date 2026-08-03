@@ -33,11 +33,23 @@ cp -r examples/team-spike-crew /path/to/workspace/.team-brain
 
 ## Walkthrough (Supabase collaborative memory)
 
-1. Apply migrations from `supabase/` ([migrations/README.md](../../supabase/migrations/README.md))
-2. Admin once: `bash core/scripts/team-brain-api.sh register "Spike Crew" "Alice"`
-3. Teammate: `bash core/scripts/team-brain-api.sh onboard <INVITE> "Bob" AAP-81423`
-4. `remember` → teammate `recall` / agent loop / MCP
-5. Optional: `breakdown` / `watch` / `metrics`
+**Admin (preferred):**
+
+```bash
+bash core/scripts/team-brain-api.sh bootstrap \
+  --team "Spike Crew" --admin "Alice" \
+  --url "https://….supabase.co" --anon "eyJ…" \
+  --db-url "postgresql://postgres:…@db….supabase.co:5432/postgres" \
+  --jira AAP-81423 --write-env
+```
+
+Or manual: apply migrations → `register "Spike Crew" "Alice"` ([migrations/README.md](../../supabase/migrations/README.md)).
+
+Then:
+
+1. Teammate: `bash core/scripts/team-brain-api.sh onboard <INVITE> "Bob" AAP-81423`
+2. `remember` → teammate `recall` / agent loop / MCP
+3. Optional: `breakdown` / `watch` / `metrics` / `history`
 
 Fill local `supabase/project.public.env` with **your** project URL + anon (placeholders only in git). Joiners do not need their own Supabase account — only the crew’s URL/anon + invite.
 
