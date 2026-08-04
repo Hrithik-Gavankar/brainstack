@@ -176,27 +176,25 @@ supabase_linked() {
 # When psql / linked CLI unavailable — write combined SQL + tell admin exactly what to do next.
 migration_blocked_manual_sql() {
   local reason="${1:-no auto migration tool}"
-  local combined
+  local combined rerun_jira
   combined=$(write_combined_sql "$SUPABASE_DIR/.bootstrap-migrations.combined.sql")
+  rerun_jira="${JIRA_KEY:-}"
   warn "Cannot auto-apply migrations ($reason)."
   cat >&2 <<EOF
 
-Apply migrations manually (one time), then re-run bootstrap with --skip-migrations:
+──────── Step 1 (once) — Supabase SQL Editor ────────
+  Dashboard → SQL Editor → paste and run:
+    $combined
 
-  1. Open Supabase Dashboard → SQL Editor for your project
-  2. Paste and run the combined file (all migrations in timestamp order):
-       $combined
-     Or apply each file under supabase/migrations/ individually.
-  3. Register the team (no --db-url needed):
+──────── Step 2 — register (one copy-paste line) ───
+  --skip-migrations is a flag on bootstrap, not its own command.
 
-       bash core/scripts/team-brain-api.sh bootstrap \\
-         --team "$TEAM_NAME" --admin "$ADMIN_NAME" \\
-         --url "$SUPABASE_URL" --anon "<anon-key>" \\
-         --jira ${JIRA_KEY:-JIRA-KEY} --write-env --skip-migrations
+EOF
+  # Print a ready-to-run single line (admin's machine; anon already in project.public.env)
+  printf '%s\n' "bash \"$API\" bootstrap --team \"$TEAM_NAME\" --admin \"$ADMIN_NAME\" --url \"$SUPABASE_URL\" --anon \"$ANON_KEY\" ${rerun_jira:+--jira \"$rerun_jira\"} --write-env --skip-migrations" >&2
+  cat >&2 <<EOF
 
-Optional installs (pick one for future projects):
-  • psql:  brew install libpq && brew link --force libpq   then use --db-url
-  • CLI:   brew install supabase/tap/supabase && supabase link && db push
+Optional (future projects): brew install libpq && brew link --force libpq  # then --db-url works
 
 EOF
   MIGRATION_BLOCKED=1
@@ -408,7 +406,7 @@ else
 fi
 
 if [ "$MIGRATION_BLOCKED" -eq 1 ]; then
-  warn "Bootstrap incomplete — apply migrations, then re-run (add --skip-migrations after SQL Editor)."
+  warn "Bootstrap paused after writing config — finish Step 1 (SQL Editor), then run the Step 2 line above."
   exit 2
 fi
 

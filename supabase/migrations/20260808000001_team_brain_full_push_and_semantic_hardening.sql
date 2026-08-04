@@ -73,6 +73,8 @@ comment on column public.captures.body_ct is
 --    (matches the rate-limited signature from 20260806000001: p_team_name, p_admin_name)
 -- ---------------------------------------------------------------------------
 
+drop function if exists public.register_team(text, text);
+
 create or replace function public.register_team(p_team_name text, p_admin_name text)
 returns jsonb
 language plpgsql
