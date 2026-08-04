@@ -141,9 +141,9 @@ begin
     'unknown'
   );
   v_combined := v_ip || '|' || v_ua;
-  return encode(digest(v_combined, 'sha256'), 'hex');
+  return encode(extensions.digest(v_combined, 'sha256'), 'hex');
 exception when others then
-  return 'fallback-' || encode(digest(random()::text || now()::text, 'sha256'), 'hex');
+  return 'fallback-' || encode(extensions.digest(random()::text || now()::text, 'sha256'), 'hex');
 end;
 $$;
 
