@@ -1521,7 +1521,7 @@ cmd_register() {
   local display="${2:-${USER:-engineer}}"
   [ -n "$name" ] || die "usage: register <team-name> [display-name]"
   local out
-  out=$(rpc register_team "$(jq -n --arg n "$name" --arg d "$display" '{p_name:$n, p_display_name:$d}')")
+  out=$(rpc register_team "$(jq -n --arg n "$name" --arg d "$display" '{p_team_name:$n, p_admin_name:$d}')")
   save_credentials "$out"
   # Seed local TEAM.md / team.yaml hints
   mkdir -p "$TEAM_DIR/initiatives"
