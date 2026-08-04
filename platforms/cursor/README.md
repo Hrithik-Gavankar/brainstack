@@ -1,4 +1,4 @@
-# Engineer Brain — Cursor IDE Setup
+# Brainstack — Cursor IDE Setup
 
 ## Installation
 
@@ -6,7 +6,7 @@
 
 ```bash
 cd /path/to/your/workspace
-bash /path/to/engineer-brain/install.sh cursor
+bash /path/to/brainstack/install.sh cursor
 ```
 
 ### Option 2: Manual install
@@ -89,7 +89,7 @@ Beginner path: [docs/team-brain-onboarding.md](../../docs/team-brain-onboarding.
 Agent tools without shelling out manually — see [`mcp/team-brain/README.md`](../../mcp/team-brain/README.md).
 
 ```bash
-cd /path/to/engineer-brain/mcp/team-brain
+cd /path/to/brainstack/mcp/team-brain
 python3 -m venv .venv && source .venv/bin/activate && pip install -e .
 ```
 
@@ -97,8 +97,8 @@ Wire Cursor — add under `mcpServers` in `~/.cursor/mcp.json`:
 
 ```json
 "team-brain": {
-  "command": "<engineer-brain>/mcp/team-brain/.venv/bin/python",
-  "args": ["<engineer-brain>/mcp/team-brain/server.py"],
+  "command": "<brainstack>/mcp/team-brain/.venv/bin/python",
+  "args": ["<brainstack>/mcp/team-brain/server.py"],
   "env": {
     "TEAM_BRAIN_DIR": "<workspace>/.team-brain"
   }

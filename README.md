@@ -18,7 +18,7 @@
 <p align="center">
   <a href="#quick-start">Quick Start</a> •
   <a href="#two-scopes-one-product">Two Scopes</a> •
-  <a href="#engineer-brain">Engineer Brain</a> •
+  <a href="#engineer-brain">engineer-brain</a> •
   <a href="#team-brain">Team Brain</a> •
   <a href="docs/architecture.md">Architecture</a> •
   <a href="docs/team-brain-onboarding.md">Onboarding</a> •
@@ -48,12 +48,12 @@ Brainstack is a **context layer** for AI coding assistants — with two scopes:
 
 | Scope | What it solves | Living document |
 |-------|----------------|-----------------|
-| **Engineer Brain** | Personal context — your skills, patterns, career | `BRAIN.md` (local) |
+| **`engineer-brain`** | Personal context — your skills, patterns, career | `BRAIN.md` (local) |
 | **Team Brain** | Crew context — shared memory on a Jira initiative | Supabase + local cache |
 
 ```mermaid
 flowchart TB
-    subgraph Personal["Engineer Brain (you)"]
+    subgraph Personal["engineer-brain (you)"]
         GIT[Git History] --> SCAN[Scanner]
         SCAN --> BRAIN[BRAIN.md]
     end
@@ -96,7 +96,7 @@ flowchart LR
     PB -.->|"never uploaded"| TB
 ```
 
-| | Engineer Brain | Team Brain |
+| | `engineer-brain` | Team Brain |
 |--|----------------|------------|
 | **For** | You | Your crew on a Jira initiative |
 | **Stores** | `BRAIN.md` (local, versioned) | Supabase memories + local cache |
@@ -121,7 +121,7 @@ flowchart LR
 
 ---
 
-## Engineer Brain
+## Personal scope (`engineer-brain`)
 
 Your personal engineering profile — skills, patterns, career trajectory — that follows you across AI tools.
 
@@ -148,7 +148,7 @@ flowchart TD
 **Three layers:**
 
 1. **Scanner** — Collects raw data from your git history across all repositories
-2. **Brain** — A living Markdown document (`BRAIN.md`) that structures your engineering identity
+2. **BRAIN.md** — A living Markdown document that structures your engineering identity
 3. **Adapters** — Platform-specific context files that feed your brain into each AI tool
 
 ---
@@ -222,7 +222,7 @@ Carol runs breakdown → draft includes Alice's auth decision
 It's a structured Markdown file that documents *you* — your skills, your work patterns, your active projects, your growth trajectory. It's designed to be consumed by AI assistants, providing them deep context about the human they're helping.
 
 ```markdown
-# Jane Doe — Engineering Brain
+# Jane Doe — Engineering Profile
 
 ## Identity
 - Name: Jane Doe
@@ -261,7 +261,7 @@ graph TB
         JIRA[Jira / Tracker]
     end
 
-    subgraph Personal["Engineer Brain (local)"]
+    subgraph Personal["engineer-brain (local)"]
         SCAN[Scanner]
         DETECT[Pattern Detection]
         BRAIN[BRAIN.md]
@@ -300,7 +300,7 @@ graph TB
     BRAIN -.->|"never uploaded"| Team
 ```
 
-| Layer | Engineer Brain | Team Brain |
+| Layer | `engineer-brain` | Team Brain |
 |-------|----------------|------------|
 | **Data source** | Git history | Jira identity + agent findings |
 | **Storage** | `BRAIN.md` (local) | Supabase (cloud) + `cache/` (local) |
@@ -315,7 +315,7 @@ graph TB
 
 Both scopes work with every major AI coding assistant. Same brain, native format.
 
-| Platform | Engineer Brain | Team Brain | Status |
+| Platform | `engineer-brain` | Team Brain | Status |
 |----------|----------------|------------|--------|
 | [Cursor](https://cursor.sh) | `.cursor/rules/engineer-brain.mdc` | `team-brain.mdc` + MCP | ✅ Full support |
 | [Claude Code](https://claude.ai/code) | `CLAUDE.md` | MCP tools | ✅ Supported |
@@ -330,7 +330,7 @@ Both scopes work with every major AI coding assistant. Same brain, native format
 
 ## Features
 
-### Engineer Brain commands
+### `engineer-brain` commands
 
 | Command | Description |
 |---------|-------------|
@@ -500,7 +500,9 @@ brainstack/
 
 ### Web dashboard
 
-Visualize patterns locally (or ship a **sample-data demo** on Vercel/Pages):
+Visualize patterns locally, or open the **sample-data demo** on GitHub Pages:
+
+**Live demo:** https://hrithik-gavankar.github.io/brainstack/
 
 ```bash
 cd dashboard && npm install && npm run dev
@@ -553,19 +555,19 @@ We welcome contributions! See **[CONTRIBUTING.md](CONTRIBUTING.md)** for guideli
 See **[docs/faq.md](docs/faq.md)** for the full FAQ.
 
 **Is this another AI coding tool?**
-No. Brain doesn't write code. It provides context to tools that do.
+No. Brainstack doesn't write code. It provides context to tools that do.
 
 **Does it send my data anywhere?**
-Engineer Brain stays 100% local. Team Brain syncs to *your* Supabase project (you own the data). Personal `BRAIN.md` is never uploaded.
+`engineer-brain` stays 100% local. Team Brain syncs to *your* Supabase project (you own the data). Personal `BRAIN.md` is never uploaded.
 
 **Can I use it with multiple AI tools simultaneously?**
 Yes. That's the point. Install once, use everywhere.
 
-**What's the difference between Engineer Brain and Team Brain?**
-Engineer Brain = you (personal profile, standups, career). Team Brain = your crew on a Jira initiative (shared memory, realtime sync).
+**What's the difference between `engineer-brain` and Team Brain?**
+`engineer-brain` = you (personal profile, standups, career). Team Brain = your crew on a Jira initiative (shared memory, realtime sync).
 
 **Do I need Team Brain?**
-No. Engineer Brain works standalone. Team Brain is opt-in for crews who want shared AI context.
+No. Brainstack works with `engineer-brain` alone. Team Brain is opt-in for crews who want shared AI context.
 
 ---
 

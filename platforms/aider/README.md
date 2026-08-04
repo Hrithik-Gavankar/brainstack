@@ -1,4 +1,4 @@
-# Engineer Brain — Aider Setup
+# Brainstack — Aider Setup
 
 ## Installation
 
@@ -6,7 +6,7 @@
 
 ```bash
 cd /path/to/your/workspace
-bash /path/to/engineer-brain/install.sh aider
+bash /path/to/brainstack/install.sh aider
 ```
 
 ### Option 2: Manual install

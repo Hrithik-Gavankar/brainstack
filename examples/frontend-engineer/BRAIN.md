@@ -1,4 +1,4 @@
-# Priya Sharma — Engineering Brain
+# Priya Sharma — Engineering Profile
 
 > Last updated: 2026-07-09
 > Auto-generated baseline. Updates itself via `engineer-brain update`.

@@ -89,7 +89,7 @@ function App() {
 
       <footer className="border-t border-border-dim px-6 py-4 text-center">
         <p className="text-xs text-text-muted">
-          Engineer Brain Dashboard &middot; {sourceLabel(data.source)}
+          Brainstack Dashboard &middot; {sourceLabel(data.source)}
         </p>
       </footer>
     </div>

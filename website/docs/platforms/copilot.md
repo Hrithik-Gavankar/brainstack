@@ -4,7 +4,7 @@ sidebar_position: 3
 
 # GitHub Copilot (VS Code)
 
-Engineer Brain integrates with GitHub Copilot via `.github/copilot-instructions.md`.
+Brainstack integrates with GitHub Copilot via `.github/copilot-instructions.md`.
 
 ## Files installed
 

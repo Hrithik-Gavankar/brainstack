@@ -4,7 +4,7 @@ sidebar_position: 3
 
 # Pattern Detection
 
-Engineer Brain doesn't just collect data — it detects patterns and surfaces insights you might miss yourself.
+Brainstack doesn't just collect data — it detects patterns and surfaces insights you might miss yourself.
 
 ## Detection Rules
 

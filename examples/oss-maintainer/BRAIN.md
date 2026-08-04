@@ -1,4 +1,4 @@
-# Sam Nakamura — Engineering Brain
+# Sam Nakamura — Engineering Profile
 
 > Last updated: 2026-07-13
 > Auto-generated baseline. Updates itself via `engineer-brain update`.

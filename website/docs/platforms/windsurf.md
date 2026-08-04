@@ -4,7 +4,7 @@ sidebar_position: 4
 
 # Windsurf
 
-Engineer Brain integrates with Windsurf via `.windsurfrules`.
+Brainstack integrates with Windsurf via `.windsurfrules`.
 
 ## Files installed
 

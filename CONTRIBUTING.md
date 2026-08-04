@@ -1,6 +1,6 @@
 # Contributing to Brainstack
 
-Thank you for your interest in contributing! Engineer Brain is an open-source project and we welcome contributions of all kinds.
+Thank you for your interest in contributing! Brainstack is an open-source project and we welcome contributions of all kinds.
 
 ---
 
@@ -20,7 +20,7 @@ Thank you for your interest in contributing! Engineer Brain is an open-source pr
 
 ### Ideas
 - Propose new features via GitHub Issues
-- Share how you use Engineer Brain
+- Share how you use Brainstack
 - Suggest improvements to the BRAIN.md spec
 
 ---
@@ -97,7 +97,7 @@ Larger items (new platforms, new commands, Web UI) are welcome too — just keep
 
 ### Try the tool without polluting your clone
 
-If you want to install Engineer Brain while working on a contribution, point the installer at a **separate playground directory**, not this repository's root:
+If you want to install Brainstack while working on a contribution, point the installer at a **separate playground directory**, not this repository's root:
 
 ```bash
 mkdir -p /tmp/engineer-brain-playground

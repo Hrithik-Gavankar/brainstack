@@ -15,7 +15,7 @@ tools: Read, Write, Shell, Glob, Grep
 
 # Team Brain — Sync Mode
 
-Part of **Brain**: personal=`engineer-brain`, crew=`team-brain`.
+Part of **Brainstack**: personal=`engineer-brain`, crew=`team-brain`.
 
 | Prefer | Fallback |
 |--------|----------|

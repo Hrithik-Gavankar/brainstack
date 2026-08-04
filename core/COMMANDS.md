@@ -1,4 +1,4 @@
-# Engineer Brain — Command Reference
+# engineer-brain — Command Reference
 
 A living system that learns how you work, what you focus on, where
 you're growing, and where you should push further. Produces actionable output

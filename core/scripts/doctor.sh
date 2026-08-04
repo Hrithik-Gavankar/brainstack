@@ -6,7 +6,7 @@
 set -uo pipefail
 
 if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
-  echo "Engineer Brain Doctor — health check and completeness score"
+  echo "Brainstack doctor — health check and completeness score"
   echo ""
   echo "Usage: bash doctor.sh [workspace_path] [brain_path]"
   echo ""
@@ -442,7 +442,7 @@ fi
 
 # --- Output Report ---
 
-echo "🧠 Engineer Brain Health"
+echo "🧠 Brainstack Health"
 echo ""
 printf "Engineering Context:     %d%%\n" "$OVERALL"
 if [ "$SCAN_AVAILABLE" -eq 1 ]; then

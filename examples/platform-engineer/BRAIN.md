@@ -1,4 +1,4 @@
-# Jordan Park — Engineering Brain
+# Jordan Park — Engineering Profile
 
 > Last updated: 2026-07-12
 > Auto-generated baseline. Updates itself via `engineer-brain update`.

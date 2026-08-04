@@ -35,7 +35,7 @@ engineer-brain doctor
 ## Output format
 
 ```
-🧠 Engineer Brain Health
+🧠 Brainstack Health
 
 Engineering Context:     94%
 Repositories Tracked:    18

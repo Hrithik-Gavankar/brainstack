@@ -2,15 +2,15 @@
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: "Engineer Brain",
-  tagline: "A persistent engineering context layer for AI coding assistants.",
+  title: "Brainstack",
+  tagline: "Persistent context for AI coding assistants — personal and team.",
   favicon: "img/favicon.ico",
 
   url: "https://engineer-brain.dev",
   baseUrl: "/",
 
   organizationName: "Hrithik-Gavankar",
-  projectName: "engineer-brain",
+  projectName: "brainstack",
 
   onBrokenLinks: "throw",
   onBrokenMarkdownLinks: "warn",
@@ -42,7 +42,7 @@ const config = {
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
       navbar: {
-        title: "Engineer Brain",
+        title: "Brainstack",
         items: [
           {
             type: "docSidebar",

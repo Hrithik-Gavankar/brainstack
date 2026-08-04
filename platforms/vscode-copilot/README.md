@@ -1,4 +1,4 @@
-# Engineer Brain — VS Code Copilot Setup
+# Brainstack — VS Code Copilot Setup
 
 ## Installation
 
@@ -6,7 +6,7 @@
 
 ```bash
 cd /path/to/your/workspace
-bash /path/to/engineer-brain/install.sh vscode-copilot
+bash /path/to/brainstack/install.sh vscode-copilot
 ```
 
 ### Option 2: Manual install

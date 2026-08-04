@@ -1,6 +1,6 @@
 # Team Brain — Command Reference
 
-Team Brain is the **team / initiative scope** of the Brain product — collaborative AI memory on a Jira key.  
+Team Brain is the **team / initiative scope** of Brainstack — collaborative AI memory on a Jira key.  
 Personal identity stays in engineer-brain (`BRAIN.md`).
 
 Plan: [docs/team-brain-memory.md](../../docs/team-brain-memory.md)  

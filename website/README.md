@@ -1,6 +1,6 @@
 # Documentation Website
 
-This directory contains the Engineer Brain documentation site built with [Docusaurus](https://docusaurus.io/).
+This directory contains the Brainstack documentation site built with [Docusaurus](https://docusaurus.io/).
 
 ## Development
 

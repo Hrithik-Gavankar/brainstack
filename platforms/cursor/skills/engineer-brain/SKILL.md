@@ -13,7 +13,7 @@ argument-hint: <command> — sync | update | quarterly | reflect | scan [days] |
 tools: Read, Write, Shell, Glob, Grep
 ---
 
-# Engineer Brain — Self-Updating Engineering Context
+# engineer-brain — Self-Updating Engineering Context
 
 A living system that learns how you work, what you focus on, where
 you're growing, and where you should push further. Produces actionable output

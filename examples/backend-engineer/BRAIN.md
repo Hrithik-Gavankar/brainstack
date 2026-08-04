@@ -1,4 +1,4 @@
-# Marcus Chen — Engineering Brain
+# Marcus Chen — Engineering Profile
 
 > Last updated: 2026-07-10
 > Auto-generated baseline. Updates itself via `engineer-brain update`.

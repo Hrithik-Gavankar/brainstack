@@ -1,6 +1,6 @@
 # Roadmap
 
-Engineer Brain's development is organized into three horizons.
+Brainstack's development is organized into three horizons.
 
 ---
 

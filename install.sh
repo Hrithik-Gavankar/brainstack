@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Engineer Brain — Universal Installer
-# Creates a persistent engineering context layer for your AI coding assistant.
+# Brainstack — Universal Installer
+# Persistent context for AI coding assistants — personal and team.
 #
 # Usage:
 #   bash install.sh <platform> [workspace_path]
@@ -28,8 +28,8 @@ NC='\033[0m'
 
 print_banner() {
   echo ""
-  echo -e "${BOLD}  Engineer Brain${NC} v${VERSION}"
-  echo "  A persistent engineering context layer for AI coding assistants."
+  echo -e "${BOLD}  Brainstack${NC} v${VERSION}"
+  echo "  Persistent context for AI coding assistants — personal and team."
   echo ""
 }
 

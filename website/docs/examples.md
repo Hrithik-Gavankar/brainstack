@@ -4,7 +4,7 @@ sidebar_position: 7
 
 # Examples
 
-See how Engineer Brain adapts to different engineering profiles.
+See how Brainstack adapts to different engineering profiles.
 
 ## Available Examples
 

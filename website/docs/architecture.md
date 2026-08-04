@@ -4,7 +4,7 @@ sidebar_position: 4
 
 # Architecture
 
-Engineer Brain has two **scopes** (skills): personal `engineer-brain` and opt-in `team-brain`.
+Brainstack has two **scopes** (skills): personal `engineer-brain` and opt-in `team-brain`.
 
 ## System overview
 

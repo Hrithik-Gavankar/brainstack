@@ -10,6 +10,7 @@ Thumbs.db
 
 # Node.js
 node_modules/
+dashboard/dist/
 website/build/
 website/.docusaurus/
 .env

@@ -57,12 +57,27 @@ Expertise categories follow [docs/brain-spec.md](../docs/brain-spec.md): **Stron
 
 ## Hosting & Privacy
 
-Engineer Brain keeps personal data **local** ([architecture — Security & Privacy](../docs/architecture.md)).
+`engineer-brain` keeps personal data **local** ([architecture — Security & Privacy](../docs/architecture.md)).
 
 | Mode | Allowed | Notes |
 |------|---------|-------|
 | **Local** (`npm run dev` / `preview`) | Yes — supported path for real brain data (once the `brain` adapter lands) | Prefer this for personal `BRAIN.md` |
 | **Vercel / GitHub Pages / public CDN** | Demo **only** | Deploy the app with `source: "sample"`. **Do not** upload or bake personal `BRAIN.md` into a public deploy |
+
+### GitHub Pages (demo)
+
+The dashboard auto-deploys from `main` when files under `dashboard/` change (see [`.github/workflows/dashboard-pages.yml`](../.github/workflows/dashboard-pages.yml)).
+
+**Live demo:** https://hrithik-gavankar.github.io/brainstack/
+
+One-time repo setup (Settings → Pages → Build and deployment → Source: **GitHub Actions**).
+
+Local build with the same base path as Pages:
+
+```bash
+VITE_BASE_PATH=/brainstack/ npm run build
+npm run preview
+```
 
 Public demo tip (Vercel): set **Root Directory** to `dashboard`, build command `npm run build`, output `dist`.
 

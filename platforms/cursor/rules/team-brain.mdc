@@ -28,8 +28,8 @@ EACH TURN on a known Jira key
 CLI mirror:
 
 ```bash
-bash <engineer-brain>/core/scripts/team-brain-api.sh compliance <JIRA-KEY>
-bash <engineer-brain>/core/scripts/team-brain-api.sh sync-status <JIRA-KEY>
+bash <brainstack>/core/scripts/team-brain-api.sh compliance <JIRA-KEY>
+bash <brainstack>/core/scripts/team-brain-api.sh sync-status <JIRA-KEY>
 ```
 
 ## Human entry (one manual step)
@@ -47,7 +47,7 @@ Stop Team Brain sync for AAP-81423.
 …run the matching command (`start` / `wake` / `stop`):
 
 ```bash
-bash <engineer-brain>/core/scripts/team-brain-api.sh start <JIRA-KEY>
+bash <brainstack>/core/scripts/team-brain-api.sh start <JIRA-KEY>
 ```
 
 That loads crew memory into `.team-brain/cache/<KEY>.json` and starts background pull.

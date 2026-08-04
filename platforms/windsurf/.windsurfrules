@@ -1,4 +1,4 @@
-# Engineer Brain Context
+# Brainstack Context
 
 You are assisting **[YOUR NAME]**, a [YOUR ROLE] at [YOUR COMPANY], with [X]+ years of industry experience.
 
@@ -36,7 +36,7 @@ You are assisting **[YOUR NAME]**, a [YOUR ROLE] at [YOUR COMPANY], with [X]+ ye
 4. [Instruction — e.g. "Flag security implications proactively"]
 5. [Instruction — e.g. "Remind me to leverage underused skills"]
 
-## Engineer Brain Commands
+## engineer-brain Commands
 
 When the user says "engineer-brain sync", "daily sync", "standup", "update brain",
 "quarterly review", "reflect", "brain scan", "doctor", "health check", "brain health",

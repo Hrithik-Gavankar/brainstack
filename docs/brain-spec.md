@@ -73,7 +73,7 @@ Today, every AI coding assistant starts from zero. Engineers re-explain their ex
 #### 1. Header
 
 ```markdown
-# [Full Name] — Engineering Brain
+# [Full Name] — Engineering Profile
 
 > Last updated: [ISO 8601 date]
 > Auto-generated baseline. Updates itself via `engineer-brain update`.
@@ -297,6 +297,6 @@ BRAIN.md is designed to be forward-compatible:
 
 ## References
 
-- [Engineer Brain Repository](https://github.com/Hrithik-Gavankar/brainstack)
+- [Brainstack Repository](https://github.com/Hrithik-Gavankar/brainstack)
 - [Architecture Documentation](architecture.md)
 - [Vision Document](vision.md)

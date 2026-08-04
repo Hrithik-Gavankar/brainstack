@@ -5,7 +5,7 @@ slug: /quick-start
 
 # Quick Start
 
-Get Engineer Brain running in 5 minutes.
+Get Brainstack running in 5 minutes.
 
 ## Prerequisites
 

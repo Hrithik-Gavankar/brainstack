@@ -1,4 +1,4 @@
-# Engineer Brain — Claude Code Setup
+# Brainstack — Claude Code Setup
 
 ## Installation
 
@@ -6,7 +6,7 @@
 
 ```bash
 cd /path/to/your/workspace
-bash /path/to/engineer-brain/install.sh claude-code
+bash /path/to/brainstack/install.sh claude-code
 ```
 
 ### Option 2: Manual install
@@ -25,7 +25,7 @@ cp core/BRAIN.md /path/to/your/workspace/.engineer-brain/BRAIN.md
 cp core/scripts/scan.sh /path/to/your/workspace/.engineer-brain/scripts/scan.sh
 ```
 
-3. Edit `CLAUDE.md` — fill in your career details in the Engineer Brain Context section.
+3. Edit `CLAUDE.md` — fill in your career details in the Brainstack Context section.
 
 4. Edit `.engineer-brain/scripts/scan.sh` — set your workspace path and git author pattern.
 

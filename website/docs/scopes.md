@@ -4,7 +4,7 @@ sidebar_position: 3
 
 # Brainstack scopes
 
-**Brain** is the product umbrella. Two skills = two scopes:
+**Brainstack** is the product umbrella. Two skills = two scopes:
 
 | Skill | For | Living docs |
 |-------|-----|-------------|

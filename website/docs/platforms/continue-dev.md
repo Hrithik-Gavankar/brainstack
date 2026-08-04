@@ -4,7 +4,7 @@ sidebar_position: 6
 
 # Continue.dev
 
-Engineer Brain integrates with Continue.dev via `.continue/rules.md`.
+Brainstack integrates with Continue.dev via `.continue/rules.md`.
 
 ## Files installed
 

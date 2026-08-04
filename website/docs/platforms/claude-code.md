@@ -4,7 +4,7 @@ sidebar_position: 2
 
 # Claude Code
 
-Engineer Brain integrates with Claude Code via `CLAUDE.md`.
+Brainstack integrates with Claude Code via `CLAUDE.md`.
 
 ## Files installed
 

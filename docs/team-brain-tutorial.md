@@ -26,7 +26,7 @@ Pick one path and follow it through. The walkthrough uses a demo Jira key `DEMO-
 **Option 1: Local Docker (fastest for trying out)**
 
 ```bash
-cd /path/to/engineer-brain
+cd /path/to/brainstack
 
 # Start local Supabase
 supabase start
@@ -43,7 +43,7 @@ bash core/scripts/team-brain-api.sh bootstrap \
 2. Get your **Project URL**, **anon key**, and **DB password** from Settings → API
 
 ```bash
-cd /path/to/engineer-brain
+cd /path/to/brainstack
 
 bash core/scripts/team-brain-api.sh bootstrap \
   --team "Tutorial Crew" --admin "Alice" \
@@ -130,7 +130,7 @@ Your admin shared: invite code, Supabase URL + anon key, and Jira key.
 ### Step 1: Set up environment
 
 ```bash
-cd /path/to/engineer-brain
+cd /path/to/brainstack
 
 # Option 1: Environment variables
 export TEAM_BRAIN_SUPABASE_URL="https://....supabase.co"
@@ -206,7 +206,7 @@ In Cursor, check your MCP settings (`.cursor/mcp.json` or global):
   "servers": {
     "team-brain": {
       "command": "python",
-      "args": ["/path/to/engineer-brain/mcp/team-brain/server.py"],
+      "args": ["/path/to/brainstack/mcp/team-brain/server.py"],
       "env": {
         "TEAM_BRAIN_SUPABASE_URL": "https://....supabase.co",
         "TEAM_BRAIN_SUPABASE_ANON_KEY": "eyJ..."

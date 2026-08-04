@@ -1,4 +1,4 @@
-# Engineer Brain — Windsurf Setup
+# Brainstack — Windsurf Setup
 
 ## Installation
 
@@ -6,7 +6,7 @@
 
 ```bash
 cd /path/to/your/workspace
-bash /path/to/engineer-brain/install.sh windsurf
+bash /path/to/brainstack/install.sh windsurf
 ```
 
 ### Option 2: Manual install

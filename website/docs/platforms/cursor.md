@@ -4,7 +4,7 @@ sidebar_position: 1
 
 # Cursor
 
-Engineer Brain integrates with Cursor via its native rules and skills system.
+Brainstack integrates with Cursor via its native rules and skills system.
 
 ## Files installed
 

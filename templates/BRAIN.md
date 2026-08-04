@@ -1,4 +1,4 @@
-# [Your Name] — Engineering Brain
+# [Your Name] — Engineering Profile
 
 > Last updated: [DATE]
 > Auto-generated baseline. Updates itself via `engineer-brain update`.

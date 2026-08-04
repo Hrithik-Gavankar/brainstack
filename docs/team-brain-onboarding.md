@@ -78,7 +78,7 @@ Admin creates/updates the pin with: `bash core/scripts/team-brain-api.sh pin set
 ### Step 1 — Open a terminal in the right place
 
 ```bash
-cd /path/to/engineer-brain
+cd /path/to/brainstack
 ```
 
 Use the real path on your machine (where you cloned the repo). Work with `TEAM_BRAIN_DIR` pointing at the product workspace `.team-brain/` when the pin lives there.
@@ -251,7 +251,7 @@ Only one person does this for a new crew. **You need a Supabase account** (free 
 1. Bootstrap once **without** migrations — it writes the combined SQL file and stops with instructions:
 
 ```bash
-cd /path/to/engineer-brain
+cd /path/to/brainstack
 bash core/scripts/team-brain-api.sh bootstrap \
   --team "Team Name" --admin "Your Name" \
   --url "https://YOUR_REF.supabase.co" \

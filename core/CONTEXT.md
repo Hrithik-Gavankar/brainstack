@@ -1,4 +1,4 @@
-# Engineer Brain Context
+# Brainstack Context
 
 You are assisting **[YOUR NAME]**, a [YOUR ROLE] at [YOUR COMPANY], with [X]+ years of industry experience.
 

@@ -4,7 +4,7 @@ sidebar_position: 5
 
 # Aider
 
-Engineer Brain integrates with Aider via `CONVENTIONS.md`.
+Brainstack integrates with Aider via `CONVENTIONS.md`.
 
 ## Files installed
 

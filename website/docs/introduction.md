@@ -5,19 +5,19 @@ slug: /introduction
 
 # Introduction
 
-**Engineer Brain** is a persistent engineering context layer for AI coding assistants.
+**Brainstack** is a persistent engineering context layer for AI coding assistants.
 
 ## The Problem
 
-AI coding assistants understand code. They don't understand *engineers*.
+AI coding assistants understand code. They don't understand *engineers* — or *teams*.
 
 Every session starts from zero. Your AI doesn't know your expertise, your active projects, your team conventions, or your career trajectory. You re-explain context dozens of times a day across multiple tools.
 
 ## The Solution
 
-Engineer Brain creates a **versioned engineering profile** — stored as a simple Markdown file called `BRAIN.md` — that follows you across every AI coding assistant you use.
+Brainstack creates a **versioned engineering profile** — stored as a simple Markdown file called `BRAIN.md` — that follows you across every AI coding assistant you use.
 
-It's not another AI tool. It's a **context layer** that makes every AI tool better.
+It's not another AI tool. It's a **context layer** that makes every AI tool better — for you and your crew.
 
 **Team Brain** (opt-in) adds collaborative AI memory for a crew on the same Jira initiative — Supabase as source of truth, local cache for agents, MCP + Cursor agent loop.
 

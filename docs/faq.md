@@ -10,18 +10,18 @@ Brainstack is a persistent context layer for AI coding assistants — with two s
 
 | Scope | What it does |
 |-------|--------------|
-| **Engineer Brain** | Your personal profile — skills, patterns, career trajectory |
+| **`engineer-brain`** | Your personal profile — skills, patterns, career trajectory |
 | **Team Brain** | Shared crew memory on a Jira initiative — realtime sync across agents |
 
 Together, they give AI deep context about *you* and *your team's work*.
 
-### What's the difference between Engineer Brain and Team Brain?
+### What's the difference between `engineer-brain` and Team Brain?
 
-**Engineer Brain** = personal. Your `BRAIN.md` stays local, tracks your growth, generates standups and quarterly reviews. Never uploaded.
+**`engineer-brain`** = personal. Your `BRAIN.md` stays local, tracks your growth, generates standups and quarterly reviews. Never uploaded.
 
 **Team Brain** = crew collaboration. When three engineers spike the same Jira initiative, their agents share memory via Supabase. Engineer A learns something → Engineer B's agent knows it instantly.
 
-You can use Engineer Brain standalone. Team Brain is opt-in for crews who want shared AI context.
+You can use Brainstack with `engineer-brain` alone. Team Brain is opt-in for crews who want shared AI context.
 
 ### Is this another AI coding tool?
 
@@ -47,7 +47,7 @@ Yes — that's a primary design goal. Install once, and every AI tool gets the s
 
 | Scope | Data location | What syncs |
 |-------|---------------|------------|
-| **Engineer Brain** | 100% local | Nothing — git history, `BRAIN.md`, context files stay on your machine |
+| **`engineer-brain`** | 100% local | Nothing — git history, `BRAIN.md`, context files stay on your machine |
 | **Team Brain** | Your Supabase project | Initiative memories + membership (you own the project) |
 
 **Personal `BRAIN.md` is never uploaded to Team Brain.** Team Brain syncs only crew findings on a Jira key — research decisions, architectural choices, spike learnings.

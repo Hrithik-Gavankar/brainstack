@@ -1,4 +1,4 @@
-# Engineer Brain — Continue.dev Setup
+# Brainstack — Continue.dev Setup
 
 ## Installation
 
@@ -6,7 +6,7 @@
 
 ```bash
 cd /path/to/your/workspace
-bash /path/to/engineer-brain/install.sh continue-dev
+bash /path/to/brainstack/install.sh continue-dev
 ```
 
 ### Option 2: Manual install

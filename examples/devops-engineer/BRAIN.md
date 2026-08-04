@@ -1,4 +1,4 @@
-# Alex Rivera — Engineering Brain
+# Alex Rivera — Engineering Profile
 
 > Last updated: 2026-07-11
 > Auto-generated baseline. Updates itself via `engineer-brain update`.
