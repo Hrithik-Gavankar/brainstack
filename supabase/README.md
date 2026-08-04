@@ -115,6 +115,7 @@ bash core/scripts/team-brain-api.sh breakdown AAP-81423
 | Live project URL/anon **not** committed to OSS | ✅ placeholders only |
 | `join_team` omits `invite_code`; `whoami` returns it only for admin | ✅ |
 | Anon `register_team` / `join_team` **rate limiting** | ✅ DB-level sliding window (default 5 register/h, 15 join/h) |
+| pgcrypto calls schema-qualified (`extensions.digest`) | ✅ Required on Supabase (`search_path = public`); see migration `60809` |
 | Realtime push body **encrypted app-layer**, not plaintext on the wire | ✅ AES-256-CBC + HMAC-SHA256, per-team key, DB never decrypts |
 | `remember` body-size cap | ✅ 20,000 chars |
 | RPC request timeouts (client) | ✅ `curl --max-time` (default 20s, `TEAM_BRAIN_HTTP_TIMEOUT`) |

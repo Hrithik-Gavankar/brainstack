@@ -397,6 +397,8 @@ Juniors can ignore MCP and use the bash commands or Cursor skill.
 | Problem | What to try |
 |---------|-------------|
 | `missing dependency: jq` | `brew install jq` (macOS) |
+| `function digest(…) does not exist` / SQLSTATE `42883` on register/join/onboard | **Admin:** apply [`20260809000001_fix_tb_anon_fingerprint_digest.sql`](../supabase/migrations/20260809000001_fix_tb_anon_fingerprint_digest.sql) (or full `supabase db push` / bootstrap migrations), then retry. Confirm with `bash core/scripts/team-brain-api.sh doctor`. |
+| `Could not find the function public.register_team` / `join_team` (PGRST202) | **Admin:** migrations not applied (or wrong Supabase project). Apply all `supabase/migrations/*.sql` in order. Also check `project.public.env` URL matches `.team-brain/team.yaml`. |
 | `unauthorized` / RPC failed | Re-run `whoami`. If still broken, ask admin for a fresh invite and `onboard` again with a **new display name** |
 | `member already exists` | Pick a different `"Your Name"` (must be unique on the team) |
 | `initiative not found — attach first` | `attach JIRA-KEY` or include the key in `onboard … KEY` |

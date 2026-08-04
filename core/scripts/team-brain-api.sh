@@ -94,6 +94,15 @@ rpc_forbidden_hint() {
     echo "→ Your role is viewer (read-only). Ask an admin for member/write access." >&2
   elif echo "$err" | grep -qi 'forbidden: admin only'; then
     echo "→ Admin only — ask a crew admin (rotate-invite / set-role)." >&2
+  elif echo "$err" | grep -Eqi 'function digest\(|digest\(text|SQLSTATE 42883|42883'; then
+    echo "→ DB bug: unqualified digest() in tb_anon_fingerprint (register/join)." >&2
+    echo "  Admin: apply supabase/migrations/20260809000001_fix_tb_anon_fingerprint_digest.sql" >&2
+    echo "  (or re-run bootstrap migrations / supabase db push), then retry." >&2
+  elif echo "$err" | grep -Eqi 'Could not find the function public\.(register_team|join_team)|PGRST202'; then
+    echo "→ register/join RPC missing or wrong signature — migrations not applied (or stale)." >&2
+    echo "  Admin: apply all supabase/migrations/*.sql in timestamp order, then retry." >&2
+  elif echo "$err" | grep -Eqi "Could not find the table 'public\.teams'|PGRST205"; then
+    echo "→ Team Brain schema missing on this Supabase project — run bootstrap / apply migrations." >&2
   fi
 }
 
@@ -844,6 +853,18 @@ cmd_doctor() {
   done
   if [ -n "${TEAM_BRAIN_SUPABASE_URL:-}" ] && [ -n "${TEAM_BRAIN_SUPABASE_ANON_KEY:-}" ] && ! supabase_config_is_placeholder; then
     echo "[ok]   Supabase config present ($TEAM_BRAIN_SUPABASE_URL)"
+    # Surface URL drift: bootstrap may write project.public.env while team.yaml keeps the live crew.
+    if [ -f "$PUBLIC_ENV" ] && [ -f "$CONFIG_YAML" ]; then
+      local env_url yaml_url
+      env_url=$(grep -E '^TEAM_BRAIN_SUPABASE_URL=' "$PUBLIC_ENV" 2>/dev/null | head -1 | cut -d= -f2- || true)
+      yaml_url=$(yaml_get sync.supabase_url "$CONFIG_YAML" || true)
+      if [ -n "$env_url" ] && [ -n "$yaml_url" ] && [ "$env_url" != "$yaml_url" ]; then
+        echo "[warn] project.public.env URL ≠ team.yaml sync.supabase_url"
+        echo "       env:  $env_url"
+        echo "       yaml: $yaml_url"
+        echo "       CLI prefers env → team.yaml → project.public.env — align these before onboard."
+      fi
+    fi
     if command -v python3 >/dev/null 2>&1 && python3 -c 'import websockets' 2>/dev/null; then
       echo "[ok]   websockets installed — realtime push listener available"
     else
@@ -853,6 +874,21 @@ cmd_doctor() {
       echo "[ok]   cryptography installed — full-content push decrypt available"
     else
       echo "[info] cryptography not installed — pip install cryptography for full push (signal+pull fallback works today)"
+    fi
+    # Safe anon probe: invalid invite fails after fingerprint — catches digest 42883
+    # without creating a team. Uses one join rate-limit token (default 15/h).
+    local probe_err
+    probe_err=$(rpc_try join_team "$(jq -n '{p_invite_code:"",p_display_name:"x",p_role:"member"}')" 2>&1 >/dev/null || true)
+    if echo "$probe_err" | grep -Eqi 'function digest\(|digest\(text|42883'; then
+      echo "[fail] join/register broken: unqualified digest() — apply 20260809000001_fix_tb_anon_fingerprint_digest.sql"
+      ok=0
+    elif echo "$probe_err" | grep -Eqi 'Could not find the function public\.join_team|PGRST202'; then
+      echo "[fail] join_team RPC missing — apply supabase/migrations (bootstrap / db push)"
+      ok=0
+    elif echo "$probe_err" | grep -Eqi 'invite code required|rate limit exceeded|invalid role|display name required'; then
+      echo "[ok]   join_team RPC reachable (anon fingerprint path)"
+    else
+      echo "[info] join_team probe: $(echo "$probe_err" | head -1)"
     fi
     if [ -n "${TEAM_BRAIN_API_KEY:-}" ]; then
       if rpc_try tb_whoami "$(jq -n --arg k "$TEAM_BRAIN_API_KEY" '{p_api_key:$k}')" >/dev/null 2>&1; then

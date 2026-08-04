@@ -25,6 +25,9 @@ jobs:
         run: |
           find . -name "*.sh" -not -path './mcp/*' -exec shellcheck {} \;
 
+      - name: Check Supabase pgcrypto qualification
+        run: bash supabase/scripts/check-extension-qualification.sh
+
       - name: Smoke team-brain-api help
         run: |
           bash core/scripts/team-brain-api.sh --help | grep -q remember
