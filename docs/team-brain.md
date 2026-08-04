@@ -47,7 +47,7 @@ flowchart LR
   MCP --> EngB
 ```
 
-**Honesty:** sync is not automatic chat sync. Shared memory requires `remember`, then `recall` (or the Cursor agent loop / MCP / optional `watch` poll). Agents get a soft MCP-first compliance gate (`compliance` / `prepare_research`); the CLI is not hard-blocked. Peer push (#31) is signal-only Realtime Broadcast + authenticated pull — poll remains the fallback. Repo pin (#39): commit `.team-brain/project.json` (no secrets). Roles (#40): `viewer` is read-only; only `admin` rotates invites.
+**Honesty:** sync is not automatic chat sync. Shared memory requires `remember`, then `recall` (or the Cursor agent loop / MCP / optional `watch` poll). Agents get a soft MCP-first compliance gate (`compliance` / `prepare_research`); the CLI is not hard-blocked. Peer push (#31) is **full-content** Realtime Broadcast — the body travels app-layer encrypted and a peer holding the team's `broadcast_key` decrypts it locally (zero extra round-trip); anyone without the key, or a pre-migration/`restore`d row, falls back to authenticated pull — poll remains the always-on safety net either way. Semantic recall (#4) is a one-command opt-in: `enable-semantic <openai|ollama>`. Repo pin (#39): commit `.team-brain/project.json` (no secrets). Roles (#40): `viewer` is read-only; only `admin` rotates invites.
 
 ## Onboard (new teammate)
 
@@ -118,6 +118,14 @@ bash core/scripts/team-brain-api.sh metrics --team
 ## Fallback
 
 `sync.backend: local` — file/git only (no Supabase). Useful offline; not multi-engineer realtime.
+
+## Readiness check
+
+```bash
+bash core/scripts/team-brain-api.sh doctor
+```
+
+Client-side preflight: dependencies (curl/jq/openssl/python3), Supabase config, migrations applied, push mode (full/signal/poll), embedding provider. Run this first when something feels broken.
 
 ## Privacy
 

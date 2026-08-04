@@ -35,10 +35,12 @@ Growing beyond individual use into a richer tool.
 - [x] **Team Brain agent loop** — Cursor always-on `team-brain.mdc` + skill: recall before research, remember after findings
 - [x] **Team Brain onboarding** — invite + Jira key via `onboard`; beginner guide [team-brain-onboarding.md](team-brain-onboarding.md)
 - [x] **Team Brain sync mode** — `start` / `stop` / `wake` / idle sleep; merge-safe `source_ref` updates
-- [x] **Team Brain Realtime push** — signal-only Broadcast + poll fallback (#31); Auth-private channels later
+- [x] **Team Brain Realtime push** — full-content Broadcast, app-layer encrypted (AES-256-CBC+HMAC, per-team key); decrypt-and-cache locally with zero extra round-trip; signal + authenticated pull fallback unchanged (#31)
+- [x] **Team Brain semantic recall opt-in** — one-command `enable-semantic <openai|ollama>`, persisted to `team.yaml`, no secret written to disk (#4)
 - [x] **Team Brain repo pin** — commit-safe `.team-brain/project.json` (#39)
 - [x] **Team Brain access roles** — admin / member / viewer + admin invite rotate (#40)
 - [x] **Anon register/join rate limits** — DB-level sliding window (#32)
+- [x] **Team Brain hardening** — `remember` body-size cap, `curl --max-time` on all RPCs, `doctor` readiness preflight
 - [x] **Team aggregation metrics** — coverage matrix + reuse/activity via `metrics --team` (#35); collab graph / heatmap deferred — see [team-brain-memory.md](team-brain-memory.md) · parent [#2](https://github.com/Hrithik-Gavankar/brainstack/issues/2)
 - [ ] **GitLab/Bitbucket support** — scanner support beyond GitHub
 - [ ] **Engineer-brain MCP** — personal BRAIN.md / sync as MCP resources (team-brain MCP ships first)

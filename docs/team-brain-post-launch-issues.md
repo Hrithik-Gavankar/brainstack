@@ -60,7 +60,7 @@ Agents and sync summaries can be wrong. Today there is no first-class path to:
 
 ## 2. Realtime push into peer agent context
 
-**Status:** implemented locally for [#31](https://github.com/Hrithik-Gavankar/brainstack/issues/31) — **signal-only Broadcast** (public topic keyed by `team_id`; bodies via `list_recent`). Auth-private channels deferred. Poll/`watch` remain fallback.
+**Status:** implemented locally for [#31](https://github.com/Hrithik-Gavankar/brainstack/issues/31) — **full push**: the body travels app-layer-encrypted (`body_ct`, AES-256-CBC+HMAC-SHA256) on the same public Broadcast topic; a resolved member gets the per-team `broadcast_key` via `memory_broadcast_topic` and decrypts locally with zero extra RPC round-trip. Supabase Auth-private channels were still rejected (Team Brain's custom `api_key` model has no JWT to scope against) — encryption closes the same gap without that migration. Signal-only (pre-migration / missing key / `cryptography` not installed / restore in flight) transparently falls back to the original authenticated `_pull_signal` poll. Poll/`watch` remain the always-on safety net.
 
 ### Title
 
@@ -91,11 +91,17 @@ v1 uses authenticated polling (`watch` / sync-mode background pull). That is sec
 - [x] Prototype push path (signal Broadcast + DB trigger; Auth-private deferred)
 - [x] Document fallback: poll/`watch` still works if push unavailable
 - [x] No widening of anon table reads
+- [x] Full-content push: body travels encrypted (app-layer, not plaintext) on the same public topic — no Auth migration needed
+- [x] Zero extra RPC round-trip on the happy path (decrypt-and-cache locally in the listener)
+- [x] Graceful degrade: missing key/lib, malformed ciphertext, or a stale ciphertext after `restore` all fall back to authenticated pull, never a crash or silent data loss
+
+> Full push implemented in migration `20260808000001_team_brain_full_push_and_semantic_hardening.sql` + `core/scripts/team-brain-realtime.py` / `team-brain-api.sh`.
 
 ## References
 
 - `docs/team-brain-memory.md` — P1 watch decision + “Future hardening”
 - `docs/roadmap.md` — Team Brain Realtime push
+- Migration `20260808000001_team_brain_full_push_and_semantic_hardening.sql`
 ```
 
 ---
@@ -147,6 +153,8 @@ Invite entropy and unique display names help, but unbounded anon RPC calls remai
 
 ## 4. Semantic recall opt-in for crews
 
+**Status:** implemented locally — `enable-semantic <openai|ollama>` is now a one-command opt-in: persists `provider`/`model` (non-secret) to `team.yaml` so the whole crew inherits it, tests one embed call, and reports vector dims. The embed API key stays env-only and is never written to disk.
+
 ### Title
 
 ```
@@ -172,15 +180,16 @@ Some-class products treat semantic search as core. Team Brain has the plumbing; 
 
 ## Acceptance criteria
 
-- [ ] Crew-facing enable docs (env + `reembed` backfill)
-- [ ] Optional helper command or install flag documented
-- [ ] Example recall showing `"mode": "vector"` after enable
-- [ ] Cost/privacy notes for OpenAI vs Ollama
+- [x] Crew-facing enable docs (env + `reembed` backfill)
+- [x] Optional helper command or install flag documented — `enable-semantic <openai|ollama> [--model NAME] [--base-url URL]`
+- [x] Example recall showing `"mode": "vector"` after enable
+- [x] Cost/privacy notes for OpenAI vs Ollama
 
 ## References
 
 - Migration `20260729000001_team_brain_embeddings.sql`
 - `docs/team-brain-memory.md` — P2 Semantic recall
+- `core/scripts/team-brain-api.sh` — `enable-semantic` command
 ```
 
 ---

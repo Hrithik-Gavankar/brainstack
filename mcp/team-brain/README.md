@@ -1,6 +1,6 @@
 # Team Brain MCP
 
-Agent-native tools for collaborative initiative memory. Wraps [`team-brain-api.sh`](../../core/scripts/team-brain-api.sh) — no embeddings required (FTS recall by default).
+Agent-native tools for collaborative initiative memory. Wraps [`team-brain-api.sh`](../../core/scripts/team-brain-api.sh) — no embeddings required (FTS recall by default; one-command `enable-semantic` opt-in for vector recall).
 
 ## Tools
 
@@ -11,7 +11,7 @@ Agent-native tools for collaborative initiative memory. Wraps [`team-brain-api.s
 | `sync_status` | `active` \| `sleep` \| `stopped` + embedded `compliance` |
 | `compliance` | Soft MCP-first gate (`research_ok`, `agent_action`) |
 | `prepare_research` | Recall/list + compliance — call before deep research |
-| `broadcast_topic` | Realtime signal topic for a Jira key (#31) |
+| `broadcast_topic` | Realtime full-content push topic + per-team decrypt key for a Jira key (#31) |
 | `peer_notify` | Latest push notify file (`.team-brain/notify/<KEY>.json`) |
 | `pin_show` | Commit-safe repo pin (`project.json`) (#39) |
 | `rotate_invite` / `set_role` | Admin-only invite rotate / role change (#40) |
@@ -103,7 +103,8 @@ IDLE ~1h
 Memory bodies: natural-language prefer/avoid guidance — not TODO/NO-TODO dumps.  
 Apply migration `20260802000001_team_brain_learning_kind.sql` for the `learning` kind.  
 Apply `20260803000001_team_brain_memory_history.sql` for revision archive + `history` / `restore`.  
-Apply `20260804000001_team_brain_realtime_broadcast.sql` for peer push signals (`start` / `watch --push`; poll remains fallback).  
+Apply `20260804000001_team_brain_realtime_broadcast.sql` + `20260808000001_team_brain_full_push_and_semantic_hardening.sql` for full-content encrypted peer push (`start` / `watch --push`; poll remains fallback if `cryptography` or the key is unavailable).  
+Run `team-brain-api.sh enable-semantic openai|ollama` to opt in to vector `recall`; `team-brain-api.sh doctor` for a client readiness preflight.  
 Apply `20260805000001_team_brain_roles_and_invites.sql` for `viewer` + admin invite rotate.  
 Commit `.team-brain/project.json` for repo pin (#39); `start`/`attach` accept an empty key when pinned.
 
