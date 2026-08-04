@@ -217,7 +217,7 @@ Sync mode already pulls while active, but during a **long** research session you
 
 ```bash
 bash core/scripts/team-brain-api.sh watch AAP-81423 &
-# or with Realtime signal push: watch AAP-81423 --push &
+# or with Realtime push (full content, encrypted; falls back to signal+pull without `cryptography`): watch AAP-81423 --push &
 ```
 
 Run it **once** when the spike gets long — not every command. Cursor agents also refresh via periodic `recall` (see the team-brain skill); `watch` is the human/CLI companion. If sync **slept**, use `wake` (or `start`) — `watch` does not replace sleep/wake.

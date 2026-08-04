@@ -9,7 +9,8 @@
 # Commands: onboard | register | join | whoami | attach | start | stop | wake |
 #           bootstrap | pin | remember | correct | history | restore | recall | capture |
 #           sync | watch | breakdown | metrics | aggregate | compliance | list | mirror | status |
-#           sync-status | touch | broadcast-topic | rotate-invite | set-role
+#           sync-status | touch | broadcast-topic | rotate-invite | set-role |
+#           enable-semantic | doctor
 # Plan: docs/team-brain-memory.md — memories are SoT; md is optional export.
 # Realtime (#31): signal Broadcast + poll fallback — see migration …_realtime_broadcast.sql
 # Pin (#39): commit-safe .team-brain/project.json — never secrets.
@@ -192,6 +193,21 @@ load_config() {
   if [ -z "${TEAM_BRAIN_API_KEY:-}" ] && [ -f "$CRED_FILE" ]; then
     TEAM_BRAIN_API_KEY=$(jq -r '.api_key // empty' "$CRED_FILE")
   fi
+  # Semantic recall opt-in (#4): provider/model persist to team.yaml (non-secret,
+  # shareable with the crew); the embed API key is never read from here.
+  if [ -z "${TEAM_BRAIN_EMBED_PROVIDER:-}" ] && [ -f "$CONFIG_YAML" ]; then
+    local yaml_provider
+    yaml_provider=$(yaml_get embeddings.provider "$CONFIG_YAML")
+    if [ -n "$yaml_provider" ]; then
+      TEAM_BRAIN_EMBED_PROVIDER="$yaml_provider"
+      TEAM_BRAIN_EMBED_MODEL=${TEAM_BRAIN_EMBED_MODEL:-$(yaml_get embeddings.model "$CONFIG_YAML")}
+      local yaml_base
+      yaml_base=$(yaml_get embeddings.base_url "$CONFIG_YAML")
+      if [ -n "$yaml_base" ]; then
+        TEAM_BRAIN_EMBED_BASE_URL=${TEAM_BRAIN_EMBED_BASE_URL:-$yaml_base}
+      fi
+    fi
+  fi
 }
 
 require_supabase() {
@@ -217,6 +233,7 @@ rpc_try() {
   local url="${TEAM_BRAIN_SUPABASE_URL%/}/rest/v1/rpc/${fn}"
   local resp http resp_body
   resp=$(curl -sS -w "\n%{http_code}" -X POST "$url" \
+    --max-time "${TEAM_BRAIN_HTTP_TIMEOUT:-20}" \
     -H "apikey: ${TEAM_BRAIN_SUPABASE_ANON_KEY}" \
     -H "Authorization: Bearer ${TEAM_BRAIN_SUPABASE_ANON_KEY}" \
     -H "Content-Type: application/json" \
@@ -302,6 +319,75 @@ embed_text() {
       return 1
       ;;
   esac
+}
+
+# ---------------------------------------------------------------------------
+# Full realtime push (#31) — app-layer encryption for the Broadcast payload.
+# DB never sees plaintext: body_ct is opaque "<iv_hex>:<ct_b64>:<hmac_hex>",
+# AES-256-CBC + HMAC-SHA256 (encrypt-then-MAC) with subkeys derived from the
+# team's server-generated broadcast_key via SHA-256(key || "enc"|"mac").
+# Requires only openssl (present almost everywhere) — never blocks remember;
+# peers without a decryptable payload fall back to the existing authenticated
+# _pull_signal, unchanged. See migration …_full_push_and_semantic_hardening.sql.
+# ---------------------------------------------------------------------------
+
+_bk_subkey_hex() {
+  # $1 = broadcast_key_b64  $2 = label ("enc"|"mac") -> hex(sha256(raw_key || label))
+  local key_b64="$1" label="$2"
+  { printf '%s' "$key_b64" | base64 -d 2>/dev/null; printf '%s' "$label"; } \
+    | openssl dgst -sha256 -binary 2>/dev/null | od -An -tx1 | tr -d ' \n'
+}
+
+# $1=plaintext $2=broadcast_key_b64 -> prints "<iv_hex>:<ct_b64>:<hmac_hex>"; rc=1 if unavailable.
+broadcast_encrypt() {
+  local plaintext="$1" key_b64="$2"
+  [ -n "$key_b64" ] || return 1
+  command -v openssl >/dev/null 2>&1 || return 1
+  local enc_key_hex mac_key_hex iv_hex ct_b64 hmac_hex
+  enc_key_hex=$(_bk_subkey_hex "$key_b64" enc) || return 1
+  mac_key_hex=$(_bk_subkey_hex "$key_b64" mac) || return 1
+  [ -n "$enc_key_hex" ] && [ -n "$mac_key_hex" ] || return 1
+  iv_hex=$(openssl rand -hex 16 2>/dev/null) || return 1
+  ct_b64=$(printf '%s' "$plaintext" | openssl enc -aes-256-cbc -K "$enc_key_hex" -iv "$iv_hex" -base64 -A 2>/dev/null) || return 1
+  [ -n "$ct_b64" ] || return 1
+  hmac_hex=$(printf '%s:%s' "$iv_hex" "$ct_b64" | openssl dgst -sha256 -hmac "$mac_key_hex" 2>/dev/null | awk '{print $NF}')
+  [ -n "$hmac_hex" ] || return 1
+  printf '%s:%s:%s' "$iv_hex" "$ct_b64" "$hmac_hex"
+}
+
+# Persist broadcast_key_b64 into credentials.json (never git-tracked; same file as api_key).
+cache_broadcast_key() {
+  local key_b64="$1"
+  [ -n "$key_b64" ] || return 0
+  [ -f "$CRED_FILE" ] || return 0
+  local tmp
+  tmp=$(mktemp)
+  jq --arg bk "$key_b64" '. + {broadcast_key_b64: $bk}' "$CRED_FILE" >"$tmp" && mv "$tmp" "$CRED_FILE"
+  chmod 600 "$CRED_FILE" 2>/dev/null || true
+}
+
+# Prints the team's broadcast_key_b64 on stdout (cached, or fetched + cached via
+# memory_broadcast_topic — requires an already-attached initiative). rc=1 if unavailable;
+# callers must treat that as "skip full push, signal-only still works" — never fatal.
+ensure_broadcast_key() {
+  local key="$1"
+  [ -n "$key" ] || return 1
+  key=$(echo "$key" | tr '[:lower:]' '[:upper:]')
+  if [ -f "$CRED_FILE" ]; then
+    local cached
+    cached=$(jq -r '.broadcast_key_b64 // empty' "$CRED_FILE" 2>/dev/null || true)
+    if [ -n "$cached" ]; then
+      printf '%s' "$cached"
+      return 0
+    fi
+  fi
+  local out bk
+  out=$(rpc_try memory_broadcast_topic "$(jq -n --arg k "$TEAM_BRAIN_API_KEY" --arg j "$key" \
+    '{p_api_key:$k, p_jira_key:$j}')" 2>/dev/null) || return 1
+  bk=$(jq -r '.broadcast_key_b64 // empty' <<<"$out" 2>/dev/null || true)
+  [ -n "$bk" ] || return 1
+  cache_broadcast_key "$bk"
+  printf '%s' "$bk"
 }
 
 # Pull memories: prefer list_recent (P0); fall back to list_captures (v1).
@@ -560,6 +646,7 @@ maybe_client_broadcast() {
   # Topic may contain ':' — encode path segments safely via batch endpoint
   local url="${TEAM_BRAIN_SUPABASE_URL%/}/realtime/v1/api/broadcast"
   curl -sS -o /dev/null -X POST "$url" \
+    --max-time "${TEAM_BRAIN_HTTP_TIMEOUT:-20}" \
     -H "apikey: ${TEAM_BRAIN_SUPABASE_ANON_KEY}" \
     -H "Authorization: Bearer ${TEAM_BRAIN_SUPABASE_ANON_KEY}" \
     -H "Content-Type: application/json" \
@@ -632,6 +719,169 @@ cmd_broadcast_topic() {
   rpc memory_broadcast_topic "$(jq -n \
     --arg k "$TEAM_BRAIN_API_KEY" --arg j "$key" \
     '{p_api_key:$k, p_jira_key:$j}')" | jq .
+}
+
+# Apply a fully-decrypted pushed memory straight into local cache — full push
+# (#31): zero extra RPC round-trip once the realtime listener decrypts body_ct.
+# stdin: memory JSON ({id, kind, body, source_ref, author_name, created_at, updated_at, ...}).
+# Never dies on bad input from the listener — caller falls back to _pull_signal.
+cmd_apply_pushed_memory() {
+  local key="${1:-}"
+  [ -n "$key" ] || die "usage: _apply_pushed_memory <JIRA-KEY> (memory JSON on stdin)"
+  key=$(echo "$key" | tr '[:lower:]' '[:upper:]')
+  local mem
+  mem=$(cat)
+  jq -e 'type=="object" and has("id") and has("body")' >/dev/null 2>&1 <<<"$mem" \
+    || die "_apply_pushed_memory: invalid memory JSON on stdin"
+  local incoming
+  incoming=$(jq -n --argjson m "$mem" --arg key "$key" '{initiative: {jira_key: $key}, memories: [$m]}')
+  merge_memory_cache "$key" "$incoming"
+  touch_sync_activity "$key"
+  mkdir -p "$(NOTIFY_DIR)"
+  ensure_team_gitignore
+  local notify_path
+  notify_path="$(NOTIFY_DIR)/${key}.json"
+  jq -n \
+    --arg key "$key" \
+    --arg now "$(iso_now)" \
+    --argjson mem "$mem" \
+    '{
+      jira_key: $key,
+      notified_at: $now,
+      pull_count: 1,
+      source: "realtime_push_full",
+      memories: {memories: [$mem]},
+      agent_hint: "Peer memory landed (full push, decrypted locally) — summarize notify/cache before continuing deep research."
+    }' >"$notify_path"
+  if [ -f "$(sync_state_path "$key")" ]; then
+    local tmp
+    tmp=$(mktemp)
+    jq --arg now "$(iso_now)" '
+      .last_pull_at = $now
+      | .last_push_at = $now
+      | .last_pull_count = 1
+      | .push = ((.push // {}) + {last_signal_at: $now, last_pull_count: 1, mode: "full"})
+    ' "$(sync_state_path "$key")" >"$tmp" && mv "$tmp" "$(sync_state_path "$key")"
+  fi
+  echo "→ full push applied ${key}: 1 memory (decrypted locally; notify: $notify_path)" >&2
+  jq . "$notify_path"
+}
+
+# enable-semantic — one-command crew opt-in for semantic recall (#4).
+# Persists provider+model (non-secret) to team.yaml so every teammate who
+# pulls it gets vector recall "for free"; the embed API key stays env-only
+# and is never written to disk. FTS recall keeps working either way.
+cmd_enable_semantic() {
+  local provider="${1:-}"
+  shift || true
+  case "$provider" in
+    openai|ollama) ;;
+    *)
+      die "usage: enable-semantic <openai|ollama> [--model NAME] [--base-url URL]
+  openai: export TEAM_BRAIN_EMBED_API_KEY=sk-... (or OPENAI_API_KEY) — never persisted
+  ollama: run a local Ollama server first (default http://127.0.0.1:11434)"
+      ;;
+  esac
+  local model="" base_url=""
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --model) model="${2:-}"; shift 2 ;;
+      --base-url) base_url="${2:-}"; shift 2 ;;
+      *) shift ;;
+    esac
+  done
+  if [ -z "$model" ]; then
+    if [ "$provider" = "openai" ]; then model="text-embedding-3-small"; else model="nomic-embed-text"; fi
+  fi
+  load_config
+  [ -f "$CONFIG_YAML" ] || die "no $CONFIG_YAML yet — run onboard/register/join first"
+  if grep -q '^embeddings:' "$CONFIG_YAML" 2>/dev/null; then
+    echo "→ $CONFIG_YAML already has an embeddings: block — edit it directly to change provider/model." >&2
+  else
+    {
+      echo "embeddings:"
+      echo "  provider: ${provider}"
+      echo "  model: ${model}"
+      if [ -n "$base_url" ]; then echo "  base_url: ${base_url}"; fi
+    } >>"$CONFIG_YAML"
+    echo "→ Persisted embeddings.provider=${provider} model=${model} to $CONFIG_YAML (shareable — no secret)" >&2
+  fi
+  export TEAM_BRAIN_EMBED_PROVIDER="$provider"
+  export TEAM_BRAIN_EMBED_MODEL="$model"
+  if [ -n "$base_url" ]; then export TEAM_BRAIN_EMBED_BASE_URL="$base_url"; fi
+  if [ "$provider" = "openai" ] && [ -z "${TEAM_BRAIN_EMBED_API_KEY:-}${OPENAI_API_KEY:-}" ]; then
+    echo "→ Set TEAM_BRAIN_EMBED_API_KEY (or OPENAI_API_KEY) in your shell, then re-run this command to verify." >&2
+    return 0
+  fi
+  echo "→ Testing embed call…" >&2
+  local emb dims
+  if emb=$(embed_text "semantic recall smoke test" 2>&1); then
+    dims=$(jq 'length' <<<"$emb" 2>/dev/null || echo "?")
+    echo "→ OK — ${provider}/${model} returns ${dims}-d vectors. \`recall <KEY> <query>\` now reports mode: vector." >&2
+    echo "→ Backfill existing memories: bash core/scripts/team-brain-api.sh reembed <JIRA-KEY>" >&2
+  else
+    echo "→ embed test failed: $emb" >&2
+    echo "  Semantic recall stays off until this succeeds; FTS recall keeps working." >&2
+    return 1
+  fi
+}
+
+# doctor — client-side readiness preflight (infra maturity: the Supabase-native
+# equivalent of a server /health check — no server to host, so this checks the
+# things that would otherwise silently degrade: deps, config, migrations, push mode).
+cmd_doctor() {
+  load_config
+  local ok=1
+  echo "Team Brain doctor"
+  echo "=================="
+  for bin in curl jq openssl python3; do
+    if command -v "$bin" >/dev/null 2>&1; then
+      echo "[ok]   $bin"
+    else
+      echo "[warn] $bin missing"
+      case "$bin" in curl|jq) ok=0 ;; esac
+    fi
+  done
+  if [ -n "${TEAM_BRAIN_SUPABASE_URL:-}" ] && [ -n "${TEAM_BRAIN_SUPABASE_ANON_KEY:-}" ] && ! supabase_config_is_placeholder; then
+    echo "[ok]   Supabase config present ($TEAM_BRAIN_SUPABASE_URL)"
+    if command -v python3 >/dev/null 2>&1 && python3 -c 'import websockets' 2>/dev/null; then
+      echo "[ok]   websockets installed — realtime push listener available"
+    else
+      echo "[info] websockets not installed — pip install websockets for push (poll fallback works today)"
+    fi
+    if command -v python3 >/dev/null 2>&1 && python3 -c 'import cryptography' 2>/dev/null; then
+      echo "[ok]   cryptography installed — full-content push decrypt available"
+    else
+      echo "[info] cryptography not installed — pip install cryptography for full push (signal+pull fallback works today)"
+    fi
+    if [ -n "${TEAM_BRAIN_API_KEY:-}" ]; then
+      if rpc_try tb_whoami "$(jq -n --arg k "$TEAM_BRAIN_API_KEY" '{p_api_key:$k}')" >/dev/null 2>&1; then
+        echo "[ok]   api_key resolves (tb_whoami)"
+      else
+        echo "[fail] api_key does not resolve — re-run onboard/register/join"
+        ok=0
+      fi
+      if rpc_try team_aggregate_metrics "$(jq -n --arg k "$TEAM_BRAIN_API_KEY" '{p_api_key:$k}')" >/dev/null 2>&1; then
+        echo "[ok]   migrations up to date (through #35 team_aggregate_metrics)"
+      else
+        echo "[warn] team_aggregate_metrics unavailable — apply latest supabase/migrations/*.sql"
+      fi
+      echo "[info] Full push needs: apply …_full_push_and_semantic_hardening.sql, then remember once to warm the broadcast key cache."
+    else
+      echo "[info] no TEAM_BRAIN_API_KEY yet — run onboard/register/join"
+    fi
+  else
+    echo "[warn] Supabase URL/anon not configured (or still placeholders) — see supabase/README.md"
+    ok=0
+  fi
+  echo "EMBED_PROVIDER=${TEAM_BRAIN_EMBED_PROVIDER:-none} — run: enable-semantic <openai|ollama> to opt in"
+  echo "REALTIME=$(realtime_mode) (TEAM_BRAIN_REALTIME=auto|on|off)"
+  if [ "$ok" -eq 1 ]; then
+    echo "Result: healthy"
+  else
+    echo "Result: needs attention (see [warn]/[fail] above)"
+    return 1
+  fi
 }
 
 iso_now() { date -u +%Y-%m-%dT%H:%M:%SZ; }
@@ -1372,7 +1622,7 @@ cmd_onboard() {
 
   if [ -z "$jira_key" ]; then
     jira_key=$(pinned_jira_key 2>/dev/null || true)
-    [ -n "$jira_key" ] && echo "→ Using pinned Jira key: $jira_key" >&2
+    if [ -n "$jira_key" ]; then echo "→ Using pinned Jira key: $jira_key" >&2; fi
   fi
 
   if [ -n "$jira_key" ]; then
@@ -1607,8 +1857,13 @@ cmd_remember() {
     *) die "kind must be research, decision, note, or learning (got: $kind)" ;;
   esac
   key=$(echo "$key" | tr '[:lower:]' '[:upper:]')
-  local out sync_payload payload emb
+  local out sync_payload payload emb bk broadcast_ct
   emb=""
+  broadcast_ct=""
+  if bk=$(ensure_broadcast_key "$key" 2>/dev/null) && [ -n "$bk" ]; then
+    broadcast_ct=$(broadcast_encrypt "$body_text" "$bk" 2>/dev/null || true)
+    if [ -n "$broadcast_ct" ]; then echo "→ full push: encrypted for peers (signal-only if this fails)" >&2; fi
+  fi
   if emb=$(embed_text "$body_text" 2>/dev/null); then
     echo "→ embedding via ${TEAM_BRAIN_EMBED_PROVIDER} ($(embed_dims)-d)" >&2
     payload=$(jq -n \
@@ -1618,7 +1873,8 @@ cmd_remember() {
       --arg b "$body_text" \
       --arg r "$source_ref" \
       --argjson e "$emb" \
-      '{p_api_key:$k, p_jira_key:$j, p_kind:$kind, p_body:$b, p_source_ref:(if $r=="" then null else $r end), p_embedding:$e}')
+      --arg ct "$broadcast_ct" \
+      '{p_api_key:$k, p_jira_key:$j, p_kind:$kind, p_body:$b, p_source_ref:(if $r=="" then null else $r end), p_embedding:$e, p_broadcast_ct:(if $ct=="" then null else $ct end)}')
   else
     payload=$(jq -n \
       --arg k "$TEAM_BRAIN_API_KEY" \
@@ -1626,7 +1882,8 @@ cmd_remember() {
       --arg kind "$kind" \
       --arg b "$body_text" \
       --arg r "$source_ref" \
-      '{p_api_key:$k, p_jira_key:$j, p_kind:$kind, p_body:$b, p_source_ref:(if $r=="" then null else $r end), p_embedding:null}')
+      --arg ct "$broadcast_ct" \
+      '{p_api_key:$k, p_jira_key:$j, p_kind:$kind, p_body:$b, p_source_ref:(if $r=="" then null else $r end), p_embedding:null, p_broadcast_ct:(if $ct=="" then null else $ct end)}')
   fi
   if ! out=$(rpc_try remember "$payload" 2>/dev/null); then
     # Older remember without p_embedding, or pre-P0
@@ -2475,7 +2732,7 @@ Team Brain — collaborative memory client (Supabase)
   capture …                 Compat alias for remember
 
   recall <JIRA-KEY> [query…]
-      With query: FTS search. Without: same as sync (list recent).
+      With query: vector search if enable-semantic'd, else FTS. Without: same as sync (list recent).
   sync <JIRA-KEY> [since]   Pull memories → cache/<KEY>.json (+ md export)
   watch <JIRA-KEY> [secs] [--push|--poll]
       Near-realtime: authenticated poll (always) + optional Broadcast push (#31).
@@ -2489,20 +2746,27 @@ Team Brain — collaborative memory client (Supabase)
       Prefers team_aggregate_metrics RPC; falls back to list_recent (bodies stripped).
       Overlays local metrics.json recall hits (this machine only — never uploaded).
   reembed <JIRA-KEY> [n]    Backfill embeddings (requires TEAM_BRAIN_EMBED_PROVIDER)
+  enable-semantic <openai|ollama> [--model NAME] [--base-url URL]
+      One-command crew opt-in (#4): persists provider/model to team.yaml
+      (shareable, no secret); tests one embed call; reports vector dims.
+  doctor                    Readiness preflight: deps, config, migrations, push mode
   list
   status
 
-Embeddings (optional semantic recall):
-  export TEAM_BRAIN_EMBED_PROVIDER=openai   # or ollama
-  export TEAM_BRAIN_EMBED_API_KEY=sk-...    # openai
-  export TEAM_BRAIN_EMBED_MODEL=text-embedding-3-small
-  # ollama: TEAM_BRAIN_EMBED_BASE_URL=http://127.0.0.1:11434 MODEL=nomic-embed-text
-  Vectors are 768-d. Without a provider, recall uses FTS.
+Embeddings (semantic recall — one-command opt-in):
+  bash core/scripts/team-brain-api.sh enable-semantic openai   # or ollama
+  export TEAM_BRAIN_EMBED_API_KEY=sk-...    # openai — never persisted to team.yaml
+  # ollama: --base-url http://127.0.0.1:11434 (default), --model nomic-embed-text
+  Vectors are 768-d. Without a provider, recall uses FTS (reports mode: fts|vector).
+  Manual override still works: export TEAM_BRAIN_EMBED_PROVIDER=openai|ollama
 
-Realtime push (#31 — signal Broadcast; poll always remains fallback):
+Realtime push (#31 — full content, encrypted; poll always remains fallback):
   export TEAM_BRAIN_REALTIME=auto           # auto | on | off
-  pip install websockets                   # required for push listener
-  Apply migration 20260804000001_team_brain_realtime_broadcast.sql
+  pip install websockets cryptography       # websockets=push transport, cryptography=decrypt
+  Apply migration 20260808000001_team_brain_full_push_and_semantic_hardening.sql
+  Body travels as opaque "<iv>:<ciphertext>:<hmac>" (AES-256-CBC+HMAC, per-team
+  key) on the Broadcast topic — DB never decrypts it. Peers without the key/lib,
+  or a null body_ct (pre-migration / restore), fall back to authenticated pull.
 
 Roles / invites (#40):
   Apply migration 20260805000001_team_brain_roles_and_invites.sql
@@ -2566,6 +2830,9 @@ main() {
     watch) cmd_watch "$@" ;;
     broadcast-topic|broadcast_topic) cmd_broadcast_topic "$@" ;;
     _pull_signal) cmd_pull_signal "$@" ;;
+    _apply_pushed_memory) cmd_apply_pushed_memory "$@" ;;
+    enable-semantic|enable_semantic) cmd_enable_semantic "$@" ;;
+    doctor|health) cmd_doctor "$@" ;;
     list) cmd_list "$@" ;;
     status) cmd_status "$@" ;;
     -h|--help|help|"") usage ;;

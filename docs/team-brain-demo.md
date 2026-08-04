@@ -211,7 +211,7 @@ Ready to dig in. What would you like to work on?
 
 3. **What about privacy?**
    - Each crew runs their own Supabase project.
-   - No anon access to memory content (signal-only push).
+   - No anon access to memory content — even the realtime push body travels app-layer encrypted (per-team key), never plaintext, never decrypted by the DB.
    - Role-based: viewers can read but not write.
 
 4. **Does it work with Claude Code / VS Code?**

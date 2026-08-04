@@ -15,6 +15,7 @@
 | [`20260805000001_team_brain_roles_and_invites.sql`](20260805000001_team_brain_roles_and_invites.sql) | **#40** — `viewer` role; write gates; `rotate_invite` / `set_member_role`; join `p_role` |
 | [`20260806000001_team_brain_rate_limits.sql`](20260806000001_team_brain_rate_limits.sql) | **#32** — DB-level rate limiting for `register_team` / `join_team`; sliding window; monitoring view |
 | [`20260807000001_team_brain_aggregate_metrics.sql`](20260807000001_team_brain_aggregate_metrics.sql) | **#35** — `team_aggregate_metrics` RPC (coverage + reuse; no bodies / no BRAIN.md) |
+| [`20260808000001_team_brain_full_push_and_semantic_hardening.sql`](20260808000001_team_brain_full_push_and_semantic_hardening.sql) | **#31 (full push) closeout + hardening** — per-team `broadcast_key`; encrypted `body_ct` on the Broadcast payload; `remember` 20000-char body cap; `restore_memory` clears stale ciphertext |
 
 Apply in timestamp order (`supabase db push`, `psql` via bootstrap `--db-url`, or SQL Editor).  
 **Admin shortcut:** `bash core/scripts/team-brain-api.sh bootstrap …` ([supabase/README.md](../README.md)).  

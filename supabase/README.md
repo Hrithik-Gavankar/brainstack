@@ -115,18 +115,22 @@ bash core/scripts/team-brain-api.sh breakdown AAP-81423
 | Live project URL/anon **not** committed to OSS | ✅ placeholders only |
 | `join_team` omits `invite_code`; `whoami` returns it only for admin | ✅ |
 | Anon `register_team` / `join_team` **rate limiting** | ✅ DB-level sliding window (default 5 register/h, 15 join/h) |
+| Realtime push body **encrypted app-layer**, not plaintext on the wire | ✅ AES-256-CBC + HMAC-SHA256, per-team key, DB never decrypts |
+| `remember` body-size cap | ✅ 20,000 chars |
+| RPC request timeouts (client) | ✅ `curl --max-time` (default 20s, `TEAM_BRAIN_HTTP_TIMEOUT`) |
+| Client-side readiness preflight | ✅ `team-brain-api.sh doctor` |
 
 Do not commit `service_role` keys or live anon keys to public repos. Rotate invite codes / anon keys if leaked.
 
 **Rate limiting (#32):** `register_team` and `join_team` are rate-limited via a DB-level sliding window (`…_rate_limits.sql`). Defaults: 5 registers/hour, 15 joins/hour per fingerprint. Tunable via Postgres settings (`app.rate_limit_register`, `app.rate_limit_join`). Run `select tb_cleanup_rate_limits()` periodically (or via `pg_cron`) to purge old entries. Monitor: `select * from tb_rate_limit_stats` (authenticated/service_role only).
 
-**Existing projects:** apply any new migration files once (… → **realtime_broadcast** → **roles_and_invites**).
+**Existing projects:** apply any new migration files once (… → **realtime_broadcast** → **roles_and_invites** → **rate_limits** → **aggregate_metrics** → **full_push_and_semantic_hardening**).
 
 **Sync mode:** `bash core/scripts/team-brain-api.sh start <JIRA-KEY>` — one entry, background pull, idle sleep. Requires `…_sync_mode.sql` for merge-on-`source_ref` updates.
 
 **Correction / history:** `correct` + `learning` kind (`…_learning_kind.sql`); `history` / `restore` soft rollback (`…_memory_history.sql` — revisions team-scoped via RPCs, no anon table SELECT).
 
-**Realtime push (#31):** signal-only Broadcast on remember (`…_realtime_broadcast.sql`) — no anon SELECT on captures, no bodies on the wire. Peers: `start` / `watch --push` + `pip install websockets`. Fallback: poll/`watch` always work (`TEAM_BRAIN_REALTIME=off` to disable push).
+**Realtime push (#31, full content):** Broadcast on remember (`…_realtime_broadcast.sql` + `…_full_push_and_semantic_hardening.sql`) — no anon SELECT on captures, and the body itself travels **app-layer encrypted** (`body_ct`: AES-256-CBC + HMAC-SHA256, per-team `broadcast_key`), never plaintext, never decrypted by the DB. A resolved member (valid `api_key`) fetches the key once via `memory_broadcast_topic` and decrypts locally with zero extra round-trip. Peers without the key/`cryptography`, or a row just `restore`d (ciphertext cleared to force a correct re-pull), fall back to the original signal + authenticated `list_recent` pull. Peers: `start` / `watch --push` + `pip install websockets cryptography` (`cryptography` optional — omit it and you still get signal + pull). Fallback: poll/`watch` always work (`TEAM_BRAIN_REALTIME=off` to disable push).
 
 **Roles / invites (#40):** `admin` \| `member` (write) \| `viewer` (read-only). Apply `…_roles_and_invites.sql`. Joiners: `onboard … --role viewer`. Admins: `rotate-invite`, `set-role "Name" --role member`.
 
@@ -134,4 +138,4 @@ Do not commit `service_role` keys or live anon keys to public repos. Rotate invi
 
 **Team aggregation (#35):** `team_aggregate_metrics` RPC + `metrics --team` / `aggregate`. Returns counts + `display_name` only — never memory bodies, never personal `BRAIN.md`, never uploads local `metrics.json`. Apply `…_aggregate_metrics.sql`.
 
-**Semantic recall (optional):** `TEAM_BRAIN_EMBED_PROVIDER=openai|ollama` — otherwise `recall` uses FTS.
+**Semantic recall (optional, one-command opt-in — #4):** `bash core/scripts/team-brain-api.sh enable-semantic openai|ollama` persists the provider/model to `team.yaml` (non-secret, shareable with the crew) and tests one embed call; otherwise `recall` uses FTS. The embed API key (`TEAM_BRAIN_EMBED_API_KEY` / `OPENAI_API_KEY`) is always env-only, never written to disk.

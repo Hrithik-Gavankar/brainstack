@@ -1,6 +1,6 @@
 # Team Brain — Collaborative AI Memory (plan)
 
-Status: **P0–P4 + sync mode + Realtime signal push (#31) shipped** (anon rate limits still open)  
+Status: **P0–P4 + sync mode + Realtime full push (#31) + semantic recall opt-in (#4) shipped** (anon rate limits closed — see [#32](https://github.com/Hrithik-Gavankar/brainstack/issues/32))  
 Related: [#2](https://github.com/Hrithik-Gavankar/brainstack/issues/2), [team-brain.md](team-brain.md), [team-brain-onboarding.md](team-brain-onboarding.md), [scopes.md](scopes.md)
 
 This document captures the original Team Brain intent, what shipped for collaborative AI memory (FTS + optional semantic recall + agent loop), and remaining gaps — without depending on external memory products.
@@ -101,27 +101,29 @@ Later polish: version/rollback, snapshots, richer metrics.
 - [x] Skill + docs: memories are SoT; md is optional export
 - [x] Keep existing `capture` / `sync` as compatibility aliases
 
-### P1 — Near-realtime watch *(done — poll + signal Broadcast push)*
+### P1 — Near-realtime watch *(done — poll + full-content Broadcast push)*
 
 **Decision (poll):** use authenticated **polling** (`list_recent` + `p_since`), not `postgres_changes`.
 
 Reason: captures revoke SELECT from anon; auth is custom `p_api_key` on RPCs. Realtime CDC uses the JWT role and cannot see rows without opening SELECT to everyone (leak). Polling keeps member-key security for **content**.
 
-**Decision (push, #31):** **signal-only public Broadcast** from DB trigger + optional client broadcast — never bodies on the wire. Topic `team-brain:{team_id}:{JIRA_KEY}` (team_id already in `credentials.json`). Peers refresh via authenticated `list_recent` / `_pull_signal`. Private Auth-linked CDC deferred until membership uses Supabase Auth JWTs.
+**Decision (push, #31 — full content):** rather than migrating membership to Supabase Auth JWTs to unlock private Realtime Authorization, Team Brain closes the same gap with **application-layer encryption**. Each team gets a random 256-bit `broadcast_key` (server-generated; returned only to a resolved member via `memory_broadcast_topic`). The CLI encrypts the body (AES-256-CBC + HMAC-SHA256, encrypt-then-MAC) *before* `remember`, and the DB trigger forwards that opaque `body_ct` — still on the same **public** topic `team-brain:{team_id}:{JIRA_KEY}` — never decrypting it. A peer holding the key decrypts inline in `team-brain-realtime.py` and writes straight into `.team-brain/cache/<KEY>.json`: **zero extra RPC round-trip**. Anyone without the key (or without the optional `cryptography` dependency) only ever sees ciphertext, and transparently falls back to the original signal + authenticated `_pull_signal` pull — the same safety net #31 shipped with initially.
 
 - [x] `team-brain-api.sh watch <JIRA-KEY> [secs]` — poll, print deltas, refresh cache/md
 - [x] Doc note migration `20260728000002_team_brain_watch_notes.sql`
-- [x] Prototype push: migration `20260804000001_team_brain_realtime_broadcast.sql` + `team-brain-realtime.py`
-- [x] Fallback: poll / `watch` / sync-mode loop if Realtime or `websockets` unavailable (`TEAM_BRAIN_REALTIME=off`)
+- [x] Push transport: migration `20260804000001_team_brain_realtime_broadcast.sql` + `team-brain-realtime.py`
+- [x] **Full content push:** migration `20260808000001_team_brain_full_push_and_semantic_hardening.sql` — encrypted `body_ct`, per-team `broadcast_key`, inline decrypt-and-cache in the listener
+- [x] Fallback: poll / `watch` / sync-mode loop if Realtime, `websockets`, or `cryptography` unavailable (`TEAM_BRAIN_REALTIME=off`); also falls back on HMAC mismatch, decrypt failure, or a `restore`d row (ciphertext cleared server-side to force a correct re-pull)
 - [x] Skill: during long sessions, suggest `watch` in background or periodic `recall` (#37)
-- [ ] Later optional: private Broadcast + Supabase Auth–linked members
+- [x] No widening of anon `SELECT` — the DB never decrypts `body_ct`; it is opaque end-to-end except to members who resolved the key with a valid `api_key`
 
-### P2 — Semantic recall
+### P2 — Semantic recall *(done — one-command crew opt-in, #4)*
 
 - [x] `embedding vector(768)` + `pgvector` (`20260729000001_team_brain_embeddings.sql`)
 - [x] Embed-on-write in CLI when `TEAM_BRAIN_EMBED_PROVIDER` is set (OpenAI or Ollama)
 - [x] `search_memories` cosine when query embedding provided; else FTS
 - [x] `reembed <KEY>` backfill via `set_memory_embedding`
+- [x] **One-command crew opt-in (#4):** `enable-semantic <openai|ollama>` persists `provider`/`model` to `team.yaml` (non-secret, shareable — every teammate who pulls the repo/config inherits it) and tests one live embed call
 - [x] Provider docs below
 
 #### Embedding providers (OSS)
@@ -129,16 +131,25 @@ Reason: captures revoke SELECT from anon; auth is custom `p_api_key` on RPCs. Re
 | Provider | Env | Notes |
 |----------|-----|--------|
 | none (default) | unset | FTS-only recall; no API key needed |
-| `openai` | `TEAM_BRAIN_EMBED_PROVIDER=openai` + `TEAM_BRAIN_EMBED_API_KEY` or `OPENAI_API_KEY` | Model default `text-embedding-3-small` with `dimensions=768` |
-| `ollama` | `TEAM_BRAIN_EMBED_PROVIDER=ollama` | Default model `nomic-embed-text` (768-d); `TEAM_BRAIN_EMBED_BASE_URL` optional |
+| `openai` | `TEAM_BRAIN_EMBED_PROVIDER=openai` + `TEAM_BRAIN_EMBED_API_KEY` or `OPENAI_API_KEY` | Model default `text-embedding-3-small` with `dimensions=768`. Cost: ~$0.02 per 1M input tokens (Aug 2026 pricing) — a crew writing a few hundred memories/month costs cents. Body leaves your machine → OpenAI. |
+| `ollama` | `TEAM_BRAIN_EMBED_PROVIDER=ollama` | Default model `nomic-embed-text` (768-d); `TEAM_BRAIN_EMBED_BASE_URL` optional. Cost: $0 (local inference). Body never leaves your machine — best choice for sensitive/regulated content. |
+
+**One-command opt-in (recommended path):**
 
 ```bash
-export TEAM_BRAIN_EMBED_PROVIDER=openai
-export TEAM_BRAIN_EMBED_API_KEY=sk-...
+bash core/scripts/team-brain-api.sh enable-semantic openai   # or: enable-semantic ollama
+export TEAM_BRAIN_EMBED_API_KEY=sk-...                        # openai only — never persisted to team.yaml
+bash core/scripts/team-brain-api.sh enable-semantic openai   # re-run to verify: prints vector dims on success
+
 bash core/scripts/team-brain-api.sh remember AAP-81423 research "EE schema path lives in …"
 bash core/scripts/team-brain-api.sh recall AAP-81423 "where is decision_environment scaffolded"
-# response includes "mode": "vector" when embeddings exist
+# → stderr: "recall mode: vector (openai)"; response body: "mode": "vector"
+bash core/scripts/team-brain-api.sh reembed AAP-81423        # backfill memories written before opt-in
 ```
+
+Manual/legacy path (still works, e.g. for one-off scripting): export `TEAM_BRAIN_EMBED_PROVIDER` / `_MODEL` / `_BASE_URL` directly — `enable-semantic` is just a documented, persisted shortcut for the same env vars.
+
+**When FTS is enough vs when to turn on vectors:** FTS (default, zero setup) is fine for exact/near-exact keyword recall — "find the memory where we discussed X". Turn on vectors once a crew is asking conceptual questions ("did anyone already figure out auth for this service?") where the right memory doesn't share vocabulary with the query.
 
 ### P3 — Agent parity
 
@@ -150,7 +161,7 @@ bash core/scripts/team-brain-api.sh recall AAP-81423 "where is decision_environm
       (`20260802000001_team_brain_learning_kind.sql`, issue [#30](https://github.com/Hrithik-Gavankar/brainstack/issues/30))
 - [x] **Memory version history / soft rollback** — `capture_revisions`; archive on `source_ref` update;  
       `history` / `restore` CLI+MCP (`20260803000001_team_brain_memory_history.sql`, issue [#34](https://github.com/Hrithik-Gavankar/brainstack/issues/34))
-- [x] Optional long-lived push into the other agent session — signal Broadcast + `notify/<KEY>.json` (#31); poll remains fallback
+- [x] Optional long-lived push into the other agent session — encrypted full-content Broadcast + `notify/<KEY>.json` (#31); poll remains fallback
 
 ### Agent loop (what makes it a shared brain)
 
@@ -223,8 +234,10 @@ Use this as the build board (check off in PRs):
 - RPCs stay security-definer; no direct anon table reads
 - Unique `(team_id, display_name)`; invite codes 16 hex chars
 - **Aggregation (#35):** `team_aggregate_metrics` returns counts + `display_name` only — never memory bodies, never personal `BRAIN.md`, never local `metrics.json` upload
-- **Known v1 gap:** anon `register_team` / `join_team` have no app-level rate limit — document mitigations in [supabase/README.md](../supabase/README.md); prefer Edge Function / Auth for register later
-- Near-realtime: authenticated poll (`watch`) + signal-only Broadcast (no anon SELECT / no bodies on the wire)
+- **Closed (#32):** anon `register_team` / `join_team` are DB-level rate limited (sliding window; default 5 register/h, 15 join/h) — see [supabase/README.md](../supabase/README.md)
+- Near-realtime: authenticated poll (`watch`) + full-content Broadcast — body travels **app-layer encrypted** (`body_ct`), never plaintext, never via a widened anon `SELECT`; the DB stores/forwards ciphertext but never decrypts it
+- `remember` rejects bodies over 20,000 characters (hardening — see migration `20260808000001_…`)
+- `doctor` gives a client-side readiness preflight (deps, config, migrations, push/embedding mode) — run it before reporting "Team Brain is broken"
 
 ---
 
@@ -247,10 +260,11 @@ Use this as the build board (check off in PRs):
 | Dedup (`source_ref`) | ✅ | — |
 | Correction / learning | ✅ `correct` + `learning` kind | — |
 | Version/history/soft rollback | ✅ `history` / `restore` + `capture_revisions` | Optional snapshots / UI |
-| Semantic search | Optional embeddings; FTS default | Enable when crews want it |
-| Live push into other agent context | ✅ Signal Broadcast + poll fallback (#31) | Private Auth-linked channels when membership moves to Supabase Auth |
+| Semantic search | ✅ One-command opt-in (`enable-semantic`); FTS default (#4) | — |
+| Live push into other agent context | ✅ Full-content encrypted Broadcast + poll fallback (#31) | Optional key rotation command if a member is offboarded |
 | Model compliance | ✅ Stronger prompts + soft session gate (`compliance` / `prepare_research`; CLI not hard-blocked) | Optional hard gate / metrics later |
 | Metrics | Local `metrics.json` + crew `metrics --team` (#35) | Optional team dashboard UI |
+| Request/body hardening | ✅ `remember` 20000-char body cap; `curl --max-time` on all RPCs; `doctor` readiness preflight | — |
 
 ## 9. Out of scope (for now)
 

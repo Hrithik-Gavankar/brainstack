@@ -1,12 +1,21 @@
 #!/usr/bin/env python3
-"""Team Brain Realtime Broadcast listener (#31).
+"""Team Brain Realtime Broadcast listener (#31 — full push).
 
-Subscribes to signal-only topic team-brain:{team_id}:{JIRA_KEY}.
-On memory_changed: runs team-brain-api.sh _pull_signal <KEY> (authenticated
-list_recent merge — bodies never travel on the wire via Broadcast).
+Subscribes to topic team-brain:{team_id}:{JIRA_KEY}. Each memory_changed
+event carries `body_ct`: an app-layer-encrypted (AES-256-CBC + HMAC-SHA256)
+copy of the memory body, opaque to Postgres/Supabase. If this process has
+the team's broadcast_key (fetched once via memory_broadcast_topic, member
+api_key required) and the `cryptography` package, it decrypts inline and
+upserts the local cache directly — zero extra RPC round-trip ("full push").
 
-Requires: pip install websockets
-Fallback: leave this unused; watch / sync-mode poll still work.
+Otherwise (no key cached yet, `cryptography` not installed, or body_ct is
+null — e.g. right after a restore) it transparently falls back to the
+original #31 behavior: team-brain-api.sh _pull_signal <KEY> (authenticated
+list_recent merge). This fallback is unconditional and always correct.
+
+Requires: pip install websockets            (push transport; required)
+Optional: pip install cryptography          (full-content decrypt; else signal+pull)
+Fallback: leave this unused; watch / sync-mode poll still work either way.
 
 Env:
   TEAM_BRAIN_SUPABASE_URL, TEAM_BRAIN_SUPABASE_ANON_KEY (or team.yaml / public env)
@@ -114,7 +123,77 @@ def _pull_signal(jira_key: str) -> None:
         print(f"→ _pull_signal failed ({proc.returncode})", file=sys.stderr)
 
 
-async def _listen(jira_key: str, topic: str, url: str, anon: str) -> None:
+def _apply_pushed(jira_key: str, memory: dict[str, Any]) -> None:
+    """Merge an already-decrypted memory straight into the local cache (full push)."""
+    script = _api_script()
+    env = os.environ.copy()
+    proc = subprocess.run(
+        ["bash", str(script), "_apply_pushed_memory", jira_key],
+        input=json.dumps(memory),
+        capture_output=True,
+        text=True,
+        env=env,
+        check=False,
+    )
+    if proc.stderr:
+        print(proc.stderr, file=sys.stderr, end="")
+    if proc.stdout:
+        print(proc.stdout, end="")
+    if proc.returncode != 0:
+        print(
+            f"→ _apply_pushed_memory failed ({proc.returncode}) — falling back to authenticated pull",
+            file=sys.stderr,
+        )
+        _pull_signal(jira_key)
+
+
+def _decrypt_body_ct(body_ct: str, broadcast_key_b64: str) -> str | None:
+    """Decrypt a "<iv_hex>:<ct_b64>:<hmac_hex>" payload. None on any failure (never raises)."""
+    try:
+        import base64
+        import hashlib
+        import hmac as hmac_mod
+
+        from cryptography.hazmat.primitives import padding as sym_padding
+        from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+    except ImportError:
+        return None
+    try:
+        iv_hex, ct_b64, hmac_hex = body_ct.split(":", 2)
+        raw_key = base64.b64decode(broadcast_key_b64)
+        enc_key = hashlib.sha256(raw_key + b"enc").digest()
+        mac_key_hex = hashlib.sha256(raw_key + b"mac").hexdigest()
+        mac_input = f"{iv_hex}:{ct_b64}".encode("utf-8")
+        expected = hmac_mod.new(mac_key_hex.encode("ascii"), mac_input, hashlib.sha256).hexdigest()
+        if not hmac_mod.compare_digest(expected, hmac_hex):
+            print("→ body_ct HMAC mismatch — discarding, falling back to pull", file=sys.stderr)
+            return None
+        iv = bytes.fromhex(iv_hex)
+        ct = base64.b64decode(ct_b64)
+        decryptor = Cipher(algorithms.AES(enc_key), modes.CBC(iv)).decryptor()
+        padded = decryptor.update(ct) + decryptor.finalize()
+        unpadder = sym_padding.PKCS7(128).unpadder()
+        return (unpadder.update(padded) + unpadder.finalize()).decode("utf-8")
+    except Exception as exc:  # noqa: BLE001 — any crypto failure just degrades to pull
+        print(f"→ body_ct decrypt failed ({exc}) — falling back to pull", file=sys.stderr)
+        return None
+
+
+def _has_cryptography() -> bool:
+    try:
+        import cryptography  # noqa: F401
+    except ImportError:
+        return False
+    return True
+
+
+async def _listen(
+    jira_key: str,
+    topic: str,
+    url: str,
+    anon: str,
+    broadcast_key_b64: str | None = None,
+) -> None:
     try:
         import websockets  # type: ignore
     except ImportError as exc:
@@ -134,8 +213,25 @@ async def _listen(jira_key: str, topic: str, url: str, anon: str) -> None:
         ref += 1
         return str(ref)
 
+    full_push_ready = bool(broadcast_key_b64) and _has_cryptography()
     print(f"→ Realtime listen {jira_key} topic={topic}", file=sys.stderr)
-    print("  Signal-only; bodies via authenticated pull. Ctrl+C to stop.", file=sys.stderr)
+    if full_push_ready:
+        print(
+            "  Mode: full push (body decrypted locally; falls back to pull if a "
+            "payload can't be decrypted). Ctrl+C to stop.",
+            file=sys.stderr,
+        )
+    elif broadcast_key_b64:
+        print(
+            "  Mode: signal-only — pip install cryptography for full push (decrypt "
+            "locally, zero extra round-trip). Bodies via authenticated pull. Ctrl+C to stop.",
+            file=sys.stderr,
+        )
+    else:
+        print(
+            "  Mode: signal-only; bodies via authenticated pull. Ctrl+C to stop.",
+            file=sys.stderr,
+        )
 
     backoff = 1.0
     while True:
@@ -192,13 +288,31 @@ async def _listen(jira_key: str, topic: str, url: str, anon: str) -> None:
                             continue
                         if isinstance(inner, dict) and inner.get("event") == "memory_changed":
                             inner = inner.get("payload") or inner
-                        print(
-                            f"── push signal {jira_key} "
-                            f"op={inner.get('op') if isinstance(inner, dict) else '?'} "
-                            f"ref={inner.get('source_ref') if isinstance(inner, dict) else ''} ──",
-                            file=sys.stderr,
-                        )
-                        await asyncio.to_thread(_pull_signal, jira_key)
+                        op = inner.get("op") if isinstance(inner, dict) else "?"
+                        ref = inner.get("source_ref") if isinstance(inner, dict) else ""
+                        body_ct = inner.get("body_ct") if isinstance(inner, dict) else None
+                        plaintext = None
+                        if body_ct and broadcast_key_b64:
+                            plaintext = _decrypt_body_ct(body_ct, broadcast_key_b64)
+                        if plaintext is not None:
+                            print(
+                                f"── push FULL {jira_key} op={op} ref={ref} (decrypted locally) ──",
+                                file=sys.stderr,
+                            )
+                            memory = {
+                                "id": inner.get("capture_id"),
+                                "kind": inner.get("kind"),
+                                "body": plaintext,
+                                "source_ref": inner.get("source_ref"),
+                                "content_hash": inner.get("content_hash"),
+                                "author_name": inner.get("author_name"),
+                                "created_at": inner.get("created_at"),
+                                "updated_at": inner.get("updated_at"),
+                            }
+                            await asyncio.to_thread(_apply_pushed, jira_key, memory)
+                        else:
+                            print(f"── push signal {jira_key} op={op} ref={ref} ──", file=sys.stderr)
+                            await asyncio.to_thread(_pull_signal, jira_key)
                     elif event == "phoenix" or event == "heartbeat":
                         continue
         except asyncio.CancelledError:
@@ -221,6 +335,7 @@ def main() -> None:
     key = args.jira_key.strip().upper()
     cfg = _load_creds()
     topic = args.topic.strip()
+    broadcast_key_b64: str | None = None
     if not topic:
         info = _rpc(
             cfg["url"],
@@ -234,8 +349,24 @@ def main() -> None:
                 "memory_broadcast_topic returned no topic — "
                 "apply migration 20260804000001_team_brain_realtime_broadcast.sql"
             )
-        print(json.dumps({"topic": topic, "event": info.get("event"), "private": info.get("private")}))
-    asyncio.run(_listen(key, topic, cfg["url"], cfg["anon"]))
+        broadcast_key_b64 = str(info.get("broadcast_key_b64") or "") or None
+        print(
+            json.dumps(
+                {
+                    "topic": topic,
+                    "event": info.get("event"),
+                    "private": info.get("private"),
+                    "full_push": bool(broadcast_key_b64) and _has_cryptography(),
+                }
+            )
+        )
+    else:
+        print(
+            "→ --topic override supplied; broadcast_key not fetched — signal-only mode "
+            "(drop --topic to get full push via memory_broadcast_topic).",
+            file=sys.stderr,
+        )
+    asyncio.run(_listen(key, topic, cfg["url"], cfg["anon"], broadcast_key_b64))
 
 
 if __name__ == "__main__":
