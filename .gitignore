@@ -21,6 +21,7 @@ website/.docusaurus/
 !.team-brain/**/.gitkeep
 # Commit-safe pin (.team-brain/project.json) SHOULD be committed — never put anon/api_key/invite there.
 # team.yaml often holds URL+anon for local use — prefer env / project.public.env; do not commit anon.
+supabase/project.public.env
 
 # Bootstrap-generated combined SQL (may be large; never commit crew secrets beside it)
 supabase/.bootstrap-migrations.combined.sql

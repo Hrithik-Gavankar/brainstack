@@ -9,7 +9,7 @@ Collaborative **AI memory** for a crew on the same Jira initiative:
 | **Local cache** | `.team-brain/cache/<KEY>.json` for agents |
 | **Markdown** | Optional export under `initiatives/<KEY>.md` |
 
-[`project.public.env`](project.public.env) ships **placeholders only**. Each crew uses **their own** Supabase project — never commit a live URL or anon JWT to a public repo.
+[`project.public.env`](project.public.env) is **gitignored** — copy [`project.public.env.example`](project.public.env.example) locally (`cp …example …env`) or let `bootstrap --write-env` create it. Never commit live URL/anon.
 
 | Role | Needs Supabase account? | Needs |
 |------|-------------------------|--------|
@@ -50,12 +50,31 @@ bash core/scripts/team-brain-api.sh register "Team Atlas" "Your Name"
 
 ## Crew bootstrap (admin under ~10 minutes)
 
-Collapses owner setup into one script ([`core/scripts/team-brain-bootstrap.sh`](../core/scripts/team-brain-bootstrap.sh)):
+Collapses owner setup into one script ([`core/scripts/team-brain-bootstrap.sh`](../core/scripts/team-brain-bootstrap.sh)).
+
+**Default (no `psql` / no CLI):** SQL Editor + `--skip-migrations` — see [onboarding Path B](../docs/team-brain-onboarding.md#path-b--you-are-creating-the-team-admin-once).
 
 ```bash
 cd brainstack
 
-# Hosted project (URL + anon + DB password URI for migrations):
+# Step 1 — generates combined SQL + stops with instructions (or use SQL Editor path in onboarding)
+bash core/scripts/team-brain-api.sh bootstrap \
+  --team "Spike Crew" --admin "Alice" \
+  --url "https://YOUR_REF.supabase.co" \
+  --anon "eyJ..." \
+  --jira AAP-81423 \
+  --write-env
+
+# Step 2 — after pasting supabase/.bootstrap-migrations.combined.sql in SQL Editor:
+bash core/scripts/team-brain-api.sh bootstrap \
+  --team "Spike Crew" --admin "Alice" \
+  --url "https://YOUR_REF.supabase.co" \
+  --anon "eyJ..." \
+  --jira AAP-81423 \
+  --write-env \
+  --skip-migrations
+
+# One-shot (requires psql on PATH):
 bash core/scripts/team-brain-api.sh bootstrap \
   --team "Spike Crew" --admin "Alice" \
   --url "https://YOUR_REF.supabase.co" \
@@ -64,7 +83,7 @@ bash core/scripts/team-brain-api.sh bootstrap \
   --jira AAP-81423 \
   --write-env
 
-# Or: fill project.public.env first, link CLI (`supabase link`), then:
+# Linked Supabase CLI:
 bash core/scripts/team-brain-api.sh bootstrap --team "Spike Crew" --admin "Alice" --jira AAP-81423
 
 # Local Docker demo:
@@ -73,10 +92,10 @@ bash core/scripts/team-brain-api.sh bootstrap --team "Local Crew" --admin "Alice
 
 | Migration path | When |
 |----------------|------|
+| **SQL Editor + `--skip-migrations`** | **Default** — no `psql`, no CLI; paste `.bootstrap-migrations.combined.sql` |
 | `--local` | Docker `supabase start` (CLI applies `migrations/`) |
 | Linked CLI | `supabase db push` |
-| `--db-url` | `psql` applies each migration in timestamp order |
-| Neither | Writes `supabase/.bootstrap-migrations.combined.sql` + SQL Editor steps; re-run with `--skip-migrations` |
+| `--db-url` | Requires `psql` (`brew install libpq`) — applies each migration file |
 
 Bootstrap prints a **share bundle** (invite + URL + anon + joiner checklist).  
 **Never commit** live URL/anon/DB password. `--db-url` is never written to `project.public.env`.

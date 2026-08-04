@@ -54,7 +54,7 @@ Also make sure you have:
 - [ ] This repo cloned (`brainstack`) **and/or** the product repo with `.team-brain/project.json`
 - [ ] A terminal (macOS Terminal, iTerm, VS Code/Cursor terminal)
 - [ ] `curl` and `jq` installed (`brew install jq` if needed)
-- [ ] Placeholders in `supabase/project.public.env` replaced with the crew’s URL + anon (or set env / `team.yaml`)
+- [ ] Copy `supabase/project.public.env.example` → `supabase/project.public.env` (or use `bootstrap --write-env`) with the crew’s URL + anon
 
 You do **not** need your own Supabase account or the dashboard.
 
@@ -228,13 +228,52 @@ Run it **once** when the spike gets long — not every command. Cursor agents al
 
 Only one person does this for a new crew. **You need a Supabase account** (free tier is fine). Joiners do not.
 
-### Preferred — one-command bootstrap (~10 minutes)
+> **macOS / no `psql`?** Use **Step 2A (SQL Editor)** below — you do **not** need `psql`, Supabase CLI, or `--db-url`.
 
-1. Create a project at [supabase.com](https://supabase.com) (skip if using `--local` Docker).
-2. From the repo root:
+### Step 1 — Create a Supabase project
+
+1. [supabase.com](https://supabase.com) → New project  
+2. From **Project Settings → API**, copy:
+   - **Project URL** (`https://YOUR_REF.supabase.co`)
+   - **anon** public key  
+3. From **Database → Connection string**, note the **DB password** (only needed if you use `--db-url` / `psql`).
+
+### Step 2 — Apply migrations (pick **one** path)
+
+| Path | Needs | Best for |
+|------|--------|----------|
+| **A. SQL Editor** | Dashboard only | **Default** — no local installs |
+| **B. `--db-url`** | `psql` (`brew install libpq`) | Scripted / CI |
+| **C. Supabase CLI** | `supabase link` + `db push` | Teams already on CLI |
+
+#### Step 2A — SQL Editor (recommended)
+
+1. Bootstrap once **without** migrations — it writes the combined SQL file and stops with instructions:
 
 ```bash
 cd /path/to/engineer-brain
+bash core/scripts/team-brain-api.sh bootstrap \
+  --team "Team Name" --admin "Your Name" \
+  --url "https://YOUR_REF.supabase.co" \
+  --anon "eyJ..." \
+  --jira AAP-81423 \
+  --write-env
+```
+
+2. Open **Supabase Dashboard → SQL Editor** for that project.  
+3. Paste and run:
+
+`supabase/.bootstrap-migrations.combined.sql`
+
+(all files in `supabase/migrations/` in timestamp order — includes digest fix `60809`)
+
+4. Continue at **Step 3** with `--skip-migrations`.
+
+#### Step 2B — `psql` + `--db-url` (optional)
+
+```bash
+brew install libpq && brew link --force libpq   # once
+
 bash core/scripts/team-brain-api.sh bootstrap \
   --team "Team Name" --admin "Your Name" \
   --url "https://YOUR_REF.supabase.co" \
@@ -244,18 +283,31 @@ bash core/scripts/team-brain-api.sh bootstrap \
   --write-env
 ```
 
-3. Copy the printed **share bundle** to Slack (invite + URL + anon + Jira key).  
-4. Tell juniors to use **Path A**.
+One command if `psql` is on PATH — migrations + register + share bundle.
 
-Details / other modes (`--local`, linked CLI, `--skip-migrations`): [supabase/README.md](../supabase/README.md) · `bash core/scripts/team-brain-bootstrap.sh --help`.
+### Step 3 — Register (after SQL Editor migrations)
+
+If you used **Step 2A**, migrations are already applied — register only:
+
+```bash
+bash core/scripts/team-brain-api.sh bootstrap \
+  --team "Team Name" --admin "Your Name" \
+  --url "https://YOUR_REF.supabase.co" \
+  --anon "eyJ..." \
+  --jira AAP-81423 \
+  --write-env \
+  --skip-migrations
+```
+
+Bootstrap prints the **share bundle** (invite + URL + anon + Jira key). Copy to Slack for joiners (Path A).
 
 **Do not commit** live URL/anon/DB password.
 
-### Manual path (same outcome)
+### Manual path (same outcome, no bootstrap)
 
 1. Create a project at [supabase.com](https://supabase.com).
-2. Copy **Project URL** + **anon** key into local `supabase/project.public.env` (replace placeholders). Set `TEAM_BRAIN_JIRA_SITE`.
-3. Apply migrations in timestamp order — see [supabase/README.md](../supabase/README.md) and [migrations/README.md](../supabase/migrations/README.md).
+2. Apply migrations (SQL Editor or `psql`) — see [supabase/README.md](../supabase/README.md).
+3. Copy **Project URL** + **anon** into local `supabase/project.public.env`. Set `TEAM_BRAIN_JIRA_SITE`.
 4. Register and share:
 
 ```bash
@@ -397,7 +449,8 @@ Juniors can ignore MCP and use the bash commands or Cursor skill.
 | Problem | What to try |
 |---------|-------------|
 | `missing dependency: jq` | `brew install jq` (macOS) |
-| `function digest(…) does not exist` / SQLSTATE `42883` on register/join/onboard | **Admin:** apply [`20260809000001_fix_tb_anon_fingerprint_digest.sql`](../supabase/migrations/20260809000001_fix_tb_anon_fingerprint_digest.sql) (or full `supabase db push` / bootstrap migrations), then retry. Confirm with `bash core/scripts/team-brain-api.sh doctor`. |
+| `missing dependency: psql` on bootstrap | **Expected on macOS without Postgres.** Do **not** use `--db-url`. Run bootstrap once (no `--db-url`) → paste `supabase/.bootstrap-migrations.combined.sql` in Supabase **SQL Editor** → re-run with `--skip-migrations`. Or: `brew install libpq && brew link --force libpq`. |
+| `function digest(…) does not exist` / SQLSTATE `42883` on register/join/onboard | **Admin:** apply [`20260809000001_fix_tb_anon_fingerprint_digest.sql`](../supabase/migrations/20260809000001_fix_tb_anon_fingerprint_digest.sql) (or full combined SQL / `db push`), then retry. Confirm with `bash core/scripts/team-brain-api.sh doctor`. |
 | `Could not find the function public.register_team` / `join_team` (PGRST202) | **Admin:** migrations not applied (or wrong Supabase project). Apply all `supabase/migrations/*.sql` in order. Also check `project.public.env` URL matches `.team-brain/team.yaml`. |
 | `unauthorized` / RPC failed | Re-run `whoami`. If still broken, ask admin for a fresh invite and `onboard` again with a **new display name** |
 | `member already exists` | Pick a different `"Your Name"` (must be unique on the team) |

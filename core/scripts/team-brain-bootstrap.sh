@@ -42,8 +42,9 @@ Config (any of env / flags / existing project.public.env):
   --jira-site URL           Jira site (default from env / your-org placeholder)
   --jira KEY                Optional: attach this Jira key after register
   --jira-title TITLE        Optional title for attach
-  --db-url URL              Postgres URI to apply migrations (psql). Or set TEAM_BRAIN_DB_URL.
-                            Never uses ambient DATABASE_URL. Never written to project.public.env.
+  --db-url URL              Postgres URI to apply migrations (requires psql on PATH).
+                            Without psql, use SQL Editor + --skip-migrations instead (see docs).
+                            Or set TEAM_BRAIN_DB_URL. Never written to project.public.env.
   --local                   Docker local stack: supabase start + status keys + migrate
   --skip-migrations         Migrations already applied
   --skip-register           Only configure (+ migrate); do not register
@@ -170,6 +171,35 @@ supabase_linked() {
   fi
   # supabase status against linked remote is expensive; treat --db-url / --local as preferred
   return 1
+}
+
+# When psql / linked CLI unavailable — write combined SQL + tell admin exactly what to do next.
+migration_blocked_manual_sql() {
+  local reason="${1:-no auto migration tool}"
+  local combined
+  combined=$(write_combined_sql "$SUPABASE_DIR/.bootstrap-migrations.combined.sql")
+  warn "Cannot auto-apply migrations ($reason)."
+  cat >&2 <<EOF
+
+Apply migrations manually (one time), then re-run bootstrap with --skip-migrations:
+
+  1. Open Supabase Dashboard → SQL Editor for your project
+  2. Paste and run the combined file (all migrations in timestamp order):
+       $combined
+     Or apply each file under supabase/migrations/ individually.
+  3. Register the team (no --db-url needed):
+
+       bash core/scripts/team-brain-api.sh bootstrap \\
+         --team "$TEAM_NAME" --admin "$ADMIN_NAME" \\
+         --url "$SUPABASE_URL" --anon "<anon-key>" \\
+         --jira ${JIRA_KEY:-JIRA-KEY} --write-env --skip-migrations
+
+Optional installs (pick one for future projects):
+  • psql:  brew install libpq && brew link --force libpq   then use --db-url
+  • CLI:   brew install supabase/tap/supabase && supabase link && db push
+
+EOF
+  MIGRATION_BLOCKED=1
 }
 
 apply_migrations_psql() {
@@ -355,7 +385,11 @@ if [ "$SKIP_MIGRATIONS" -eq 0 ]; then
     ok "Local mode: migrations applied by supabase start"
   elif [ -n "$DB_URL" ]; then
     # Prefer explicit DB URL over linked CLI so --url/--anon/--db-url stay consistent
-    apply_migrations_psql "$DB_URL"
+    if command -v psql >/dev/null 2>&1; then
+      apply_migrations_psql "$DB_URL"
+    else
+      migration_blocked_manual_sql "missing dependency: psql"
+    fi
   elif supabase_linked; then
     if [ -n "$SUPABASE_URL" ] && ! is_placeholder_url "$SUPABASE_URL"; then
       warn "Using linked supabase CLI project for db push (ensure it matches --url $SUPABASE_URL)"
@@ -364,37 +398,10 @@ if [ "$SKIP_MIGRATIONS" -eq 0 ]; then
   elif command -v supabase >/dev/null 2>&1; then
     warn "Supabase CLI found but project not linked."
     info "Option A: supabase login && cd supabase && supabase link --project-ref <ref> && re-run bootstrap"
-    info "Option B: pass --db-url 'postgresql://postgres:<DB_PASSWORD>@db.<ref>.supabase.co:5432/postgres'"
-    combined=$(write_combined_sql "$SUPABASE_DIR/.bootstrap-migrations.combined.sql")
-    info "Option C: open Supabase SQL Editor and run: $combined"
-    MIGRATION_BLOCKED=1
-    if [ "$DRY_RUN" -eq 1 ]; then
-      warn "[dry-run] would stop here until migrations are applied (A/B/C)"
-    else
-      die "migrations not applied — pick A/B/C then re-run with --skip-migrations (or link/--db-url)"
-    fi
+    info "Option B: pass --db-url (requires psql: brew install libpq)"
+    migration_blocked_manual_sql "supabase CLI not linked"
   else
-    combined=$(write_combined_sql "$SUPABASE_DIR/.bootstrap-migrations.combined.sql")
-    cat >&2 <<EOF
-error: cannot auto-apply migrations (no linked supabase CLI / --db-url).
-
-Actionable next steps:
-  1. Open Supabase Dashboard → SQL Editor
-  2. Paste and run the combined file:
-       $combined
-     (or apply each file in supabase/migrations/ in timestamp order)
-  3. Re-run bootstrap with --skip-migrations:
-       bash core/scripts/team-brain-bootstrap.sh --team "$TEAM_NAME" --admin "$ADMIN_NAME" \\
-         --url "$SUPABASE_URL" --anon "<anon>" --skip-migrations ${JIRA_KEY:+--jira $JIRA_KEY}
-
-Install CLI (optional): https://supabase.com/docs/guides/cli
-EOF
-    MIGRATION_BLOCKED=1
-    if [ "$DRY_RUN" -eq 1 ]; then
-      warn "[dry-run] would stop here until migrations are applied"
-    else
-      exit 1
-    fi
+    migration_blocked_manual_sql "no supabase CLI / --db-url"
   fi
 else
   info "Skipping migrations (--skip-migrations or local already applied)"
