@@ -60,8 +60,20 @@ The scanner reads git metadata only:
 - Commit messages, authors, and dates
 - Branch names and status
 - Uncommitted change summaries (file names, not contents)
+- Optional GitHub activity via `gh` (authored PRs, reviews, configured releases)
 
 It does NOT read file contents, secrets, environment variables, or credentials.
+
+### Can I get machine-readable scan output?
+
+Yes. Pass `--json` (requires `python3`):
+
+```bash
+bash core/scripts/scan.sh ~/workspace 7 --json | jq '.type_breakdown'
+```
+
+Default output stays human/AI-readable text. JSON is the stable contract for the
+dashboard data port, CI jobs, and future weekly brain-update automation.
 
 ### Can my team see my BRAIN.md?
 

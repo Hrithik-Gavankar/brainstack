@@ -239,12 +239,15 @@ Analyze current patterns and provide actionable feedback.
 
 Just run the scanner and display results.
 
-1. Parse optional `[days]` argument (default: 7).
+1. Parse optional `[days]` argument (default: 7) and optional `--json`.
 2. Run:
    ```bash
    bash "${SKILL_DIR}/scripts/scan.sh" "$HOME/path/to/workspace" [days]
+   # Structured output for tooling (requires python3):
+   bash "${SKILL_DIR}/scripts/scan.sh" "$HOME/path/to/workspace" [days] --json
    ```
-3. Display the output directly.
+3. Display text output directly, or pipe JSON to `jq` / a local consumer.
+   Prefer text for standups; prefer `--json` when feeding the dashboard data port or CI.
 
 ### `doctor` (brain health check)
 

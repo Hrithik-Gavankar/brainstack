@@ -90,8 +90,30 @@ The scanner is a bash script that traverses all git repositories in a workspace 
 - **GitHub activity** (optional, via `gh`) — authored PRs, reviews given, recent releases
 - **Personal-repo filtering** — optional `PERSONAL_REPOS` basenames excluded from team metrics
 
-**Input:** Workspace path, author pattern, lookback period (days); optional `GH_OWNERS` / `RELEASE_REPOS`
-**Output:** Structured text suitable for AI consumption
+**Input:** Workspace path, author pattern, lookback period (days); optional `GH_OWNERS` / `RELEASE_REPOS`  
+**Output:** One of:
+
+| Mode | Flag | Consumer |
+|------|------|----------|
+| **Text** (default) | _(none)_ | AI assistants / `engineer-brain sync|update` prompts |
+| **JSON** | `--json` | Dashboard data port, CI, `jq`, weekly automation (#3 / #9) |
+
+JSON requires `python3` for safe escaping. Schema (stable keys):
+
+```json
+{
+  "metadata": { "workspace", "period_days", "since", "scan_time", "author_pattern" },
+  "commits": [{ "repo", "hash", "date", "message", "type", "personal" }],
+  "branches": [{ "repo", "branch", "ahead_of_main" }],
+  "uncommitted": [{ "repo", "files": [] }],
+  "type_breakdown": { "feat": 1, "fix": 2 },
+  "files_touched": { "repo": ["path"] },
+  "velocity": { "total", "period_days", "per_repo", "scope": "team_repos_only" },
+  "github": { "available", "authored_prs", "reviews", "releases" }
+}
+```
+
+Collection is **single-pass**: local git + optional `gh` signals are gathered once, then emitted as text or JSON (no divergent git queries per format).
 
 ```mermaid
 flowchart LR
@@ -99,10 +121,13 @@ flowchart LR
     FIND --> R1[Repo 1: git log]
     FIND --> R2[Repo 2: git log]
     FIND --> R3[Repo N: git log]
-    R1 --> AGG[Aggregate Output]
+    R1 --> AGG[Collect once]
     R2 --> AGG
     R3 --> AGG
-    AGG --> OUT[Formatted Scan Result]
+    AGG --> TEXT[Text emitter]
+    AGG --> JSON[JSON emitter]
+    TEXT --> OUT1[AI / sync prompts]
+    JSON --> OUT2[Dashboard / CI / jq]
 ```
 
 ---

@@ -22,7 +22,7 @@ flowchart TD
 
 ## Layers
 
-1. **Data collection** — multi-repo git scanner (`scan.sh`)
+1. **Data collection** — multi-repo git scanner (`scan.sh`); text by default, `--json` for dashboard/CI (`python3`)
 2. **Intelligence** — pattern detection + command engine (personal) and collaborative memory RPCs (team)
 3. **Delivery** — platform adapters; Cursor also ships always-on `team-brain.mdc` (recall / remember loop)
 

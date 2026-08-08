@@ -49,7 +49,7 @@ const data = await loadDashboardData({ source: "sample" });
 | Source | Status | Use |
 |--------|--------|-----|
 | `sample` | Implemented | Demo fixture (`src/data/sampleData.ts`) — default |
-| `brain` | Stub | Future local `BRAIN.md` / scan parser adapter |
+| `brain` | Stub | Future local `BRAIN.md` / `scan.sh --json` adapter (#3 unlocks structured scan input) |
 
 `App.tsx` must not import fixtures directly; swap adapters in `loadDashboardData.ts` only.
 
