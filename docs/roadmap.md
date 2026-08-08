@@ -42,6 +42,7 @@ Growing beyond individual use into a richer tool.
 - [x] **Anon register/join rate limits** — DB-level sliding window (#32)
 - [x] **Team Brain hardening** — `remember` body-size cap, `curl --max-time` on all RPCs, `doctor` readiness preflight
 - [x] **Team aggregation metrics** — coverage matrix + reuse/activity via `metrics --team` (#35); collab graph / heatmap deferred — see [team-brain-memory.md](team-brain-memory.md) · parent [#2](https://github.com/Hrithik-Gavankar/brainstack/issues/2)
+- [x] **Scanner JSON output** — `scan.sh --json` structured contract for dashboard/CI/automation (#3)
 - [ ] **GitLab/Bitbucket support** — scanner support beyond GitHub
 - [ ] **Engineer-brain MCP** — personal BRAIN.md / sync as MCP resources (team-brain MCP ships first)
 - [ ] **Weekly email digest** — scheduled summary of patterns and recommendations

@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- Scanner **`--json` output** (#3): `scan.sh` collect-once → text or JSON emitters; stable schema for dashboard/CI/`jq`; smoke test `tests/scan/smoke_json.sh`
 - Team Brain **launch readiness** (#32 / #38 / #42): rate-limit `register_team`/`join_team` (DB sliding window, default 5 reg/h, 15 join/h); demo & Office Hours one-pager (`docs/team-brain-demo.md`); hands-on tutorial with verification checklist (`docs/team-brain-tutorial.md`)
 - Migration `20260806000001_team_brain_rate_limits.sql` — fingerprint-based sliding window; `tb_rate_limit_stats` monitoring view
 - Team Brain **repo pin + access roles** (#39 / #40): commit-safe `.team-brain/project.json`; `start`/`attach`/`onboard` honor pin; roles `admin`\|`member`\|`viewer`; `rotate-invite` / `set-role`; join `--role viewer`

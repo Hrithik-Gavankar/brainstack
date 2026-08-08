@@ -217,12 +217,25 @@ Fetch your assigned Jira issues, grouped by status.
 
 Just run the scanner and display results.
 
-1. Parse optional `[days]` argument (default: 7).
+1. Parse optional `[days]` argument (default: 7) and optional `--json`.
 2. Run:
    ```bash
+   # Human / AI-readable text (default)
    bash <path-to-scripts>/scan.sh "$HOME/path/to/workspace" [days]
+
+   # Structured JSON for dashboard, CI, or jq (#3) — requires python3
+   bash <path-to-scripts>/scan.sh "$HOME/path/to/workspace" [days] --json
+   bash <path-to-scripts>/scan.sh --json "$HOME/path/to/workspace" [days]
    ```
-3. Display the output directly.
+3. Display the output directly (text), or pipe JSON to `jq` / a consumer:
+   ```bash
+   bash <path-to-scripts>/scan.sh "$HOME/path/to/workspace" 7 --json | jq '.velocity'
+   ```
+
+**JSON notes:** same sections as text mode (`commits`, `branches`, `uncommitted`,
+`type_breakdown`, `files_touched`, `velocity`, `github`). Personal repos stay in
+`commits` with `"personal": true` but are excluded from team velocity / type
+breakdown / files — matching text mode. See [architecture.md](../docs/architecture.md).
 
 ### `doctor` (brain health check)
 

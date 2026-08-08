@@ -338,7 +338,7 @@ Both scopes work with every major AI coding assistant. Same brain, native format
 | `engineer-brain update` | Refresh BRAIN.md with latest commits, patterns, and metrics |
 | `engineer-brain quarterly` | Generate structured quarterly review with impact numbers |
 | `engineer-brain reflect` | Pattern analysis: blind spots, habits, recommendations |
-| `engineer-brain scan [days]` | Raw multi-repo git scan output |
+| `engineer-brain scan [days]` | Raw multi-repo git scan (add `--json` for structured output) |
 | `engineer-brain doctor` | Brain health check with completeness score and growth suggestions |
 
 ### Team Brain commands
@@ -451,7 +451,7 @@ brainstack/
 │   │   ├── TEAM_COMMANDS.md
 │   │   └── initiatives/_TEMPLATE.md
 │   └── scripts/
-│       ├── scan.sh                    # Multi-repo git scanner
+│       ├── scan.sh                    # Multi-repo git scanner (text + --json) |
 │       ├── doctor.sh
 │       ├── team-init.sh               # Scaffold .team-brain/
 │       └── team-brain-api.sh          # Supabase RPC client
@@ -519,6 +519,7 @@ See **[docs/roadmap.md](docs/roadmap.md)** for the full roadmap.
 **Near-term:**
 - [x] `engineer-brain doctor` — health check and brain completeness score
 - [x] Web dashboard MVP (`dashboard/`) — sample data + data-port seam; BRAIN.md parser next
+- [x] Scanner JSON output (`scan.sh --json`, #3) — structured contract for dashboard/CI
 - [x] Team Brain collaborative memory — Jira + Supabase SoT + cache + MCP + agent loop
 - [x] Team Brain onboarding — invite + Jira key (`onboard`)
 - [x] Team aggregation metrics (coverage + reuse via `metrics --team` — #35; collab graph deferred)

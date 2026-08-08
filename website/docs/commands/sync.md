@@ -15,7 +15,7 @@ engineer-brain sync
 ## What it does
 
 1. Determines lookback window (1 day, or 3 days on Monday)
-2. Runs `scan.sh` for commits, branches, and (when `gh` is authenticated) PRs / reviews / releases
+2. Runs `scan.sh` for commits, branches, and (when `gh` is authenticated) PRs / reviews / releases (prefer text mode for sync; use `scan.sh --json` for tooling/CI)
 3. Reads BRAIN.md for sprint context and upcoming events
 4. Generates concise prose standup notes (not a commit dump)
 
