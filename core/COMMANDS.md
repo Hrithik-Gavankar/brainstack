@@ -44,7 +44,7 @@ If today is Monday, "yesterday" means last Friday. If today is a
 weekend, skip — standups don't happen on weekends.
 
 1. Determine the lookback window based on the day of week:
-   - **Monday**: scan last 3 days (covers Friday–Sunday)
+   - **Monday**: **Friday only** — ignore weekend; 3-day scan, filter to Friday
    - **Tuesday–Friday**: scan last 1 day
    - **Saturday/Sunday**: tell the user "No standup today — it's the weekend." and stop.
    ```bash
@@ -58,7 +58,23 @@ weekend, skip — standups don't happen on weekends.
    - Recent releases on configured repos
    - Tracker issues in the open sprint + BRAIN.md upcoming events
 
-3. Read `BRAIN.md` for sprint context, active tickets, and scheduled team events.
+2a. **Calendar signal (gcal, optional but preferred when available):**
+   - If the `gcal` MCP is connected, call `status()` first.
+     - If `configured: true` → call **`today_sync()`** (on Mondays also
+       `upcoming_sync(3)`) — **not** raw `today()`. Only task-related or
+       active-participation events (hackathon, demo, meetup, workshop).
+     - **Exclude** routine ceremonies from standup: syncs, retros, bug reviews,
+       1:1s, close-outs, drop-in sessions, all-hands, generic Office blocks.
+     - If `configured: false` → call `authorize_instructions()` once, relay
+       the one-time setup to the user, and fall back to BRAIN.md's
+       `Upcoming Events` table for this sync (don't block on it).
+   - No `gcal` MCP available → run `bash core/scripts/gcal.sh today --sync` if
+     the platform can shell out; otherwise fall back to BRAIN.md `Upcoming Events`.
+   - Calendar events are read-only signal only — never invent events that
+     didn't come from `gcal`/BRAIN.md. Precision over recall.
+
+3. Read `BRAIN.md` for sprint context, active tickets, and scheduled team
+   events (`Upcoming Events` table — the fallback when gcal isn't configured).
 
 4. Generate standup notes as **concise prose bullets**, not a dump of every commit hash:
    ```
@@ -279,6 +295,27 @@ Output includes PR size labels (S/M/L/XL based on lines changed), age, idle time
 **Integration with other commands:**
 - When running `sync`, mention the count from `watch` (e.g., "3 PRs waiting for your review") in section 2 (planned work).
 - When running `reflect`, flag if your review queue is growing or if you have stale PRs of your own.
+
+### `gcal` (calendar signal — read-only)
+
+Google Calendar integration used mainly by `sync` (see step 2a above), but
+callable standalone. Generic and independent of Team Brain / Jira keys.
+
+**One-time setup:** `bash core/scripts/gcal.sh authorize --client-secrets <path>` — see [mcp/gcal/README.md](../mcp/gcal/README.md).
+
+**Usage:**
+```bash
+bash core/scripts/gcal.sh status                      # config status, no secrets
+bash core/scripts/gcal.sh today [--json]               # today's events
+bash core/scripts/gcal.sh upcoming [days] [--json]     # next N days (default 7)
+bash core/scripts/gcal.sh range <since> <until> [--json]
+bash core/scripts/gcal.sh calendars [--json]
+```
+
+If the platform supports MCP, prefer the `gcal` MCP server
+(`mcp/gcal/`) — same underlying client, agent-native tool calls
+(`status`, `today`, `upcoming`, `events_range`, `list_calendars`,
+`authorize_instructions`).
 
 ---
 

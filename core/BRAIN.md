@@ -122,6 +122,14 @@ chore:     X (%)
 1. [Achievement with PR/ticket reference]
 2. [Achievement with PR/ticket reference]
 
+### Upcoming Events
+Fallback source for `sync` when the `gcal` MCP (or `core/scripts/gcal.sh`) is
+not configured — see [mcp/gcal/README.md](../mcp/gcal/README.md). Once gcal
+is set up, this table is optional; `sync` prefers live calendar data.
+| Date | Event | Standup treatment |
+|------|-------|-------------------|
+| [date] | [hackathon / meetup / demo / workshop] | [Include in "plan today" / participation] |
+
 ---
 
 ## Growth Areas & Feedback Loop

@@ -54,7 +54,8 @@ If today is Monday, "yesterday" means last Friday. If today is a
 weekend, skip — standups don't happen on weekends.
 
 1. Determine the lookback window based on the day of week:
-   - **Monday**: scan last 3 days (covers Friday–Sunday)
+   - **Monday**: **Friday only** — ignore Saturday and Sunday; 3-day scan for data,
+     filter standup bullets and `gh` to Friday-dated activity only
    - **Tuesday–Friday**: scan last 1 day
    - **Saturday/Sunday**: tell the user "No standup today — it's the weekend."
      and stop.
@@ -75,8 +76,27 @@ weekend, skip — standups don't happen on weekends.
    Plus tracker issues assigned in the open sprint, and BRAIN.md
    "Current Sprint Context" / upcoming events (demos, office hours, meetups).
 
+2a. **Calendar signal (gcal MCP, optional but preferred when connected):**
+   - Call `status()` on the `gcal` MCP server first.
+     - `configured: true` → call **`today_sync()`** (add `upcoming_sync(3)` or
+       `events_range` + manual filter on Mondays) — **not** raw `today()`.
+       Only merge **task-related or active-participation** events into standup
+       (hackathon, demo, meetup, workshop, release dry-run).
+     - **Ignore routine ceremonies** even if they appear on calendar: pod/daily
+       syncs, retros, bug reviews, 1:1s, close-outs, drop-in sessions,
+       all-hands, generic "Office"/focus blocks. Do not list them in standup.
+     - `configured: false` → call `authorize_instructions()`, relay the
+       one-time setup to the user once, and fall back to BRAIN.md's
+       `Upcoming Events` table for this sync — don't block on it.
+   - No `gcal` MCP connected → run `bash core/scripts/gcal.sh today --sync` if you
+     can shell out, otherwise fall back to BRAIN.md `Upcoming Events`.
+   - Treat calendar output as read-only signal — never invent events that
+     didn't come from `gcal` or BRAIN.md. Precision over recall: when unsure,
+     omit the meeting or ask the user once.
+
 3. Read `${SKILL_DIR}/BRAIN.md` for sprint context, active tickets, and
-   scheduled team events.
+   scheduled team events (`Upcoming Events` table — the fallback when gcal
+   isn't configured).
 
 4. Generate standup notes as **concise prose bullets**, not a dump of every
    commit hash:
@@ -97,7 +117,7 @@ weekend, skip — standups don't happen on weekends.
    git archaeology report. Example of good output:
    ```
    1. What I worked on yesterday:
-   - Reviewed quality-gate PRs, prepared a demo for Office Hours, incorporated feedback for TICKET-123 and got it ready for review, and released my-tool upstream.
+   - Reviewed quality-gate PRs, prepared a demo for a community session, incorporated feedback for TICKET-123 and got it ready for review, and released my-tool upstream.
 
    2. What I plan on working on today:
    - Preparing the release notification for the partner team and raising the corresponding dependency bump PR, actively reviewing open PRs, and preparing for the community meetup.
