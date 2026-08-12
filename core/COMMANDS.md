@@ -44,7 +44,7 @@ If today is Monday, "yesterday" means last Friday. If today is a
 weekend, skip — standups don't happen on weekends.
 
 1. Determine the lookback window based on the day of week:
-   - **Monday**: scan last 3 days (covers Friday–Sunday)
+   - **Monday**: **Friday only** — ignore weekend; 3-day scan, filter to Friday
    - **Tuesday–Friday**: scan last 1 day
    - **Saturday/Sunday**: tell the user "No standup today — it's the weekend." and stop.
    ```bash
