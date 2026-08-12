@@ -236,6 +236,86 @@ def fetch_events(
 
 
 # ---------------------------------------------------------------------------
+# Standup filter — task-related / active-participation events only
+# ---------------------------------------------------------------------------
+
+# Included when matched (active participation, deliverables, external-facing work).
+_SYNC_INCLUDE = (
+    "testathon",
+    "test-a-thon",
+    "hackathon",
+    "meetup",
+    "demo",
+    "presentation",
+    "workshop",
+    "dry run",
+    "release notification",
+    "lunch and learn",
+    "lunch & learn",
+    "training",
+)
+
+# Routine ceremonies and passive attendance — never surface in standup from gcal.
+_SYNC_EXCLUDE = (
+    "sync",
+    "standup",
+    "stand-up",
+    "stand up",
+    "retro",
+    "retrospective",
+    "bug review",
+    "triage",
+    "1x1",
+    "1:1",
+    "one-on-one",
+    "one on one",
+    "close-out",
+    "close out",
+    "check-in",
+    "check in",
+    "daily",
+    "grooming",
+    "planning",
+    "all-hands",
+    "all hands",
+    "town hall",
+    "drop in",
+    "drop-in",
+    "office hours",
+    "open office",
+)
+
+# All-day placeholders with no task signal.
+_SYNC_SKIP_EXACT = frozenset(
+    {"office", "home", "wfh", "ooo", "out of office", "focus time", "busy"}
+)
+
+
+def _event_summary(event: dict) -> str:
+    return (event.get("summary") or "").strip().lower()
+
+
+def is_sync_worthy(event: dict) -> bool:
+    """True when an event is task-related or active participation worth a standup bullet."""
+    summary = _event_summary(event)
+    if not summary or summary in _SYNC_SKIP_EXACT:
+        return False
+    if any(token in summary for token in _SYNC_INCLUDE):
+        return True
+    if event.get("all_day"):
+        return False
+    if any(token in summary for token in _SYNC_EXCLUDE):
+        return False
+    # Precision over recall — unknown meetings stay out unless user adds to BRAIN.md.
+    return False
+
+
+def filter_sync_events(events: list[dict]) -> list[dict]:
+    """Return only standup-worthy events from a raw fetch_events() list."""
+    return [event for event in events if is_sync_worthy(event)]
+
+
+# ---------------------------------------------------------------------------
 # Date range helpers (local timezone day boundaries, RFC3339 for the API)
 # ---------------------------------------------------------------------------
 
@@ -328,9 +408,21 @@ def authorize(client_secrets_path: str, calendar_id: str, out_path: str = "") ->
     if not secrets_file.is_file():
         raise GCalError(f"client secrets file not found: {secrets_file}")
     raw = json.loads(secrets_file.read_text(encoding="utf-8"))
+    if raw.get("web") and not raw.get("installed"):
+        raise GCalError(
+            "This client_secret JSON is for a Web application OAuth client.\n"
+            "gcal uses the Desktop-app loopback flow (dynamic http://127.0.0.1:<port>/oauth2callback).\n"
+            "Fix: Google Cloud Console -> APIs & Services -> Credentials -> Create Credentials\n"
+            "  -> OAuth client ID -> Application type: Desktop app (not Web application).\n"
+            "Download the new JSON and re-run authorize.\n"
+            "(Web clients cause Error 400: redirect_uri_mismatch unless you pre-register every port.)"
+        )
     section = raw.get("installed") or raw.get("web")
     if not section:
-        raise GCalError("client secrets file must contain an 'installed' or 'web' section")
+        raise GCalError(
+            "client secrets file must contain an 'installed' section (Desktop app OAuth client).\n"
+            "Create one in Google Cloud Console -> Credentials -> OAuth client ID -> Desktop app."
+        )
     client_id = section["client_id"]
     client_secret = section["client_secret"]
     auth_uri = section.get("auth_uri", DEFAULT_AUTH_URI)
@@ -494,10 +586,20 @@ def main(argv: list[str] | None = None) -> int:
 
     p_today = sub.add_parser("today", help="Events for today")
     p_today.add_argument("--calendar-id", default="")
+    p_today.add_argument(
+        "--sync",
+        action="store_true",
+        help="Standup filter: task-related / active-participation events only",
+    )
 
     p_upcoming = sub.add_parser("upcoming", help="Events for the next N days (default 7)")
     p_upcoming.add_argument("days", nargs="?", type=int, default=7)
     p_upcoming.add_argument("--calendar-id", default="")
+    p_upcoming.add_argument(
+        "--sync",
+        action="store_true",
+        help="Standup filter: task-related / active-participation events only",
+    )
 
     p_range = sub.add_parser("range", help="Events between two dates (YYYY-MM-DD or ISO8601)")
     p_range.add_argument("since")
@@ -534,12 +636,16 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "today":
             start, end = today_range()
             events = fetch_events(creds, start, end, args.calendar_id)
+            if args.sync:
+                events = filter_sync_events(events)
             _print(events, args.json, _format_events)
             return 0
 
         if args.command == "upcoming":
             start, end = upcoming_range(args.days)
             events = fetch_events(creds, start, end, args.calendar_id)
+            if args.sync:
+                events = filter_sync_events(events)
             _print(events, args.json, _format_events)
             return 0
 

@@ -1,9 +1,9 @@
 # Google Calendar MCP
 
 Read-only agent tools for Google Calendar — closes the "sync is calendar-blind"
-gap: Testathons, Office Hours, meetups, and demos never show up in git/`gh`, so
+gap: hackathons, demos, meetups, and workshops never show up in git/`gh`, so
 `engineer-brain sync` used to miss them. This server is generic and standalone
-(not coupled to Team Brain or any Jira key) — plug it in for any skill/command
+(not coupled to Team Brain or any tracker key) — plug it in for any skill/command
 that wants "what's on my calendar today".
 
 Zero third-party dependencies beyond the `mcp` SDK — the Google OAuth + Calendar
@@ -18,7 +18,9 @@ Scope is `calendar.readonly`: this server cannot create, edit, or delete events.
 | `authorize_instructions` | One-time manual setup steps (this server can't open a browser itself) |
 | `list_calendars` | Calendars visible to the authorized account |
 | `today` | Today's events (local timezone day bounds) |
+| `today_sync` | Today's events filtered for standup (task/active-participation only) |
 | `upcoming` | Events for the next N days (default 7) |
+| `upcoming_sync` | Next N days, standup filter applied |
 | `events_range` | Events between two dates (`YYYY-MM-DD` or ISO8601) — e.g. Monday-covers-Friday standup scans |
 
 ## One-time setup (manual, like Team Brain's `start`)
@@ -91,7 +93,9 @@ shell out to the same client, mirroring [`jira.sh`](../../core/scripts/jira.sh):
 ```bash
 bash core/scripts/gcal.sh status
 bash core/scripts/gcal.sh today
+bash core/scripts/gcal.sh today --sync          # standup filter (preferred for sync)
 bash core/scripts/gcal.sh upcoming 3
+bash core/scripts/gcal.sh upcoming 3 --sync
 bash core/scripts/gcal.sh range 2026-08-10 2026-08-12
 bash core/scripts/gcal.sh calendars
 ```
@@ -101,10 +105,11 @@ Add `--json` to any read command for machine-readable output.
 ## Using it in `sync`
 
 `engineer-brain sync` reads `status()` first; if `configured` is true, it calls
-`today()` (and `upcoming(3)` on Mondays, to cover the weekend-to-Friday window)
-and merges event titles into "what I plan on working on today" alongside PRs,
-reviews, and tracker items. If not configured, sync falls back to the
-`Upcoming Events` table in `BRAIN.md` and doesn't block on it.
+`today_sync()` (and `upcoming_sync(3)` on Mondays). The **sync filter** keeps
+task-related / active-participation events (hackathon, demo, meetup, workshop)
+and drops routine ceremonies (pod syncs, retros, bug reviews, 1:1s, drop-in
+sessions). Raw `today()` is for full calendar inspection only. If not
+configured, sync falls back to the `Upcoming Events` table in `BRAIN.md`.
 
 See [`core/COMMANDS.md`](../../core/COMMANDS.md) and
 [`platforms/cursor/skills/engineer-brain/SKILL.md`](../../platforms/cursor/skills/engineer-brain/SKILL.md).
@@ -129,3 +134,4 @@ See [`core/COMMANDS.md`](../../core/COMMANDS.md) and
 | `Google did not return a refresh_token` | You've authorized before without revoking; revoke at [myaccount.google.com/permissions](https://myaccount.google.com/permissions) and re-run `authorize` (it passes `prompt=consent` so this shouldn't normally happen) |
 | Browser doesn't open automatically | Copy the printed URL manually — the local callback server still waits up to 180s |
 | `Timed out waiting for authorization redirect` | Re-run `authorize`; check no firewall/VPN blocks `127.0.0.1` loopback |
+| `Error 400: redirect_uri_mismatch` | You created a **Web application** OAuth client. Create a **Desktop app** client instead and download that JSON — loopback uses a random local port that Web clients cannot register |

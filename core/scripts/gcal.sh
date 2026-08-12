@@ -7,8 +7,8 @@
 #   authorize --client-secrets <path> [--calendar-id ID] [--out PATH]   one-time OAuth setup
 #   status [--json]                                                    config status (no secrets)
 #   calendars [--json]                                                 list visible calendars
-#   today [--calendar-id ID] [--json]                                  today's events
-#   upcoming [days] [--calendar-id ID] [--json]                        next N days (default 7)
+#   today [--calendar-id ID] [--json] [--sync]                        today's events
+#   upcoming [days] [--calendar-id ID] [--json] [--sync]              next N days (default 7)
 #   range <since> <until> [--calendar-id ID] [--json]                  events in a date range
 #
 # Credential resolution: $GCAL_CREDENTIALS_PATH > ./.gcal/credentials.json >

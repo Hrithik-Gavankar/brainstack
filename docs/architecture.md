@@ -204,16 +204,16 @@ Plan and phases: [team-brain-memory.md](team-brain-memory.md). Setup: [supabase/
 ### Optional integration: Google Calendar (gcal)
 
 Read-only, generic, and independent of Team Brain / Jira keys — closes the
-"sync is calendar-blind" gap (Testathons, Office Hours, meetups, demos never
-appear in git/`gh`). One-time OAuth setup, then `sync` calls `today()` /
-`upcoming()` automatically when the `gcal` MCP (or `core/scripts/gcal.sh`) is
+"sync is calendar-blind" gap (hackathons, demos, meetups, workshops never
+appear in git/`gh`). One-time OAuth setup, then `sync` calls `today_sync()` /
+`upcoming_sync()` automatically when the `gcal` MCP (or `core/scripts/gcal.sh`) is
 configured, falling back to BRAIN.md's `Upcoming Events` table otherwise.
 
 | Layer | Responsibility |
 |-------|----------------|
 | **`core/scripts/gcal_lib.py`** | Shared OAuth (loopback flow) + Calendar API client — stdlib only, zero third-party deps |
 | **`core/scripts/gcal.sh`** | CLI entrypoint for non-MCP platforms (mirrors `jira.sh`) |
-| **`mcp/gcal/`** | MCP tools (`status`, `today`, `upcoming`, `events_range`, `list_calendars`) for MCP-capable platforms |
+| **`mcp/gcal/`** | MCP tools (`status`, `today`, `today_sync`, `upcoming`, `upcoming_sync`, `events_range`, `list_calendars`) |
 
 See [mcp/gcal/README.md](../mcp/gcal/README.md).
 

@@ -128,7 +128,7 @@ not configured — see [mcp/gcal/README.md](../mcp/gcal/README.md). Once gcal
 is set up, this table is optional; `sync` prefers live calendar data.
 | Date | Event | Standup treatment |
 |------|-------|-------------------|
-| [date] | [Testathon / Office Hours / meetup / demo] | [Include in "plan today" / participation] |
+| [date] | [hackathon / meetup / demo / workshop] | [Include in "plan today" / participation] |
 
 ---
 

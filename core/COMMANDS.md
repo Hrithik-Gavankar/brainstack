@@ -60,18 +60,18 @@ weekend, skip — standups don't happen on weekends.
 
 2a. **Calendar signal (gcal, optional but preferred when available):**
    - If the `gcal` MCP is connected, call `status()` first.
-     - If `configured: true` → call `today()` (and on Mondays also
-       `upcoming(3)` or `events_range(<last-friday>, <today>)` to cover the
-       weekend-to-Friday window) and merge event titles (Testathon, Office
-       Hours, meetup, demo) into "what I plan on working on today".
+     - If `configured: true` → call **`today_sync()`** (on Mondays also
+       `upcoming_sync(3)`) — **not** raw `today()`. Only task-related or
+       active-participation events (hackathon, demo, meetup, workshop).
+     - **Exclude** routine ceremonies from standup: syncs, retros, bug reviews,
+       1:1s, close-outs, drop-in sessions, all-hands, generic Office blocks.
      - If `configured: false` → call `authorize_instructions()` once, relay
        the one-time setup to the user, and fall back to BRAIN.md's
        `Upcoming Events` table for this sync (don't block on it).
-   - No `gcal` MCP available → run `bash core/scripts/gcal.sh status` (same
-     tool, CLI form) if the platform can shell out; otherwise fall back to
-     BRAIN.md `Upcoming Events`.
+   - No `gcal` MCP available → run `bash core/scripts/gcal.sh today --sync` if
+     the platform can shell out; otherwise fall back to BRAIN.md `Upcoming Events`.
    - Calendar events are read-only signal only — never invent events that
-     didn't come from `gcal`/BRAIN.md.
+     didn't come from `gcal`/BRAIN.md. Precision over recall.
 
 3. Read `BRAIN.md` for sprint context, active tickets, and scheduled team
    events (`Upcoming Events` table — the fallback when gcal isn't configured).

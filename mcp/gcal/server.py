@@ -2,9 +2,9 @@
 """Google Calendar MCP — read-only agent tools for engineer-brain sync.
 
 Generic, plug-and-play calendar signal: `sync` (and any skill/command) can
-call today()/upcoming() to include Testathons, Office Hours, meetups, and
-demos that are invisible to git/gh — without depending on team-brain or any
-particular Jira key. No write scope: this server can only read events.
+call today_sync()/upcoming_sync() to include hackathons, demos, meetups, and
+workshops that are invisible to git/gh — without coupling to team-brain or any
+tracker key. No write scope: this server can only read events.
 
 Thin wrapper around core/scripts/gcal_lib.py so the CLI (gcal.sh) and this
 MCP server share one auth/config implementation (no duplicated logic).
@@ -30,12 +30,12 @@ mcp = FastMCP(
     "gcal",
     instructions=(
         "Google Calendar (read-only) for engineer-brain sync. "
-        "Call today() or upcoming(days) to pull scheduled events (Testathons, "
-        "Office Hours, meetups, demos) that never show up in git/gh — merge them "
-        "into 'what I plan on working on today' instead of relying only on commits. "
+        "For standup, prefer today_sync() / upcoming_sync() — they return only "
+        "task-related or active-participation events (hackathon, demo, meetup, "
+        "workshop). Routine ceremonies (syncs, retros, 1:1s, bug reviews) are filtered "
+        "out. Raw today()/upcoming() return the full calendar. "
         "If status() reports configured=false, tell the user to run the one-time "
-        "CLI setup (see authorize_instructions()) — this server cannot open a "
-        "browser itself. Read-only: there is no tool to create or modify events."
+        "CLI setup (see authorize_instructions()). Read-only: no create/edit/delete."
     ),
 )
 
@@ -82,7 +82,7 @@ def list_calendars() -> str:
 
 @mcp.tool()
 def today(calendar_id: str = "") -> str:
-    """Return today's events (local timezone day bounds). Optional calendar_id override."""
+    """Return all of today's events (local timezone). For standup, use today_sync() instead."""
     def _run():
         creds = gcal_lib.load_credentials()
         start, end = gcal_lib.today_range()
@@ -92,12 +92,39 @@ def today(calendar_id: str = "") -> str:
 
 
 @mcp.tool()
+def today_sync(calendar_id: str = "") -> str:
+    """Today's standup-worthy events only — hackathons, demos, meetups, workshops.
+
+    Excludes routine ceremonies: syncs, retros, 1:1s, bug reviews, drop-in sessions.
+    """
+    def _run():
+        creds = gcal_lib.load_credentials()
+        start, end = gcal_lib.today_range()
+        events = gcal_lib.fetch_events(creds, start, end, calendar_id)
+        return gcal_lib.filter_sync_events(events)
+
+    return _handle(_run)
+
+
+@mcp.tool()
 def upcoming(days: int = 7, calendar_id: str = "") -> str:
-    """Return events for the next N days, starting today (default 7). Optional calendar_id override."""
+    """Return all events for the next N days (default 7). For standup, use upcoming_sync()."""
     def _run():
         creds = gcal_lib.load_credentials()
         start, end = gcal_lib.upcoming_range(max(1, int(days)))
         return gcal_lib.fetch_events(creds, start, end, calendar_id)
+
+    return _handle(_run)
+
+
+@mcp.tool()
+def upcoming_sync(days: int = 7, calendar_id: str = "") -> str:
+    """Standup-worthy events for the next N days — same filter as today_sync()."""
+    def _run():
+        creds = gcal_lib.load_credentials()
+        start, end = gcal_lib.upcoming_range(max(1, int(days)))
+        events = gcal_lib.fetch_events(creds, start, end, calendar_id)
+        return gcal_lib.filter_sync_events(events)
 
     return _handle(_run)
 
