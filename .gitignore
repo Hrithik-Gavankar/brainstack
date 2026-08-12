@@ -2,6 +2,10 @@
 .DS_Store
 Thumbs.db
 
+# Python
+__pycache__/
+*.pyc
+
 # IDE
 .vscode/
 .cursor/
@@ -26,6 +30,13 @@ supabase/project.public.env
 
 # Bootstrap-generated combined SQL (may be large; never commit crew secrets beside it)
 supabase/.bootstrap-migrations.combined.sql
+
+# GCal MCP secrets (per-workspace only — default lives outside the repo in
+# ~/.config/engineer-brain/gcal/, but guard the workspace-local override too)
+.gcal/credentials.json
+.gcal/**/credentials.json
+**/*.token_cache.json
+!.gcal/**/.gitkeep
 
 # Personal data (uncomment if you fork and add your own data)
 # core/BRAIN.md

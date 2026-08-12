@@ -75,8 +75,23 @@ weekend, skip — standups don't happen on weekends.
    Plus tracker issues assigned in the open sprint, and BRAIN.md
    "Current Sprint Context" / upcoming events (demos, office hours, meetups).
 
+2a. **Calendar signal (gcal MCP, optional but preferred when connected):**
+   - Call `status()` on the `gcal` MCP server first.
+     - `configured: true` → call `today()` (add `upcoming(3)` or
+       `events_range(<last-friday>, <today>)` on Mondays to cover the
+       weekend-to-Friday window) and merge event titles (Testathon, Office
+       Hours, meetup, demo) into "what I plan on working on today".
+     - `configured: false` → call `authorize_instructions()`, relay the
+       one-time setup to the user once, and fall back to BRAIN.md's
+       `Upcoming Events` table for this sync — don't block on it.
+   - No `gcal` MCP connected → run `bash core/scripts/gcal.sh status` if you
+     can shell out, otherwise fall back to BRAIN.md `Upcoming Events`.
+   - Treat calendar output as read-only signal — never invent events that
+     didn't come from `gcal` or BRAIN.md.
+
 3. Read `${SKILL_DIR}/BRAIN.md` for sprint context, active tickets, and
-   scheduled team events.
+   scheduled team events (`Upcoming Events` table — the fallback when gcal
+   isn't configured).
 
 4. Generate standup notes as **concise prose bullets**, not a dump of every
    commit hash:

@@ -167,6 +167,7 @@ Commands are natural language triggers interpreted by the AI assistant.
 | engineer-brain | `update` | Scanner (30 days) → Pattern detection → BRAIN.md rewrite |
 | engineer-brain | `quarterly` | Scanner (90 days) → BRAIN.md → Structured review document |
 | engineer-brain | `reflect` | Scanner (30 days) → Pattern detection → Recommendations |
+| engineer-brain | `gcal` | `mcp/gcal` (or `gcal.sh`) → today/upcoming events → merged into `sync` |
 | team-brain | `onboard` / `register` / `join` | Invite membership; write `credentials.json` |
 | team-brain | `attach` / `recall` | Jira identity + pull memories → cache / session brief |
 | team-brain | `remember` | Append shared memory (dedup by `source_ref` / content hash) |
@@ -199,6 +200,22 @@ flowchart LR
 
 Beginner path: [team-brain-onboarding.md](team-brain-onboarding.md).  
 Plan and phases: [team-brain-memory.md](team-brain-memory.md). Setup: [supabase/README.md](../supabase/README.md).
+
+### Optional integration: Google Calendar (gcal)
+
+Read-only, generic, and independent of Team Brain / Jira keys — closes the
+"sync is calendar-blind" gap (Testathons, Office Hours, meetups, demos never
+appear in git/`gh`). One-time OAuth setup, then `sync` calls `today()` /
+`upcoming()` automatically when the `gcal` MCP (or `core/scripts/gcal.sh`) is
+configured, falling back to BRAIN.md's `Upcoming Events` table otherwise.
+
+| Layer | Responsibility |
+|-------|----------------|
+| **`core/scripts/gcal_lib.py`** | Shared OAuth (loopback flow) + Calendar API client — stdlib only, zero third-party deps |
+| **`core/scripts/gcal.sh`** | CLI entrypoint for non-MCP platforms (mirrors `jira.sh`) |
+| **`mcp/gcal/`** | MCP tools (`status`, `today`, `upcoming`, `events_range`, `list_calendars`) for MCP-capable platforms |
+
+See [mcp/gcal/README.md](../mcp/gcal/README.md).
 
 ---
 

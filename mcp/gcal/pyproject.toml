@@ -1,0 +1,19 @@
+[project]
+name = "gcal-mcp"
+version = "0.1.0"
+description = "MCP server for read-only Google Calendar access (engineer-brain sync)"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "mcp>=1.2.0,<2",
+]
+
+[project.scripts]
+gcal-mcp = "server:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = ["server"]

@@ -58,7 +58,23 @@ weekend, skip — standups don't happen on weekends.
    - Recent releases on configured repos
    - Tracker issues in the open sprint + BRAIN.md upcoming events
 
-3. Read `BRAIN.md` for sprint context, active tickets, and scheduled team events.
+2a. **Calendar signal (gcal, optional but preferred when available):**
+   - If the `gcal` MCP is connected, call `status()` first.
+     - If `configured: true` → call `today()` (and on Mondays also
+       `upcoming(3)` or `events_range(<last-friday>, <today>)` to cover the
+       weekend-to-Friday window) and merge event titles (Testathon, Office
+       Hours, meetup, demo) into "what I plan on working on today".
+     - If `configured: false` → call `authorize_instructions()` once, relay
+       the one-time setup to the user, and fall back to BRAIN.md's
+       `Upcoming Events` table for this sync (don't block on it).
+   - No `gcal` MCP available → run `bash core/scripts/gcal.sh status` (same
+     tool, CLI form) if the platform can shell out; otherwise fall back to
+     BRAIN.md `Upcoming Events`.
+   - Calendar events are read-only signal only — never invent events that
+     didn't come from `gcal`/BRAIN.md.
+
+3. Read `BRAIN.md` for sprint context, active tickets, and scheduled team
+   events (`Upcoming Events` table — the fallback when gcal isn't configured).
 
 4. Generate standup notes as **concise prose bullets**, not a dump of every commit hash:
    ```
@@ -279,6 +295,27 @@ Output includes PR size labels (S/M/L/XL based on lines changed), age, idle time
 **Integration with other commands:**
 - When running `sync`, mention the count from `watch` (e.g., "3 PRs waiting for your review") in section 2 (planned work).
 - When running `reflect`, flag if your review queue is growing or if you have stale PRs of your own.
+
+### `gcal` (calendar signal — read-only)
+
+Google Calendar integration used mainly by `sync` (see step 2a above), but
+callable standalone. Generic and independent of Team Brain / Jira keys.
+
+**One-time setup:** `bash core/scripts/gcal.sh authorize --client-secrets <path>` — see [mcp/gcal/README.md](../mcp/gcal/README.md).
+
+**Usage:**
+```bash
+bash core/scripts/gcal.sh status                      # config status, no secrets
+bash core/scripts/gcal.sh today [--json]               # today's events
+bash core/scripts/gcal.sh upcoming [days] [--json]     # next N days (default 7)
+bash core/scripts/gcal.sh range <since> <until> [--json]
+bash core/scripts/gcal.sh calendars [--json]
+```
+
+If the platform supports MCP, prefer the `gcal` MCP server
+(`mcp/gcal/`) — same underlying client, agent-native tool calls
+(`status`, `today`, `upcoming`, `events_range`, `list_calendars`,
+`authorize_instructions`).
 
 ---
 
