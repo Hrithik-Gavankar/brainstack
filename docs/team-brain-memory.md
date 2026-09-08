@@ -48,7 +48,7 @@ Engineer A agent                    Supabase                         Engineer B 
 
 | Layer | Role |
 |-------|------|
-| **Jira** | Initiative spine (`AAP-81423`) |
+| **Jira** | Initiative spine (`YOU_JIRA_TICKET_HERE`) |
 | **Supabase** | Source of truth for memories + membership + realtime |
 | **Local cache** | `.team-brain/cache/<KEY>.json` for agents (fast read) |
 | **Markdown export** | Optional human/git mirror — **not** the sync bus |
@@ -141,10 +141,10 @@ bash core/scripts/team-brain-api.sh enable-semantic openai   # or: enable-semant
 export TEAM_BRAIN_EMBED_API_KEY=sk-...                        # openai only — never persisted to team.yaml
 bash core/scripts/team-brain-api.sh enable-semantic openai   # re-run to verify: prints vector dims on success
 
-bash core/scripts/team-brain-api.sh remember AAP-81423 research "EE schema path lives in …"
-bash core/scripts/team-brain-api.sh recall AAP-81423 "where is decision_environment scaffolded"
+bash core/scripts/team-brain-api.sh remember YOU_JIRA_TICKET_HERE research "EE schema path lives in …"
+bash core/scripts/team-brain-api.sh recall YOU_JIRA_TICKET_HERE "where is decision_environment scaffolded"
 # → stderr: "recall mode: vector (openai)"; response body: "mode": "vector"
-bash core/scripts/team-brain-api.sh reembed AAP-81423        # backfill memories written before opt-in
+bash core/scripts/team-brain-api.sh reembed YOU_JIRA_TICKET_HERE        # backfill memories written before opt-in
 ```
 
 Manual/legacy path (still works, e.g. for one-off scripting): export `TEAM_BRAIN_EMBED_PROVIDER` / `_MODEL` / `_BASE_URL` directly — `enable-semantic` is just a documented, persisted shortcut for the same env vars.
@@ -188,9 +188,9 @@ Humans can still run CLI manually; **agents must not skip the loop**.
 - [x] Team aggregation metrics (#35) — coverage + reuse via `metrics --team` / `aggregate` (collab graph deferred)
 
 ```bash
-bash core/scripts/team-brain-api.sh breakdown AAP-81423
-bash core/scripts/team-brain-api.sh metrics AAP-81423
-# → initiatives/AAP-81423-breakdown.md + metrics.json (gitignored)
+bash core/scripts/team-brain-api.sh breakdown YOU_JIRA_TICKET_HERE
+bash core/scripts/team-brain-api.sh metrics YOU_JIRA_TICKET_HERE
+# → initiatives/YOU_JIRA_TICKET_HERE-breakdown.md + metrics.json (gitignored)
 bash core/scripts/team-brain-api.sh metrics --team   # crew coverage + reuse (#35)
 ```
 
@@ -266,7 +266,7 @@ When poisoned or stale team context must be removed (not just corrected), **memb
 
 ```bash
 # Tombstone (member/admin)
-bash core/scripts/team-brain-api.sh delete AAP-81423 --source-ref "AAP-81423#bad-claim"
+bash core/scripts/team-brain-api.sh delete YOU_JIRA_TICKET_HERE --source-ref "YOU_JIRA_TICKET_HERE#bad-claim"
 
 # Admin audit crew tiers
 bash core/scripts/team-brain-api.sh list-members

@@ -358,7 +358,7 @@ async def _listen(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Team Brain Realtime Broadcast listener")
-    parser.add_argument("jira_key", help="Jira key (e.g. AAP-81423)")
+    parser.add_argument("jira_key", help="Jira key (e.g. YOU_JIRA_TICKET_HERE)")
     parser.add_argument(
         "--topic",
         default="",

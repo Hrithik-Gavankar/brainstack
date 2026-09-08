@@ -14,11 +14,11 @@ Onboarding: [docs/team-brain-onboarding.md](../../docs/team-brain-onboarding.md)
 ├── credentials.json       # api_key — gitignored, never commit
 ├── TEAM.md                # one per team
 ├── cache/
-│   └── AAP-81423.json     # agent SoT (written on start/sync/remember)
+│   └── YOU_JIRA_TICKET_HERE.json     # agent SoT (written on start/sync/remember)
 ├── sync/
-│   └── AAP-81423.json     # sync mode session (active | sleep | stopped)
+│   └── YOU_JIRA_TICKET_HERE.json     # sync mode session (active | sleep | stopped)
 └── initiatives/
-    └── AAP-81423.md       # optional human/git export
+    └── YOU_JIRA_TICKET_HERE.md       # optional human/git export
 ```
 
 ## Sync model
@@ -37,7 +37,7 @@ Jira = initiative **identity**. Memories = Supabase (+ cache).
 **New teammate:**
 
 ```bash
-bash core/scripts/team-brain-api.sh onboard INVITECODE "Bob" AAP-81423 --role member
+bash core/scripts/team-brain-api.sh onboard INVITECODE "Bob" YOU_JIRA_TICKET_HERE --role member
 ```
 
 **Admin (once) — preferred:**
@@ -47,7 +47,7 @@ bash core/scripts/team-brain-api.sh bootstrap \
   --team "Crew" --admin "Alice" \
   --url "https://….supabase.co" --anon "eyJ…" \
   --db-url "postgresql://postgres:…@db….supabase.co:5432/postgres" \
-  --jira AAP-81423 --write-env
+  --jira YOU_JIRA_TICKET_HERE --write-env
 # prints share bundle (invite + URL + anon + joiner checklist)
 ```
 
@@ -62,39 +62,39 @@ bash core/scripts/team-brain-api.sh register "Crew" "Alice"   # share invite_cod
 In Cursor / any agent chat:
 
 ```text
-I'm starting on AAP-81423 — start Team Brain sync.
+I'm starting on YOU_JIRA_TICKET_HERE — start Team Brain sync.
 ```
 
 ```text
-/team-brain start AAP-81423
+/team-brain start YOU_JIRA_TICKET_HERE
 ```
 
 CLI:
 
 ```bash
-bash core/scripts/team-brain-api.sh start AAP-81423
-bash core/scripts/team-brain-api.sh sync-status AAP-81423   # includes compliance
-bash core/scripts/team-brain-api.sh compliance AAP-81423    # soft MCP-first gate
+bash core/scripts/team-brain-api.sh start YOU_JIRA_TICKET_HERE
+bash core/scripts/team-brain-api.sh sync-status YOU_JIRA_TICKET_HERE   # includes compliance
+bash core/scripts/team-brain-api.sh compliance YOU_JIRA_TICKET_HERE    # soft MCP-first gate
 ```
 
 | Chat example | Effect |
 |--------------|--------|
-| `I'm starting on AAP-81423 — start Team Brain sync.` | Enter sync mode + load crew memory |
-| `Wake Team Brain sync for AAP-81423 and continue.` | Resume after idle sleep |
-| `Stop Team Brain sync for AAP-81423.` | Leave sync mode |
-| `Breakdown AAP-81423 from Team Brain memory.` | Draft stories from recall |
+| `I'm starting on YOU_JIRA_TICKET_HERE — start Team Brain sync.` | Enter sync mode + load crew memory |
+| `Wake Team Brain sync for YOU_JIRA_TICKET_HERE and continue.` | Resume after idle sleep |
+| `Stop Team Brain sync for YOU_JIRA_TICKET_HERE.` | Leave sync mode |
+| `Breakdown YOU_JIRA_TICKET_HERE from Team Brain memory.` | Draft stories from recall |
 
 **Day to day (while sync active):**
 
 ```bash
-bash core/scripts/team-brain-api.sh remember AAP-81423 research --source-ref "AAP-81423#cli" "Finding…"
-bash core/scripts/team-brain-api.sh recall AAP-81423 "decision environment"
-bash core/scripts/team-brain-api.sh touch AAP-81423    # keep awake
-bash core/scripts/team-brain-api.sh stop AAP-81423     # done
-bash core/scripts/team-brain-api.sh wake AAP-81423     # after sleep
+bash core/scripts/team-brain-api.sh remember YOU_JIRA_TICKET_HERE research --source-ref "YOU_JIRA_TICKET_HERE#cli" "Finding…"
+bash core/scripts/team-brain-api.sh recall YOU_JIRA_TICKET_HERE "decision environment"
+bash core/scripts/team-brain-api.sh touch YOU_JIRA_TICKET_HERE    # keep awake
+bash core/scripts/team-brain-api.sh stop YOU_JIRA_TICKET_HERE     # done
+bash core/scripts/team-brain-api.sh wake YOU_JIRA_TICKET_HERE     # after sleep
 
 # Human correction (update same source_ref + optional learning)
-bash core/scripts/team-brain-api.sh correct AAP-81423 --source-ref "AAP-81423#cli" \
+bash core/scripts/team-brain-api.sh correct YOU_JIRA_TICKET_HERE --source-ref "YOU_JIRA_TICKET_HERE#cli" \
   --was "Claimed schema was in tox-ansible" \
   --learning "Was wrong: schema in tox-ansible. Prefer: packages/ansible-language-server." \
   "EE schema path lives in packages/ansible-language-server."
@@ -148,8 +148,8 @@ On `source_ref` update, the prior body is **archived** (`archived_revision`); us
 Memory bodies: natural prefer/avoid prose — not TODO/NO-TODO dumps.
 
 ```bash
-bash core/scripts/team-brain-api.sh history AAP-81423 --source-ref "AAP-81423#cli"
-bash core/scripts/team-brain-api.sh restore AAP-81423 --source-ref "AAP-81423#cli" --revision 1
+bash core/scripts/team-brain-api.sh history YOU_JIRA_TICKET_HERE --source-ref "YOU_JIRA_TICKET_HERE#cli"
+bash core/scripts/team-brain-api.sh restore YOU_JIRA_TICKET_HERE --source-ref "YOU_JIRA_TICKET_HERE#cli" --revision 1
 ```
 
 Apply migrations `…_sync_mode.sql`, `…_learning_kind.sql`, and `…_memory_history.sql` on the Supabase project.

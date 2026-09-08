@@ -31,18 +31,18 @@ In any Cursor chat or Composer session:
 /engineer-brain reflect
 
 /team-brain onboard <invite> Name KEY
-/team-brain start AAP-81423
+/team-brain start YOU_JIRA_TICKET_HERE
 /team-brain remember / recall
-/team-brain breakdown AAP-81423
+/team-brain breakdown YOU_JIRA_TICKET_HERE
 ```
 
 **Start crew work (natural language):**
 
 ```text
-I'm starting on AAP-81423 — start Team Brain sync.
-I'm starting on AAP-81423 — start Team Brain sync, summarize crew memory, then help me.
-Wake Team Brain sync for AAP-81423 and continue.
-Stop Team Brain sync for AAP-81423.
+I'm starting on YOU_JIRA_TICKET_HERE — start Team Brain sync.
+I'm starting on YOU_JIRA_TICKET_HERE — start Team Brain sync, summarize crew memory, then help me.
+Wake Team Brain sync for YOU_JIRA_TICKET_HERE and continue.
+Stop Team Brain sync for YOU_JIRA_TICKET_HERE.
 ```
 
 Personal context loads automatically. Team Brain sync mode loads crew memory first, then the agent remembers durable findings.

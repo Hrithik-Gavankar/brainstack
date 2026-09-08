@@ -19,10 +19,10 @@ repos:
 
 # One markdown file per initiative under initiatives/<id>.md
 initiatives:
-  - id: AAP-81423
+  - id: YOU_JIRA_TICKET_HERE
     title: "Port and improve Ansible Tox integration"
     status: active
-    file: initiatives/AAP-81423.md
+    file: initiatives/YOU_JIRA_TICKET_HERE.md
 
 sync:
   # supabase = multi-engineer memory sync | local = files/git only

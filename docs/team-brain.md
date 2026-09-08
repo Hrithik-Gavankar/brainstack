@@ -19,11 +19,11 @@ Part of **Brainstack** alongside [engineer-brain](scopes.md). See also [#2](http
 ├── credentials.json          # gitignored — from register / join / onboard
 ├── TEAM.md                   # one per team (norms, members)
 ├── cache/
-│   └── AAP-81423.json        # agent-facing snapshot (written on attach/remember/recall)
+│   └── YOU_JIRA_TICKET_HERE.json        # agent-facing snapshot (written on attach/remember/recall)
 ├── metrics.json              # gitignored — local reuse stats
 └── initiatives/
-    ├── AAP-81423.md          # optional human/git export
-    └── AAP-81423-breakdown.md
+    ├── YOU_JIRA_TICKET_HERE.md          # optional human/git export
+    └── YOU_JIRA_TICKET_HERE-breakdown.md
 ```
 
 ## Sync model
@@ -56,7 +56,7 @@ Admin provisions **their own** Supabase project (see [supabase/README.md](../sup
 Share with joiners: **invite code + project URL + anon key + Jira key** (not via public git).
 
 ```bash
-bash core/scripts/team-brain-api.sh onboard <INVITE> "Bob" AAP-81423
+bash core/scripts/team-brain-api.sh onboard <INVITE> "Bob" YOU_JIRA_TICKET_HERE
 ```
 
 Admin once: create project → migrations → `register "Team Atlas" "Alice"` → share invite (16 hex chars).
@@ -68,26 +68,26 @@ One manual step when you start team work on a ticket.
 **In Cursor / chat (preferred):**
 
 ```text
-I'm starting on AAP-81423 — start Team Brain sync.
+I'm starting on YOU_JIRA_TICKET_HERE — start Team Brain sync.
 ```
 
 ```text
-I'm starting on AAP-81423 — start Team Brain sync, summarize crew memory, then help me.
+I'm starting on YOU_JIRA_TICKET_HERE — start Team Brain sync, summarize crew memory, then help me.
 ```
 
 ```text
-/team-brain start AAP-81423
+/team-brain start YOU_JIRA_TICKET_HERE
 ```
 
 | Later | Say |
 |-------|-----|
-| After idle sleep | `Wake Team Brain sync for AAP-81423 and continue.` |
-| Done | `Stop Team Brain sync for AAP-81423.` |
+| After idle sleep | `Wake Team Brain sync for YOU_JIRA_TICKET_HERE and continue.` |
+| Done | `Stop Team Brain sync for YOU_JIRA_TICKET_HERE.` |
 
 **CLI equivalent:**
 
 ```bash
-bash core/scripts/team-brain-api.sh start AAP-81423
+bash core/scripts/team-brain-api.sh start YOU_JIRA_TICKET_HERE
 ```
 
 | While active | Behavior |
@@ -108,8 +108,8 @@ Cursor rule/skill: summarize cache after `start`; prompt user if mode is `sleep`
 4. `breakdown` / `metrics` when planning; `metrics --team` for crew coverage + reuse (#35).
 
 ```bash
-bash core/scripts/team-brain-api.sh breakdown AAP-81423
-bash core/scripts/team-brain-api.sh metrics AAP-81423
+bash core/scripts/team-brain-api.sh breakdown YOU_JIRA_TICKET_HERE
+bash core/scripts/team-brain-api.sh metrics YOU_JIRA_TICKET_HERE
 bash core/scripts/team-brain-api.sh metrics --team
 ```
 

@@ -37,11 +37,11 @@ bash <brainstack>/core/scripts/team-brain-api.sh sync-status <JIRA-KEY>
 When the user starts team work on a ticket — including phrases like:
 
 ```text
-I'm starting on AAP-81423 — start Team Brain sync.
-I'm starting on AAP-81423 — start Team Brain sync, summarize crew memory, then help me.
-/team-brain start AAP-81423
-Wake Team Brain sync for AAP-81423 and continue.
-Stop Team Brain sync for AAP-81423.
+I'm starting on YOU_JIRA_TICKET_HERE — start Team Brain sync.
+I'm starting on YOU_JIRA_TICKET_HERE — start Team Brain sync, summarize crew memory, then help me.
+/team-brain start YOU_JIRA_TICKET_HERE
+Wake Team Brain sync for YOU_JIRA_TICKET_HERE and continue.
+Stop Team Brain sync for YOU_JIRA_TICKET_HERE.
 ```
 
 …run the matching command (`start` / `wake` / `stop`):

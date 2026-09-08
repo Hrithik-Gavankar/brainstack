@@ -182,7 +182,7 @@ The **team / initiative scope** of Brain. Crews share collaborative AI memory on
 Use **bootstrap** (configure → migrations → register → share bundle):
 
 ```bash
-bash core/scripts/team-brain-api.sh bootstrap --team "Crew" --admin "Alice" --url … --anon … --db-url … --jira AAP-81423
+bash core/scripts/team-brain-api.sh bootstrap --team "Crew" --admin "Alice" --url … --anon … --db-url … --jira YOU_JIRA_TICKET_HERE
 ```
 
 See [supabase/README.md](../supabase/README.md). Joiners still use `onboard` and do **not** need a Supabase account.
@@ -192,7 +192,7 @@ See [supabase/README.md](../supabase/README.md). Joiners still use `onboard` and
 Ask your admin for an **invite code**, **Jira key**, and the crew’s **Supabase URL + anon key**. Put URL/anon in local `supabase/project.public.env` (or `team.yaml` / env), then:
 
 ```bash
-bash core/scripts/team-brain-api.sh onboard <INVITE> "Your Name" AAP-81423
+bash core/scripts/team-brain-api.sh onboard <INVITE> "Your Name" YOU_JIRA_TICKET_HERE
 ```
 
 You do **not** need your own Supabase account. Step-by-step: [team-brain-onboarding.md](team-brain-onboarding.md). Admin setup: [supabase/README.md](../supabase/README.md).

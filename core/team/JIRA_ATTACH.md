@@ -5,7 +5,7 @@ Used by the `team-brain` skill when running `/team-brain attach <JIRA-KEY>`.
 ## Steps for the agent
 
 1. **Resolve Jira** (preferred: Atlassian MCP `getJiraIssue` with cloudId + key):
-   - `key` (e.g. `AAP-81423`)
+   - `key` (e.g. `YOU_JIRA_TICKET_HERE`)
    - `fields.summary`
    - `fields.status.name`
    - Browse URL: `{jira.site}/browse/{key}` from `.team-brain/team.yaml`

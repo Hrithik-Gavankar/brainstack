@@ -115,11 +115,11 @@ Commit `.team-brain/project.json` for repo pin (#39); `start`/`attach` accept an
 ### Chat examples (Cursor)
 
 ```text
-I'm starting on AAP-81423 — start Team Brain sync.
-I'm starting on AAP-81423 — start Team Brain sync, summarize crew memory, then help me.
-Wake Team Brain sync for AAP-81423 and continue.
-Stop Team Brain sync for AAP-81423.
-Breakdown AAP-81423 from Team Brain memory.
+I'm starting on YOU_JIRA_TICKET_HERE — start Team Brain sync.
+I'm starting on YOU_JIRA_TICKET_HERE — start Team Brain sync, summarize crew memory, then help me.
+Wake Team Brain sync for YOU_JIRA_TICKET_HERE and continue.
+Stop Team Brain sync for YOU_JIRA_TICKET_HERE.
+Breakdown YOU_JIRA_TICKET_HERE from Team Brain memory.
 ```
 
 Cursor ships always-on rule `platforms/cursor/rules/team-brain.mdc` + skill.

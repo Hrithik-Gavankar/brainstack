@@ -75,7 +75,7 @@ The plugin registers MCP namespace `plugin-atlassian-atlassian` and points at At
 
 First-time site install may require a user who has access to the Jira projects you use; after that, other crew members can authorize individually.
 
-> **Example (Red Hat):** `you@redhat.com` on `redhat.atlassian.net`, project keys like `AAP-xxxxx`.
+> **Example (Red Hat):** `you@redhat.com` on `redhat.atlassian.net`, project keys like `YOU_JIRA_TICKET_HERE`.
 
 #### 3.3 Verify
 

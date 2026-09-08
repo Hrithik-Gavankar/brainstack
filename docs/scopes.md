@@ -43,7 +43,7 @@ flowchart TB
 
 1. Admin: `bootstrap --team "Spike Crew" --admin "Alice" …` (or manual migrate + `register`) — see [supabase/README.md](../supabase/README.md)
 2. Admin: share the printed invite + URL + anon bundle
-3. Teammate: put crew URL/anon locally → `onboard <invite> "Name" AAP-81423`
+3. Teammate: put crew URL/anon locally → `onboard <invite> "Name" YOU_JIRA_TICKET_HERE`
 4. Agents/`remember` / `recall` / `breakdown` (or MCP tools)
 5. Optional: wire [mcp/team-brain](../mcp/team-brain/README.md); Cursor installs `team-brain.mdc` always-on rule
 6. `/engineer-brain sync` still personal-only
