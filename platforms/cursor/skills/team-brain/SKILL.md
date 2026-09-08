@@ -231,12 +231,12 @@ Never invent stories without recalled memories.
 | `bootstrap` | Admin one-shot setup + share bundle |
 | `onboard` / `register` / `join` | Membership |
 | `attach` | Bind Jira key |
-| `recall` / `remember` | Search / save (`learning` kind ok); on `redundant_candidate` recall + same `source_ref` or `--queue` |
+| `recall` / `remember` | Search / save (`learning` kind ok); on `redundant_candidate` recall + same `source_ref` or `--queue`; admin may `--force` |
 | `correct` | Update `source_ref` + optional learning |
 | `history` / `restore` | Revision audit trail / soft rollback |
 | `delete` | Tombstone poisoned memory (member/admin) |
 | `list-members` | Admin audit of crew roles |
-| `pending list` / `approve` / `reject` | Admin reviews overriding context (#67) |
+| `pending list` / `approve <pending-id>` / `reject <pending-id>` | Admin reviews overriding context (#67) |
 | `breakdown` / `metrics` / `status` | Plan / stats / config |
 
 MCP also exposes `prepare_research` (recall + compliance in one call).

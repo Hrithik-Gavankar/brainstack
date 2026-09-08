@@ -358,7 +358,7 @@ cat .team-brain/initiatives/DEMO-1-breakdown.md
 - [ ] Near-duplicate `remember` returns `redundant_candidate` (not stored)
 - [ ] `remember --queue` returns `pending_submitted`
 - [ ] Admin `pending list` shows the submission
-- [ ] Admin `pending approve` promotes to live memory
+- [ ] Admin `pending approve <pending-id>` promotes to live memory
 
 ```bash
 # After a memory exists, try overlapping content

@@ -365,7 +365,7 @@ The always-on rule expects `start` → summarize cache → work → `remember` /
 | You / AI learned something durable | `remember` with `source_ref` |
 | AI got research wrong — you correct it | `correct` (or re-`remember` same `source_ref`) |
 | Overlapping research blocked | `remember` returns `redundant_candidate` — reuse `source_ref` or `--queue` |
-| Admin keeps improved finding | `pending list` → `pending approve` |
+| Admin keeps improved finding | `pending list` → `pending approve <pending-id>` |
 | Keep sync awake | automatic via recall/remember; or `touch` |
 | Long spike / peer freshness | Optional once: `watch JIRA-KEY &` · agent: periodic `recall` (not every turn) |
 | Sync slept | Prompt → `wake JIRA-KEY` (not `watch`) |

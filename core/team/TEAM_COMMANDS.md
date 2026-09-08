@@ -125,7 +125,7 @@ bash core/scripts/team-brain-api.sh correct AAP-81423 --source-ref "AAP-81423#cl
 | `history` | List archived revisions + current body for a `source_ref` |
 | `restore` | Soft-rollback to revision N (archives current first) |
 | `delete` | Tombstone memory at `source_ref` (member/admin; audit preserved) |
-| `pending list` / `pending approve` / `pending reject` | Admin review queue for overrides (#67) |
+| `pending list` / `pending approve <pending-id>` / `pending reject <pending-id>` | Admin review queue for overrides (#67) |
 | `recall` | List recent, or vector/FTS search |
 | `reembed` | Backfill embeddings for an initiative |
 | `watch` | Foreground poll only (prefer `start`) |

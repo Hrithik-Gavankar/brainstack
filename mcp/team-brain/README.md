@@ -17,7 +17,7 @@ Agent-native tools for collaborative initiative memory. Wraps [`team-brain-api.s
 | `rotate_invite` / `set_role` / `list_members` | Admin-only invite rotate / role change / crew audit (#40) |
 | `whoami` | Current member / team |
 | `attach` | Upsert Jira initiative + pull recent memories |
-| `remember` | Write memory (`source_ref`; update on overlap; kinds include `learning`) |
+| `remember` | Write memory (`source_ref`; update on overlap; kinds include `learning`; `queue_for_review`, admin `force_apply`) |
 | `correct` | Human correction — update `source_ref` + optional learning |
 | `history` | List archived revisions + current body for a `source_ref` |
 | `restore` | Soft-rollback to revision N (archives current first) |

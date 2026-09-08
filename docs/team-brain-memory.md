@@ -282,12 +282,33 @@ Smoke tests: `tests/team-brain/cache-purge-smoke.sh` (local), `tests/team-brain/
 
 **Feedback engine:** `remember` detects near-duplicates (FTS; vector when embeddings enabled) and cross-author `source_ref` overrides on `research`/`decision`. Returns `redundant_candidate: true` — **nothing is stored** until the author fixes the slug or queues for review.
 
+### Detection thresholds (v1)
+
+| Path | Trigger | Notes |
+|------|---------|-------|
+| **Vector** (when embedding supplied) | cosine distance ≤ **0.12** (~similarity ≥ 0.88) | Issue #67 draft suggested 0.08 (≥0.92); v1 uses 0.12 to reduce false blocks on paraphrases |
+| **FTS** (fallback / no embedding) | `ts_rank` ≥ **0.05**, query body ≥ **8** chars | Uses `plainto_tsquery('english', …)` on `search_tsv` |
+| **Exact hash** | identical `content_hash` | Auto-dedupe (unchanged) |
+| **Cross-author `source_ref`** | `research`/`decision` only | `note`/`learning` still auto-update same `source_ref` (author merge) |
+
+### Response contract
+
+| Outcome | Key fields |
+|---------|------------|
+| Success (`inserted` / `updated` / `deduped`) | `id`, `initiative_id`, `content_hash`, `has_embedding`, `author_member_id`, `author_name`, `created_at`, `updated_at`, plus `result` |
+| Blocked | `redundant_candidate: true`, `matches[]`, `conflict_reason`, `suggested_action` |
+| Queued | `pending_submitted: true`, `pending_id`, `conflict_reason` |
+
+`suggested_action` values (v1): `recall_and_merge_same_source_ref_or_queue_for_review`, `use_same_source_ref_after_recall_or_queue_with_p_queue_for_review`, `await_admin_approval`.
+
+**Admin approve:** promotes queued body to live memory and **attributes `author_member_id` to the submitter** (credit for the improved finding).
+
 | Situation | Default | Member escape hatch | Admin |
 |-----------|---------|---------------------|-------|
 | Identical body | Auto-dedupe | — | — |
 | Same `source_ref`, same author | Auto-update + archive | — | `--force` immediate |
-| Same `source_ref`, different author (`research`/`decision`) | Block → `redundant_candidate` | `remember … --queue` | `pending approve <id>` |
-| New body, semantic/FTS match | Block → `redundant_candidate` + `matches[]` | `remember … --queue` | `pending approve <id>` |
+| Same `source_ref`, different author (`research`/`decision`) | Block → `redundant_candidate` | `remember … --queue` | `pending approve <pending-id>` |
+| New body, semantic/FTS match | Block → `redundant_candidate` + `matches[]` | `remember … --queue` | `pending approve <pending-id>` |
 
 ```bash
 # Member blocked — see matches, reuse source_ref:

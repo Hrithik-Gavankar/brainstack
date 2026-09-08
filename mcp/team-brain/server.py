@@ -321,6 +321,7 @@ def remember(
     kind: str = "research",
     source_ref: str = "",
     queue_for_review: bool = False,
+    force_apply: bool = False,
 ) -> str:
     """Save a finding for the crew — call IMMEDIATELY after durable research (do not wait).
 
@@ -330,6 +331,7 @@ def remember(
     prior body is archived (archived_revision) when the history migration is applied.
     Near-duplicate or cross-author conflict → redundant_candidate=true (not stored).
     Set queue_for_review=true to submit for admin approval instead of blocking.
+    Set force_apply=true (admin only) to bypass the redundant guard and apply immediately.
     For human corrections prefer correct(); or re-remember with the same source_ref.
     Memory bodies: natural-language prefer/avoid guidance — never TODO/NO-TODO dumps.
     Response includes compliance (marks last_remember_at on the sync session).
@@ -347,6 +349,8 @@ def remember(
         args.extend(["--source-ref", source_ref.strip()])
     if queue_for_review:
         args.append("--queue")
+    if force_apply:
+        args.append("--force")
     args.append("-")
     payload = _parse_obj(_run(*args, stdin_data=body))
     return _with_compliance(key, payload)

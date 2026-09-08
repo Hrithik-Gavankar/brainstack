@@ -21,7 +21,7 @@ create table if not exists public.memory_pending_submissions (
   content_hash text not null,
   target_capture_id uuid references public.captures (id) on delete set null,
   conflict_reason text not null check (conflict_reason in (
-    'semantic_duplicate', 'source_ref_override', 'cross_author_override'
+    'semantic_duplicate', 'source_ref_override'
   )),
   match_metadata jsonb not null default '{}'::jsonb,
   status text not null default 'pending' check (status in ('pending', 'approved', 'rejected')),
@@ -180,6 +180,47 @@ revoke all on function public.tb_insert_pending_submission(uuid, uuid, uuid, tex
 -- 4) remember — redundant guard + optional queue (#67)
 -- ---------------------------------------------------------------------------
 
+-- Standard capture payload (preserves pre-#67 remember response fields on success paths)
+create or replace function public.tb_remember_capture_json(
+  p_result text,
+  p_capture public.captures,
+  p_jira_key text,
+  p_author_name text,
+  p_deduped boolean,
+  p_updated boolean,
+  p_undeleted boolean,
+  p_archived_revision int
+)
+returns jsonb
+language sql
+stable
+as $$
+  select jsonb_build_object(
+    'result', p_result,
+    'id', p_capture.id,
+    'initiative_id', p_capture.initiative_id,
+    'jira_key', p_jira_key,
+    'kind', p_capture.kind,
+    'body', p_capture.body,
+    'source_ref', p_capture.source_ref,
+    'content_hash', p_capture.content_hash,
+    'has_embedding', p_capture.embedding is not null,
+    'author_member_id', p_capture.author_member_id,
+    'author_name', p_author_name,
+    'created_at', p_capture.created_at,
+    'updated_at', p_capture.updated_at,
+    'deduped', p_deduped,
+    'updated', p_updated,
+    'undeleted', p_undeleted,
+    'archived_revision', p_archived_revision,
+    'redundant_candidate', false,
+    'pending_submitted', false
+  );
+$$;
+
+revoke all on function public.tb_remember_capture_json(text, public.captures, text, text, boolean, boolean, boolean, int)
+  from public, anon, authenticated;
+
 drop function if exists public.remember(text, text, text, text, text, float[], text);
 
 create or replace function public.remember(
@@ -276,18 +317,8 @@ begin
           update public.captures set embedding = v_emb where id = existing.id
           returning * into existing;
         end if;
-        return jsonb_build_object(
-          'result', 'deduped',
-          'id', existing.id,
-          'initiative_id', existing.initiative_id,
-          'jira_key', init.jira_key,
-          'kind', existing.kind,
-          'body', existing.body,
-          'source_ref', existing.source_ref,
-          'deduped', true,
-          'updated', false,
-          'redundant_candidate', false,
-          'pending_submitted', false
+        return public.tb_remember_capture_json(
+          'deduped', existing, init.jira_key, author_name, true, false, false, null
         );
       end if;
 
@@ -350,19 +381,8 @@ begin
       where id = existing.id
       returning * into c;
 
-      return jsonb_build_object(
-        'result', 'updated',
-        'id', c.id,
-        'jira_key', init.jira_key,
-        'kind', c.kind,
-        'body', c.body,
-        'source_ref', c.source_ref,
-        'deduped', false,
-        'updated', true,
-        'undeleted', v_undeleted,
-        'archived_revision', v_archived_rev,
-        'redundant_candidate', false,
-        'pending_submitted', false
+      return public.tb_remember_capture_json(
+        'updated', c, init.jira_key, author_name, false, true, v_undeleted, v_archived_rev
       );
     end if;
   end if;
@@ -375,16 +395,12 @@ begin
   order by created_at desc
   limit 1;
   if found then
-    return jsonb_build_object(
-      'result', 'deduped',
-      'id', existing.id,
-      'jira_key', init.jira_key,
-      'source_ref', existing.source_ref,
-      'body', existing.body,
-      'deduped', true,
-      'updated', false,
-      'redundant_candidate', false,
-      'pending_submitted', false
+    if v_emb is not null and existing.embedding is null then
+      update public.captures set embedding = v_emb where id = existing.id
+      returning * into existing;
+    end if;
+    return public.tb_remember_capture_json(
+      'deduped', existing, init.jira_key, author_name, true, false, false, null
     );
   end if;
 
@@ -425,18 +441,8 @@ begin
   values (init.id, m.id, v_kind, trim(p_body), v_ref, v_hash, v_emb, v_ct)
   returning * into c;
 
-  return jsonb_build_object(
-    'result', 'inserted',
-    'id', c.id,
-    'jira_key', init.jira_key,
-    'kind', c.kind,
-    'body', c.body,
-    'source_ref', c.source_ref,
-    'deduped', false,
-    'updated', false,
-    'undeleted', false,
-    'redundant_candidate', false,
-    'pending_submitted', false
+  return public.tb_remember_capture_json(
+    'inserted', c, init.jira_key, author_name, false, false, false, null
   );
 end;
 $$;
@@ -623,6 +629,9 @@ end;
 $$;
 
 grant execute on function public.approve_pending_memory(text, uuid, text) to anon, authenticated;
+
+comment on function public.approve_pending_memory(text, uuid, text) is
+  'Admin promotes pending submission to live memory; attributes author_member_id to submitter (#67).';
 
 -- ---------------------------------------------------------------------------
 -- 7) reject_pending_memory (admin only)

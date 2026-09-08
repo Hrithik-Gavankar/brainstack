@@ -87,7 +87,7 @@ Then:
 3. Admin: `list-members` · `rotate-invite` · `set-role "Carol" --role member`
 4. `remember` → teammate `recall` / agent loop / MCP
 5. Remove poisoned memory: `delete <KEY> --source-ref <REF>` (member/admin)
-6. Feedback engine (#67): overlapping `remember` → `redundant_candidate`; member `remember … --queue` → admin `pending list` → `pending approve|reject`
+6. Feedback engine (#67): overlapping `remember` → `redundant_candidate`; member `remember … --queue` → admin `pending list` → `pending approve <pending-id>|reject <pending-id>`
 
 ### Roles (#40 + delete governance)
 

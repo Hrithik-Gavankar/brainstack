@@ -91,7 +91,7 @@ Generates a draft epic breakdown from shared memory — stories, spikes, impleme
 | **Correction loop** | Fix bad research → learning memory |
 | **History / rollback** | Soft restore prior findings |
 | **Governance** | Explicit role at onboard; delete for poisoned context |
-| **Feedback engine** | Blocks near-duplicate `remember`; admin `pending approve` (#67) |
+| **Feedback engine** | Blocks near-duplicate `remember`; admin `pending approve <pending-id>` (#67) |
 | **MCP tools** | Native AI tool access (Cursor, Claude Code) |
 
 ---
@@ -253,7 +253,7 @@ Ready to dig in. What would you like to work on?
 
 6. **How do we avoid duplicate research?**
    - `remember` returns `redundant_candidate` when content overlaps existing crew memory
-   - Members queue with `remember … --queue`; admins `pending list` → `pending approve`
+   - Members queue with `remember … --queue`; admins `pending list` → `pending approve <pending-id>`
    - Visual inbox: [#69](https://github.com/Hrithik-Gavankar/brainstack/issues/69) (CLI is v1)
 
 ---

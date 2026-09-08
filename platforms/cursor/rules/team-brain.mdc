@@ -77,7 +77,7 @@ ON HUMAN CORRECTION (bad research / wrong sync summary)
   → optional learning at source_ref/learning (was wrong → prefer …)
   → prior body archived; history/restore for soft rollback if needed
   → delete(source_ref) to tombstone poisoned context (member/admin only)
-  → redundant_candidate on remember → recall + same source_ref, or queue for admin (pending approve)
+  → redundant_candidate on remember → recall + same source_ref, or queue for admin (pending approve <pending-id>)
 
 LONG SESSION (do not spam every turn)
   → after a long research block, OR about every 8–10 turns on this key
