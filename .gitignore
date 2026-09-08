@@ -44,3 +44,6 @@ supabase/.bootstrap-migrations.combined.sql
 # .engineer-brain/BRAIN.md
 # *.pdf
 # RESUME.md
+
+# Local-only workshop runbook (not published)
+docs/workshop-brainstack-day0.md

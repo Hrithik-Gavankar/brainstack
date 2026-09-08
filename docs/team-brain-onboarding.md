@@ -52,6 +52,7 @@ Ask a teammate (crew admin) for **secrets** (Slack/chat is fine). The **Jira key
 Also make sure you have:
 
 - [ ] This repo cloned (`brainstack`) **and/or** the product repo with `.team-brain/project.json`
+- [ ] **Atlassian MCP** for Jira — required if you use `engineer-brain sync` ([setup](engineer-brain-onboarding.md#step-3--atlassian-mcp-jira--required))
 - [ ] A terminal (macOS Terminal, iTerm, VS Code/Cursor terminal)
 - [ ] `curl` and `jq` installed (`brew install jq` if needed)
 - [ ] Copy `supabase/project.public.env.example` → `supabase/project.public.env` (or use `bootstrap --write-env`) with the crew’s URL + anon

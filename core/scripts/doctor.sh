@@ -401,6 +401,16 @@ if [ "$S_IDENTITY" -ge 50 ] && { [ "$SCAN_AVAILABLE" -eq 1 ] || [ "$S_SPRINT" -g
   STANDUP_READY=1
 fi
 
+JIRA_CLI_READY=0
+if [ -n "${JIRA_URL:-}" ] && [ -n "${JIRA_EMAIL:-}" ] && [ -n "${JIRA_API_TOKEN:-}" ]; then
+  JIRA_CLI_READY=1
+fi
+
+GH_READY=0
+if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then
+  GH_READY=1
+fi
+
 QUARTERLY_READY=0
 if [ "$S_IDENTITY" -ge 50 ] && [ "$S_SKILLS" -ge 30 ] && [ "$S_VELOCITY" -ge 30 ]; then
   QUARTERLY_READY=1
@@ -450,8 +460,15 @@ if [ "$SCAN_AVAILABLE" -eq 1 ]; then
   printf "Active This Week:        %d\n" "$ACTIVE_THIS_WEEK"
 fi
 printf "Skills Updated:          %s\n" "$(check_mark "$SKILLS_UPDATED")"
+printf "GitHub CLI (gh):         %s\n" "$(check_mark "$GH_READY")"
+printf "Jira CLI (JIRA_* env):   %s\n" "$(check_mark "$JIRA_CLI_READY")"
 printf "Standup Ready:           %s\n" "$(check_mark "$STANDUP_READY")"
 printf "Quarterly Review Ready:  %s\n" "$(check_mark "$QUARTERLY_READY")"
+if [ "$JIRA_CLI_READY" -eq 0 ]; then
+  echo ""
+  echo "Jira signal: Cursor → install Atlassian MCP (Settings → Plugins)."
+  echo "             Other platforms → set JIRA_URL, JIRA_EMAIL, JIRA_API_TOKEN (see ONBOARDING.md)."
+fi
 
 if [ "${#COOLING_REPOS[@]}" -gt 0 ]; then
   echo ""

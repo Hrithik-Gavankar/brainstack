@@ -43,6 +43,10 @@ When the user says "engineer-brain sync", "daily sync", "standup", "update brain
 "watch PRs", "PR digest", "review queue",
 or asks about their work patterns, follow the command logic in `.engineer-brain/COMMANDS.md`.
 
+**Jira for `sync`:** This platform does **not** have the Atlassian Cursor plugin.
+Configure `JIRA_URL`, `JIRA_EMAIL`, and `JIRA_API_TOKEN`, then use `jira.sh` during `sync`
+(see `.engineer-brain/ONBOARDING.md` Step 5). Never finalize standup without a Jira signal.
+
 **Available commands:**
 - `sync` — generate daily standup notes
 - `update` — refresh BRAIN.md from git history
@@ -60,6 +64,7 @@ or asks about their work patterns, follow the command logic in `.engineer-brain/
 - Jira script: `.engineer-brain/scripts/jira.sh`
 - Watch script: `.engineer-brain/scripts/watch.sh`
 - Command reference: `.engineer-brain/COMMANDS.md`
+- Onboarding (Jira + setup): `.engineer-brain/ONBOARDING.md`
 
 ## Hard Rules
 

@@ -21,7 +21,8 @@
   <a href="#engineer-brain">engineer-brain</a> •
   <a href="#team-brain">Team Brain</a> •
   <a href="docs/architecture.md">Architecture</a> •
-  <a href="docs/team-brain-onboarding.md">Onboarding</a> •
+  <a href="docs/team-brain-onboarding.md">Team Onboarding</a> •
+  <a href="docs/engineer-brain-onboarding.md">engineer-brain Setup</a> •
   <a href="docs/roadmap.md">Roadmap</a> •
   <a href="docs/faq.md">FAQ</a>
 </p>
@@ -211,7 +212,7 @@ Bob's agent knows → suggests OAuth2 without re-researching
 Carol runs breakdown → draft includes Alice's auth decision
 ```
 
-> **Docs:** [Team Brain Overview](docs/team-brain.md) · [Onboarding](docs/team-brain-onboarding.md) · [Tutorial](docs/team-brain-tutorial.md) · [Demo](docs/team-brain-demo.md)
+> **Docs:** [Team Brain Overview](docs/team-brain.md) · [Team Onboarding](docs/team-brain-onboarding.md) · [engineer-brain Setup](docs/engineer-brain-onboarding.md) · [Tutorial](docs/team-brain-tutorial.md) · [Demo](docs/team-brain-demo.md)
 
 ---
 
@@ -472,6 +473,7 @@ brainstack/
 │   ├── scopes.md                      # Umbrella: engineer + team skills
 │   ├── team-brain.md                  # Team Brain overview
 │   ├── team-brain-onboarding.md       # Junior join path
+│   ├── engineer-brain-onboarding.md   # Standup signals (gh + Atlassian MCP)
 │   ├── team-brain-memory.md           # Collaborative memory plan (P0–P4)
 │   ├── brain-spec.md
 │   ├── vision.md
