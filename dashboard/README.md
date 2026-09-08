@@ -29,7 +29,20 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173) to view the dashboard.
+Open [http://localhost:5173](http://localhost:5173) to view the engineer dashboard.
+
+**Team Brain admin review inbox** (local only — [#69](https://github.com/Hrithik-Gavankar/brainstack/issues/69)):
+
+```bash
+# Optional: pre-fill Supabase project (same vars as CLI / supabase/project.public.env)
+export VITE_TEAM_BRAIN_SUPABASE_URL=https://xxxx.supabase.co
+export VITE_TEAM_BRAIN_SUPABASE_ANON_KEY=eyJ...
+
+npm run dev
+# → http://localhost:5173/admin/review
+```
+
+Connect with a crew **admin** `tb_…` API key (session storage only). Approve/reject calls the same RPCs as `pending list|approve|reject` in `core/scripts/team-brain-api.sh`. Never deploy real keys to GitHub Pages.
 
 ```bash
 npm run build   # production build → dist/
@@ -81,6 +94,39 @@ npm run preview
 
 Public demo tip (Vercel): set **Root Directory** to `dashboard`, build command `npm run build`, output `dist`.
 
+## Team Brain admin review queue
+
+Admin-only inbox for pending memory overrides (#67 / #69). Workshop-friendly alternative to `pending list` JSON in the terminal.
+
+| View | Source |
+|------|--------|
+| Pending queue | `list_pending_memories` RPC (`status = pending`, optional `p_jira_key`) |
+| Diff panel | Proposed `body_preview` vs live capture via `list_recent` + `target_capture_id` |
+| Metadata | `conflict_reason`, author, `match_metadata.matches`, timestamps |
+| Actions | `approve_pending_memory` · `reject_pending_memory` (admin role required) |
+
+**Auth:** Same trust model as CLI — `tb_…` api_key in `sessionStorage`, Supabase anon key for REST RPC calls. No anon `SELECT` on `memory_pending_submissions`; RPC-only.
+
+**Privacy:** Team-scoped like `list_members`. Never surfaces personal `BRAIN.md`.
+
+**Route:** `/admin/review` (pathname switch in `Root.tsx`; no extra router dependency).
+
+```
+dashboard/src/
+├── admin/                   # Team Brain review inbox (#69)
+│   ├── AdminReviewApp.tsx
+│   ├── AdminCredentialsForm.tsx
+│   ├── PendingSubmissionCard.tsx
+│   └── MemoryDiffPanel.tsx
+├── team-brain/
+│   ├── rpc.ts               # Supabase REST RPC client
+│   ├── session.ts             # sessionStorage credentials
+│   └── types.ts
+├── Root.tsx                   # /admin/review vs engineer dashboard
+```
+
+See [docs/team-brain-memory.md §7c](../docs/team-brain-memory.md#7c-redundant-memory-feedback--admin-approval-queue-67).
+
 ## Architecture
 
 ```
@@ -88,14 +134,17 @@ dashboard/
 ├── public/
 │   └── favicon.svg
 ├── src/
-│   ├── components/          # React presentation components
+│   ├── admin/               # Team Brain review inbox (local admin only)
+│   ├── team-brain/          # RPC client + types
+│   ├── components/          # Engineer dashboard presentation
 │   ├── data/
 │   │   ├── loadDashboardData.ts  # Stable data port
 │   │   ├── sampleData.ts         # Demo adapter payload
 │   │   └── brainAdapter.ts       # Stub for BRAIN.md parser
 │   ├── colors.ts            # Chart colors (UI layer)
 │   ├── types.ts             # DashboardData + brain-spec types
-│   ├── App.tsx
+│   ├── App.tsx              # Engineer dashboard (sample data)
+│   ├── Root.tsx             # Route: /admin/review → AdminReviewApp
 │   ├── main.tsx
 │   └── index.css
 ├── package.json
