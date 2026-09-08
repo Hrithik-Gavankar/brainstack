@@ -36,6 +36,8 @@ mcp = FastMCP(
         "no TODO/NO-TODO dumps). "
         "source_ref updates archive the prior body; history() / restore() for soft rollback. "
         "delete_memory() tombstones poisoned context (member/admin only). "
+        "remember() may return redundant_candidate — recall and reuse source_ref, or queue for admin. "
+        "pending list/approve/reject (#67) — admin reviews overriding context. "
         "If sync_status mode is sleep, prompt the user to wake before deep research. "
         "Peer push: start() may run Realtime Broadcast listener; check notify/<KEY>.json "
         "or sync_status.realtime_daemon after teammate remembers (poll/watch still fallback). "
@@ -318,6 +320,7 @@ def remember(
     body: str,
     kind: str = "research",
     source_ref: str = "",
+    queue_for_review: bool = False,
 ) -> str:
     """Save a finding for the crew — call IMMEDIATELY after durable research (do not wait).
 
@@ -325,6 +328,8 @@ def remember(
     Always pass source_ref (e.g. AAP-81423#cli-schema).
     Identical body → deduped=true. Same source_ref + new body → updated=true (merge);
     prior body is archived (archived_revision) when the history migration is applied.
+    Near-duplicate or cross-author conflict → redundant_candidate=true (not stored).
+    Set queue_for_review=true to submit for admin approval instead of blocking.
     For human corrections prefer correct(); or re-remember with the same source_ref.
     Memory bodies: natural-language prefer/avoid guidance — never TODO/NO-TODO dumps.
     Response includes compliance (marks last_remember_at on the sync session).
@@ -337,10 +342,11 @@ def remember(
     body = body.strip()
     if not body:
         raise ValueError("body is required")
-    # Pass body on stdin ("-") so quotes/newlines/$() are not mangled as shell args
     args = ["remember", key, kind_n]
     if source_ref.strip():
         args.extend(["--source-ref", source_ref.strip()])
+    if queue_for_review:
+        args.append("--queue")
     args.append("-")
     payload = _parse_obj(_run(*args, stdin_data=body))
     return _with_compliance(key, payload)
@@ -439,6 +445,39 @@ def list_members() -> str:
     Use before workshop demos to audit permission tiers.
     """
     return _as_json(_run("list-members"))
+
+
+@mcp.tool()
+def list_pending(jira_key: str = "", status: str = "pending") -> str:
+    """List pending memory submissions awaiting admin review (#67).
+
+    Admin sees all crew pending rows; members see only their own.
+    status: pending | approved | rejected | all
+    """
+    args = ["pending", "list"]
+    if jira_key.strip():
+        args.append(jira_key.strip().upper())
+    if status.strip() and status.strip().lower() != "pending":
+        args.extend(["--status", status.strip().lower()])
+    return _as_json(_run(*args))
+
+
+@mcp.tool()
+def approve_pending(pending_id: str, note: str = "") -> str:
+    """Admin-only: approve a queued memory override — promotes body to live crew memory."""
+    args = ["pending", "approve", pending_id.strip()]
+    if note.strip():
+        args.extend(["--note", note.strip()])
+    return _as_json(_run(*args))
+
+
+@mcp.tool()
+def reject_pending(pending_id: str, note: str = "") -> str:
+    """Admin-only: reject a queued memory override — keeps existing live memory."""
+    args = ["pending", "reject", pending_id.strip()]
+    if note.strip():
+        args.extend(["--note", note.strip()])
+    return _as_json(_run(*args))
 
 
 @mcp.tool()

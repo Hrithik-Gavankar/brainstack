@@ -33,6 +33,10 @@ jobs:
           bash core/scripts/team-brain-api.sh --help | grep -q remember
           bash core/scripts/team-brain-api.sh --help | grep -q breakdown
 
+      - name: Team Brain CLI smoke tests
+        run: |
+          bash tests/team-brain/pending-review-smoke.sh
+
   install-test:
     name: Test Installation (${{ matrix.platform }})
     runs-on: ubuntu-latest

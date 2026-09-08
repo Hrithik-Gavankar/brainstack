@@ -8,9 +8,10 @@
 #
 # Commands: onboard | register | join | whoami | attach | start | stop | wake |
 #           bootstrap | pin | remember | correct | history | restore | delete | recall | capture |
-#           sync | watch | breakdown | metrics | aggregate | compliance | list | list-members | mirror | status |
+#           sync | watch | breakdown | metrics | aggregate | compliance | list | list-members | pending | mirror | status |
 #           sync-status | touch | broadcast-topic | rotate-invite | set-role |
 #           enable-semantic | doctor
+# Pending review (#67): pending list|approve|reject — admin approves overriding context
 # Plan: docs/team-brain-memory.md — memories are SoT; md is optional export.
 # Realtime (#31): signal Broadcast + poll fallback — see migration …_realtime_broadcast.sql
 # Pin (#39): commit-safe .team-brain/project.json — never secrets.
@@ -1012,6 +1013,13 @@ cmd_doctor() {
       else
         echo "[ok]   delete_memory RPC present (governance migration)"
       fi
+      local pend_probe_err
+      pend_probe_err=$(rpc_try list_pending_memories "$(jq -n --arg k "$TEAM_BRAIN_API_KEY" '{p_api_key:$k,p_status:"pending"}')" 2>&1 >/dev/null || true)
+      if echo "$pend_probe_err" | grep -Eqi 'Could not find the function|PGRST202|404|does not exist'; then
+        echo "[warn] list_pending_memories unavailable — apply 20260908120001_team_brain_pending_review.sql (#67)"
+      else
+        echo "[ok]   pending review queue RPC present (#67 feedback engine)"
+      fi
       echo "[info] Full push needs: apply …_full_push_and_semantic_hardening.sql, then remember once to warm the broadcast key cache."
     else
       echo "[info] no TEAM_BRAIN_API_KEY yet — run onboard/register/join"
@@ -1970,6 +1978,80 @@ cmd_list_members() {
   echo "$out" | jq .
 }
 
+# pending — admin review queue for redundant/conflicting overrides (#67)
+cmd_pending() {
+  require_api_key
+  local sub="${1:-}"
+  shift || true
+  case "$sub" in
+    list|"")
+      local key=""
+      local status="pending"
+      while [ $# -gt 0 ]; do
+        case "$1" in
+          --status) status="${2:-pending}"; shift 2 ;;
+          -h|--help) die "usage: pending list [JIRA-KEY] [--status pending|approved|rejected|all]" ;;
+          *)
+            if [ -z "$key" ]; then key="$1"; else die "usage: pending list [JIRA-KEY] [--status pending|approved|rejected|all]"; fi
+            shift
+            ;;
+        esac
+      done
+      if [ -n "$key" ]; then key=$(echo "$key" | tr '[:lower:]' '[:upper]'); fi
+      rpc list_pending_memories "$(jq -n \
+        --arg k "$TEAM_BRAIN_API_KEY" \
+        --arg j "$key" \
+        --arg s "$status" \
+        '{p_api_key:$k, p_jira_key:(if $j=="" then null else $j end), p_status:$s}')" | jq .
+      ;;
+    approve)
+      local id="${1:-}"
+      local note=""
+      shift || true
+      while [ $# -gt 0 ]; do
+        case "$1" in
+          --note) note="${2:-}"; shift 2 ;;
+          *) die "usage: pending approve <pending-id> [--note TEXT]" ;;
+        esac
+      done
+      [ -n "$id" ] || die "usage: pending approve <pending-id> [--note TEXT]"
+      local out key
+      out=$(rpc approve_pending_memory "$(jq -n \
+        --arg k "$TEAM_BRAIN_API_KEY" --arg id "$id" --arg n "$note" \
+        '{p_api_key:$k, p_pending_id:$id, p_note:(if $n=="" then null else $n end)}')")
+      key=$(jq -r '.jira_key // empty' <<<"$out")
+      if [ -n "$key" ]; then
+        local sync_payload
+        sync_payload=$(fetch_memories "$key")
+        mirror_captures_to_md "$key" "$sync_payload"
+      fi
+      echo "→ approved — live memory updated" >&2
+      echo "$out" | jq .
+      ;;
+    reject)
+      local id="${1:-}"
+      local note=""
+      shift || true
+      while [ $# -gt 0 ]; do
+        case "$1" in
+          --note) note="${2:-}"; shift 2 ;;
+          *) die "usage: pending reject <pending-id> [--note TEXT]" ;;
+        esac
+      done
+      [ -n "$id" ] || die "usage: pending reject <pending-id> [--note TEXT]"
+      rpc reject_pending_memory "$(jq -n \
+        --arg k "$TEAM_BRAIN_API_KEY" --arg id "$id" --arg n "$note" \
+        '{p_api_key:$k, p_pending_id:$id, p_note:(if $n=="" then null else $n end)}')" | jq .
+      ;;
+    -h|--help|help)
+      die "usage: pending list [JIRA-KEY] [--status pending|approved|rejected|all] | pending approve <id> [--note] | pending reject <id> [--note]"
+      ;;
+    *)
+      die "usage: pending list|approve|reject — admin reviews overriding context (#67)"
+      ;;
+  esac
+}
+
 cmd_whoami() {
   require_api_key
   rpc tb_whoami "$(jq -n --arg k "$TEAM_BRAIN_API_KEY" '{p_api_key:$k}')" | jq .
@@ -2038,13 +2120,23 @@ cmd_remember() {
   local source_ref="${TEAM_BRAIN_SOURCE_REF:-}"
   local body_file=""
   local from_stdin=0
+  local queue_flag=0
+  local force_flag=0
   local args=()
-  local usage='usage: remember <JIRA-KEY> <research|decision|note|learning> [--source-ref REF] [--body-file PATH | - | <body...>]'
+  local usage='usage: remember <JIRA-KEY> <research|decision|note|learning> [--source-ref REF] [--queue|--force] [--body-file PATH | - | <body...>]'
   while [ $# -gt 0 ]; do
     case "$1" in
       --source-ref)
         source_ref="${2:-}"
         shift 2 || die "$usage"
+        ;;
+      --queue)
+        queue_flag=1
+        shift
+        ;;
+      --force)
+        force_flag=1
+        shift
         ;;
       --body-file)
         body_file="${2:-}"
@@ -2094,7 +2186,9 @@ cmd_remember() {
       --arg r "$source_ref" \
       --argjson e "$emb" \
       --arg ct "$broadcast_ct" \
-      '{p_api_key:$k, p_jira_key:$j, p_kind:$kind, p_body:$b, p_source_ref:(if $r=="" then null else $r end), p_embedding:$e, p_broadcast_ct:(if $ct=="" then null else $ct end)}')
+      --argjson force "$force_flag" \
+      --argjson queue "$queue_flag" \
+      '{p_api_key:$k, p_jira_key:$j, p_kind:$kind, p_body:$b, p_source_ref:(if $r=="" then null else $r end), p_embedding:$e, p_broadcast_ct:(if $ct=="" then null else $ct end), p_force_apply:$force, p_queue_for_review:$queue}')
   else
     payload=$(jq -n \
       --arg k "$TEAM_BRAIN_API_KEY" \
@@ -2103,7 +2197,9 @@ cmd_remember() {
       --arg b "$body_text" \
       --arg r "$source_ref" \
       --arg ct "$broadcast_ct" \
-      '{p_api_key:$k, p_jira_key:$j, p_kind:$kind, p_body:$b, p_source_ref:(if $r=="" then null else $r end), p_embedding:null, p_broadcast_ct:(if $ct=="" then null else $ct end)}')
+      --argjson force "$force_flag" \
+      --argjson queue "$queue_flag" \
+      '{p_api_key:$k, p_jira_key:$j, p_kind:$kind, p_body:$b, p_source_ref:(if $r=="" then null else $r end), p_embedding:null, p_broadcast_ct:(if $ct=="" then null else $ct end), p_force_apply:$force, p_queue_for_review:$queue}')
   fi
   if ! out=$(rpc_try remember "$payload" 2>/dev/null); then
     # Older remember without p_embedding, or pre-P0
@@ -2118,13 +2214,21 @@ cmd_remember() {
       if [ "$kind" = "learning" ]; then
         die "remember(learning) failed — apply migration 20260802000001_team_brain_learning_kind.sql"
       fi
-      out=$(rpc add_capture "$(jq -n \
-        --arg k "$TEAM_BRAIN_API_KEY" \
-        --arg j "$key" \
-        --arg kind "$kind" \
-        --arg b "$body_text" \
-        '{p_api_key:$k, p_jira_key:$j, p_kind:$kind, p_body:$b}')")
+      die "remember failed — apply migration 20260908120001_team_brain_pending_review.sql for #67 feedback engine"
     fi
+  fi
+  if jq -e '.redundant_candidate == true' >/dev/null 2>&1 <<<"$out"; then
+    echo "→ BLOCKED (#67): similar or conflicting crew memory exists — not stored" >&2
+    echo "→ Prefer: recall → reuse same source_ref, or: remember ... --queue (admin approval)" >&2
+    jq -r '.matches[]? | "  match: \(.source_ref // "no-ref") [\(.match_type // "?")] by \(.author_name // "?") — \(.body_preview // "")"' <<<"$out" 2>/dev/null >&2 || true
+    echo "$out" | jq .
+    return 0
+  fi
+  if jq -e '.pending_submitted == true' >/dev/null 2>&1 <<<"$out"; then
+    echo "→ queued for admin review (pending_id=$(jq -r '.pending_id // empty' <<<"$out"))" >&2
+    echo "→ Admin: pending list $key · pending approve <id>" >&2
+    echo "$out" | jq .
+    return 0
   fi
   sync_payload=$(fetch_memories "$key")
   merge_memory_cache "$key" "$sync_payload"
@@ -2982,6 +3086,10 @@ Team Brain — collaborative memory client (Supabase)
   set-role "Name" --role admin|member|viewer
       Admin-only: change a teammate's role (#40)
   list-members               Admin-only: audit crew roles (display_name + role)
+  pending list [JIRA-KEY] [--status pending|approved|rejected|all]
+      Review queue (#67): members see own submissions; admin sees all.
+  pending approve <pending-id> [--note TEXT]   Admin-only: promote override to live memory
+  pending reject <pending-id> [--note TEXT]    Admin-only: discard queued override
   attach [JIRA-KEY] [title] [status] [jira-url]
       Upsert initiative (writers only). Jira key optional if project.json pin set.
 
@@ -2996,8 +3104,8 @@ Team Brain — collaborative memory client (Supabase)
   sync-status [JIRA-KEY]    Sync mode + MCP compliance (research_ok, agent_action)
   compliance [JIRA-KEY]     MCP-first soft gate status (issue #36)
 
-  remember <JIRA-KEY> <research|decision|note|learning> [--source-ref REF] [--body-file PATH | - | <body...>]
-      Write shared memory (admin/member only; viewers forbidden). Dedupes / source_ref merge.
+  remember <JIRA-KEY> <research|decision|note|learning> [--source-ref REF] [--queue|--force] [--body-file PATH | - | <body...>]
+      Write shared memory (#67: blocks near-duplicates; --queue submits for admin review; --force admin-only).
   correct <JIRA-KEY> --source-ref REF [--kind research|decision|note] [--was TEXT] [--learning TEXT] [--body-file PATH | - | <body...>]
       Human correction: UPDATE memory at source_ref; optional learning row at REF/learning.
       Bodies: natural-language prefer/avoid guidance — not TODO/NO-TODO dumps.
@@ -3087,6 +3195,7 @@ main() {
     rotate-invite|rotate_invite) cmd_rotate_invite "$@" ;;
     set-role|set_role) cmd_set_role "$@" ;;
     list-members|list_members) cmd_list_members "$@" ;;
+    pending) cmd_pending "$@" ;;
     attach) cmd_attach "$@" ;;
     start) cmd_start "$@" ;;
     stop) cmd_stop "$@" ;;

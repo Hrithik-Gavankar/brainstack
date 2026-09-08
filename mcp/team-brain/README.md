@@ -22,6 +22,7 @@ Agent-native tools for collaborative initiative memory. Wraps [`team-brain-api.s
 | `history` | List archived revisions + current body for a `source_ref` |
 | `restore` | Soft-rollback to revision N (archives current first) |
 | `delete_memory` | Tombstone memory at `source_ref` (member/admin; audit preserved) |
+| `list_pending` / `approve_pending` / `reject_pending` | Admin review queue for overrides (#67) |
 | `recall` | Search (query) or list recent (no query); includes `compliance` |
 | `list_recent` | Sync / list with optional `since` cursor |
 | `list_initiatives` | Team initiative index |
@@ -108,6 +109,7 @@ Apply `20260804000001_team_brain_realtime_broadcast.sql` + `20260808000001_team_
 Run `team-brain-api.sh enable-semantic openai|ollama` to opt in to vector `recall`; `team-brain-api.sh doctor` for a client readiness preflight.  
 Apply `20260805000001_team_brain_roles_and_invites.sql` for `viewer` + admin invite rotate.  
 Apply `20260908000001_team_brain_delete_permissions.sql` for `delete_memory` tombstone + `list_members`.  
+Apply `20260908120001_team_brain_pending_review.sql` for redundant guard + `pending` review queue (#67).  
 Commit `.team-brain/project.json` for repo pin (#39); `start`/`attach` accept an empty key when pinned.
 
 ### Chat examples (Cursor)

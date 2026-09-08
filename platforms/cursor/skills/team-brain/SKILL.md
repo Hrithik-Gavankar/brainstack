@@ -231,11 +231,12 @@ Never invent stories without recalled memories.
 | `bootstrap` | Admin one-shot setup + share bundle |
 | `onboard` / `register` / `join` | Membership |
 | `attach` | Bind Jira key |
-| `recall` / `remember` | Search / save (`learning` kind ok) |
+| `recall` / `remember` | Search / save (`learning` kind ok); on `redundant_candidate` recall + same `source_ref` or `--queue` |
 | `correct` | Update `source_ref` + optional learning |
 | `history` / `restore` | Revision audit trail / soft rollback |
 | `delete` | Tombstone poisoned memory (member/admin) |
 | `list-members` | Admin audit of crew roles |
+| `pending list` / `approve` / `reject` | Admin reviews overriding context (#67) |
 | `breakdown` / `metrics` / `status` | Plan / stats / config |
 
 MCP also exposes `prepare_research` (recall + compliance in one call).
@@ -247,6 +248,7 @@ Beginner guide: `docs/team-brain-onboarding.md`
 - User’s one step: **`start`** (or ask you to start)
 - Context first from cache before research (`research_ok` / follow `agent_action`)
 - `remember` with `source_ref`; never clobber unrelated rows
+- If `remember` returns `redundant_candidate: true` → **do not fork**; `recall` existing, reuse `source_ref`, or `remember --queue` for admin
 - On human correction: **update** the matching `source_ref` (never fork)
 - Memory bodies: prefer/avoid prose — **no** TODO/NO-TODO dumps
 - Long sessions: refresh via `recall` after research blocks / ~8–10 turns — **never** every turn

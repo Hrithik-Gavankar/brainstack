@@ -331,10 +331,16 @@ Jira:     ${site}
 Joiner checklist (no Supabase account needed):
   1. Clone brainstack (or use installed skills)
   2. Put URL + anon in local supabase/project.public.env (or .team-brain/team.yaml / env)
-  3. Run:
-       bash core/scripts/team-brain-api.sh onboard ${invite} "Their Name" ${jira:-JIRA-KEY}
+  3. Admin assigns role (member = contributor, viewer = read-only), then run:
+       bash core/scripts/team-brain-api.sh onboard ${invite} "Their Name" ${jira:-JIRA-KEY} --role member
+     # or: ... --role viewer
   4. Start sync:
        bash core/scripts/team-brain-api.sh start ${jira:-JIRA-KEY}
+
+Admin after bootstrap:
+  bash core/scripts/team-brain-api.sh list-members
+  bash core/scripts/team-brain-api.sh pending list ${jira:-JIRA-KEY}   # review queued overrides (#67)
+  bash core/scripts/team-brain-api.sh doctor
 
 Do NOT commit live URL/anon/invite to a public fork.
 Do NOT share service_role or member api_key in chat logs that get committed.

@@ -278,6 +278,39 @@ Smoke tests: `tests/team-brain/cache-purge-smoke.sh` (local), `tests/team-brain/
 
 ---
 
+## 7c. Redundant-memory feedback + admin approval queue (#67)
+
+**Feedback engine:** `remember` detects near-duplicates (FTS; vector when embeddings enabled) and cross-author `source_ref` overrides on `research`/`decision`. Returns `redundant_candidate: true` — **nothing is stored** until the author fixes the slug or queues for review.
+
+| Situation | Default | Member escape hatch | Admin |
+|-----------|---------|---------------------|-------|
+| Identical body | Auto-dedupe | — | — |
+| Same `source_ref`, same author | Auto-update + archive | — | `--force` immediate |
+| Same `source_ref`, different author (`research`/`decision`) | Block → `redundant_candidate` | `remember … --queue` | `pending approve <id>` |
+| New body, semantic/FTS match | Block → `redundant_candidate` + `matches[]` | `remember … --queue` | `pending approve <id>` |
+
+```bash
+# Member blocked — see matches, reuse source_ref:
+bash core/scripts/team-brain-api.sh remember DEMO-1 research "…" 
+# → redundant_candidate (not stored)
+
+# Member queues override for admin:
+bash core/scripts/team-brain-api.sh remember DEMO-1 research --source-ref "DEMO-1#auth" --queue "…"
+
+# Admin reviews + approves (promotes to live memory):
+bash core/scripts/team-brain-api.sh pending list DEMO-1
+bash core/scripts/team-brain-api.sh pending approve <pending-id> --note "Better finding"
+
+# Admin rejects (keeps existing live memory):
+bash core/scripts/team-brain-api.sh pending reject <pending-id> --note "Duplicate of Alice's note"
+```
+
+**Workshop Part 5:** B tries to re-store A's topic → feedback engine blocks → B recalls A's `source_ref` OR queues → admin keeps only the improved version.
+
+**UI dashboard:** [#69](https://github.com/Hrithik-Gavankar/brainstack/issues/69) — admin review inbox (CLI/MCP is v1).
+
+---
+
 ## 8. Future hardening (roadmap)
 
 | Capability | Today | Next |
@@ -285,6 +318,7 @@ Smoke tests: `tests/team-brain/cache-purge-smoke.sh` (local), `tests/team-brain/
 | Recall before research | ✅ Rule/skill/MCP | Keep mandatory |
 | Remember after findings | ✅ Direct save | Keep mandatory |
 | Dedup (`source_ref`) | ✅ | — |
+| Redundant guard + pending queue | ✅ CLI/MCP (#67) | Admin dashboard UI |
 | Correction / learning | ✅ `correct` + `learning` kind | — |
 | Version/history/soft rollback | ✅ `history` / `restore` + `capture_revisions` | Optional snapshots / UI |
 | Tombstone delete / governance | ✅ `delete` + `list-members`; peer cache eviction | Per-initiative ACLs (deferred) |

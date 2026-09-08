@@ -91,6 +91,7 @@ Generates a draft epic breakdown from shared memory — stories, spikes, impleme
 | **Correction loop** | Fix bad research → learning memory |
 | **History / rollback** | Soft restore prior findings |
 | **Governance** | Explicit role at onboard; delete for poisoned context |
+| **Feedback engine** | Blocks near-duplicate `remember`; admin `pending approve` (#67) |
 | **MCP tools** | Native AI tool access (Cursor, Claude Code) |
 
 ---
@@ -138,6 +139,7 @@ bash core/scripts/team-brain-api.sh onboard <INVITE> "Carol" AAP-81423 --role vi
 **Admin audit crew permissions:**
 ```bash
 bash core/scripts/team-brain-api.sh list-members
+bash core/scripts/team-brain-api.sh pending list AAP-81423   # review queued overrides (#67)
 ```
 
 **Work session:**
@@ -163,17 +165,27 @@ bash core/scripts/team-brain-api.sh remember DEMO-1 research \
 bash core/scripts/team-brain-api.sh recall DEMO-1 "auth"
 
 # 3. Carol joins and gets context
-bash core/scripts/team-brain-api.sh onboard ABC123 "Carol" DEMO-1
+bash core/scripts/team-brain-api.sh onboard ABC123 "Carol" DEMO-1 --role member
 bash core/scripts/team-brain-api.sh start DEMO-1
 # → AI summarizes: "Auth uses bearer tokens from /auth/token..."
 
 # 4. Breakdown
 bash core/scripts/team-brain-api.sh breakdown DEMO-1
 
-# 5. Governance demo — remove poisoned memory (member/admin)
+# 5. Governance — remove poisoned memory (member/admin)
 bash core/scripts/team-brain-api.sh delete DEMO-1 --source-ref "DEMO-1#bad-claim"
 # Peer A's cache evicts on realtime tombstone or next sync poll — no manual cache wipe.
 # Viewer attempt → forbidden: delete requires member role
+
+# 6. Feedback engine — Bob tries duplicate research (blocked, then admin approves)
+bash core/scripts/team-brain-api.sh remember DEMO-1 research \
+  "API uses bearer tokens from /auth/token endpoint."
+# → redundant_candidate: true (not stored — matches DEMO-1#api-auth)
+
+bash core/scripts/team-brain-api.sh remember DEMO-1 research \
+  --source-ref "DEMO-1#api-auth" --queue \
+  "API uses OAuth2 device flow (preferred for CLI clients)."
+# → pending_submitted — admin: pending list DEMO-1 · pending approve <id>
 ```
 
 ### Cursor Chat Demo
@@ -238,6 +250,11 @@ Ready to dig in. What would you like to work on?
 5. **How do I try it?**
    - Local Docker: `bootstrap --local`
    - Hosted: free Supabase tier is enough
+
+6. **How do we avoid duplicate research?**
+   - `remember` returns `redundant_candidate` when content overlaps existing crew memory
+   - Members queue with `remember … --queue`; admins `pending list` → `pending approve`
+   - Visual inbox: [#69](https://github.com/Hrithik-Gavankar/brainstack/issues/69) (CLI is v1)
 
 ---
 
