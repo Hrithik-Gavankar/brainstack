@@ -231,6 +231,21 @@ Run it **once** when the spike gets long — not every command. Cursor agents al
 
 Only one person does this for a new crew. **You need a Supabase account** (free tier is fine). Joiners do not.
 
+### Quick path — one config file (recommended)
+
+Fill **everything** in one place, then run one command:
+
+```bash
+cd /path/to/brainstack
+bash core/scripts/team-brain-admin-setup.sh --init
+# edit supabase/admin.setup.env (admin name, crew, Jira epic, Supabase URL + anon)
+bash core/scripts/team-brain-admin-setup.sh
+```
+
+`supabase/admin.setup.env` is gitignored. The script writes runtime files (`project.public.env`, `credentials.json`, share bundle, pin).
+
+If migrations cannot auto-apply (no `psql`), bootstrap stops with SQL Editor instructions — set `TEAM_BRAIN_SKIP_MIGRATIONS=true` in the same file and re-run after pasting `supabase/.bootstrap-migrations.combined.sql`.
+
 > **macOS / no `psql`?** Use **Step 2A (SQL Editor)** below — you do **not** need `psql`, Supabase CLI, or `--db-url`.
 
 ### Step 1 — Create a Supabase project

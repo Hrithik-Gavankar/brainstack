@@ -189,15 +189,16 @@ migration_blocked_manual_sql() {
   Dashboard → SQL Editor → paste and run:
     $combined
 
-──────── Step 2 — register (one copy-paste line) ───
-  --skip-migrations is a flag on bootstrap, not its own command.
+──────── Step 2 — re-run admin setup (same command) ───
+  Migrations are auto-detected — no flags or config edits needed:
 
-EOF
-  # Print a ready-to-run single line (admin's machine; anon already in project.public.env)
-  printf '%s\n' "bash \"$API\" bootstrap --team \"$TEAM_NAME\" --admin \"$ADMIN_NAME\" --url \"$SUPABASE_URL\" --anon \"$ANON_KEY\" ${rerun_jira:+--jira \"$rerun_jira\"} --write-env --skip-migrations" >&2
-  cat >&2 <<EOF
+    bash core/scripts/team-brain-admin-setup.sh
 
-Optional (future projects): brew install libpq && brew link --force libpq  # then --db-url works
+  (Or from repo root: bash core/scripts/team-brain-admin-setup.sh)
+
+Optional — fully automated migrations next time (one-time):
+  brew install libpq && brew link --force libpq
+  Add TEAM_BRAIN_DB_URL to supabase/admin.setup.env (Database → connection string)
 
 EOF
   MIGRATION_BLOCKED=1
@@ -233,6 +234,34 @@ apply_migrations_supabase_push() {
     supabase db push
   ) || die "supabase db push failed — login/link the project (supabase login && supabase link) or pass --db-url"
   ok "Migrations applied via supabase db push"
+}
+
+# Probe join_team via anon — same signal as team-brain-api.sh doctor.
+migrations_already_applied() {
+  local url resp http body
+  [ -n "$SUPABASE_URL" ] && [ -n "$ANON_KEY" ] || return 1
+  is_placeholder_url "$SUPABASE_URL" && return 1
+  is_placeholder_anon "$ANON_KEY" && return 1
+  url="${SUPABASE_URL%/}/rest/v1/rpc/join_team"
+  resp=$(curl -sS -w "\n%{http_code}" -X POST "$url" \
+    --max-time "${TEAM_BRAIN_HTTP_TIMEOUT:-20}" \
+    -H "apikey: ${ANON_KEY}" \
+    -H "Authorization: Bearer ${ANON_KEY}" \
+    -H "Content-Type: application/json" \
+    -d '{"p_invite_code":"","p_display_name":"x","p_role":"member"}' 2>/dev/null) || return 1
+  http=$(echo "$resp" | tail -n1)
+  body=$(echo "$resp" | sed '$d')
+  if echo "$body" | grep -Eqi 'Could not find the function public\.join_team|PGRST202'; then
+    return 1
+  fi
+  if echo "$body" | grep -Eqi 'function digest\(|digest\(text|42883'; then
+    return 1
+  fi
+  if echo "$body" | grep -Eqi 'invite code required|rate limit exceeded|invalid role|display name required'; then
+    return 0
+  fi
+  [ "$http" -ge 200 ] && [ "$http" -lt 300 ] && return 0
+  return 1
 }
 
 write_combined_sql() {
@@ -400,11 +429,10 @@ print_plan
 if [ "$USE_LOCAL" -eq 0 ]; then
   if is_placeholder_url "$SUPABASE_URL" || is_placeholder_anon "$ANON_KEY"; then
     die "Supabase URL/anon missing or still placeholders.
-  Fix one of:
-    • Pass --url and --anon
-    • Export TEAM_BRAIN_SUPABASE_URL / TEAM_BRAIN_SUPABASE_ANON_KEY
-    • Edit $PUBLIC_ENV then re-run
-    • Use --local for Docker
+  Admin: fill supabase/admin.setup.env (one file), then:
+    bash core/scripts/team-brain-admin-setup.sh
+
+  Or pass --url and --anon / use --local for Docker.
   Create a project: https://supabase.com → Project Settings → API"
   fi
 fi
@@ -422,6 +450,11 @@ export TEAM_BRAIN_SUPABASE_ANON_KEY="$ANON_KEY"
 export TEAM_BRAIN_JIRA_SITE="$JIRA_SITE"
 
 # Migrations
+if [ "$SKIP_MIGRATIONS" -eq 0 ] && migrations_already_applied; then
+  ok "Migrations already applied on this Supabase project — skipping apply"
+  SKIP_MIGRATIONS=1
+fi
+
 if [ "$SKIP_MIGRATIONS" -eq 0 ]; then
   if [ "$USE_LOCAL" -eq 1 ]; then
     ok "Local mode: migrations applied by supabase start"
@@ -450,7 +483,7 @@ else
 fi
 
 if [ "$MIGRATION_BLOCKED" -eq 1 ]; then
-  warn "Bootstrap paused after writing config — finish Step 1 (SQL Editor), then run the Step 2 line above."
+  warn "Bootstrap paused — apply SQL once in Supabase Dashboard, then re-run admin-setup."
   exit 2
 fi
 
