@@ -5,7 +5,7 @@
 **You do not need:** your own Supabase account, a `service_role` key, or Docker.  
 **You do need from your admin:** invite code, Jira key, and the crew’s Supabase **project URL + anon key** (placeholders ship in the repo — not a live project).
 
-> **Workshop demo scripts:** [workshop-brainstack-day0.md](workshop-brainstack-day0.md) uses **`team-brain-admin-setup.sh`** / **`team-brain-member-setup.sh`** with demo epic **`KAN-4`** only. Everything below uses **`YOU_JIRA_TICKET_HERE`** (replace with your ticket key).
+> **Workshop demo scripts:** `docs/workshop-brainstack-day0.md` (local workshop copy — not in the public repo) documents **`team-brain-admin-setup.sh`** / **`team-brain-member-setup.sh`** with demo epic **`KAN-4`**. Everything below uses **`YOU_JIRA_TICKET_HERE`** (replace with your ticket key).
 
 ---
 
