@@ -172,6 +172,7 @@ bash core/scripts/team-brain-api.sh breakdown DEMO-1
 
 # 5. Governance demo — remove poisoned memory (member/admin)
 bash core/scripts/team-brain-api.sh delete DEMO-1 --source-ref "DEMO-1#bad-claim"
+# Peer A's cache evicts on realtime tombstone or next sync poll — no manual cache wipe.
 # Viewer attempt → forbidden: delete requires member role
 ```
 

@@ -383,6 +383,13 @@ When teammates `remember`, your cache updates. Agents should also `recall` after
 
 ## Optional: Roles Demo
 
+### Admin: audit crew permissions
+
+```bash
+bash core/scripts/team-brain-api.sh list-members
+# → display_name + role only (never api_key)
+```
+
 ### Admin: rotate invite
 
 ```bash
@@ -403,6 +410,28 @@ bash core/scripts/team-brain-api.sh set-role "Bob" --role viewer
 # As a viewer:
 bash core/scripts/team-brain-api.sh remember DEMO-1 note "Test"
 # → Error: forbidden: viewer role is read-only
+```
+
+### Governance: delete poisoned memory (member/admin)
+
+```bash
+# Member removes bad context (tombstone — audit preserved):
+bash core/scripts/team-brain-api.sh delete DEMO-1 --source-ref "DEMO-1#bad-claim"
+
+# Viewer cannot delete:
+# → Error: forbidden: delete requires member role
+
+# Peer cache: Engineer B deletes → Engineer A's sync loop / realtime push
+# evicts the tombstoned row from .team-brain/cache/DEMO-1.json automatically.
+
+# Confirm gone:
+bash core/scripts/team-brain-api.sh recall DEMO-1 "bad-claim"
+# → memory no longer in results
+
+# Restore content at same source_ref (undelete via remember):
+bash core/scripts/team-brain-api.sh remember DEMO-1 research \
+  --source-ref "DEMO-1#bad-claim" "Corrected finding after delete."
+# → undeleted: true in RPC response
 ```
 
 ---
@@ -433,7 +462,7 @@ bash core/scripts/team-brain-api.sh remember DEMO-1 note "Test"
 
 ```bash
 # Join
-bash core/scripts/team-brain-api.sh onboard <INVITE> "Name" <JIRA-KEY>
+bash core/scripts/team-brain-api.sh onboard <INVITE> "Name" <JIRA-KEY> --role member|viewer
 
 # Work session
 bash core/scripts/team-brain-api.sh start <JIRA-KEY>

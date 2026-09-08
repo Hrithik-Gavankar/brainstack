@@ -401,7 +401,8 @@ ensure_broadcast_key() {
   printf '%s' "$bk"
 }
 
-# Pull memories: prefer list_recent (P0); fall back to list_captures (v1).
+# Pull memories: prefer list_recent (P0); fall back to list_captures (v1 legacy).
+# Both paths exclude tombstones when delete_permissions migration is applied.
 fetch_memories() {
   local key="$1"
   local since="${2:-}"
@@ -666,6 +667,52 @@ maybe_client_broadcast() {
     2>/dev/null || true
 }
 
+# Best-effort tombstone broadcast after delete_memory (peers purge cache).
+maybe_client_broadcast_tombstone() {
+  local key="$1"
+  local out_json="${2:-}"
+  [ -n "$key" ] || return 0
+  key=$(echo "$key" | tr '[:lower:]' '[:upper:]')
+  load_config
+  [ -n "${TEAM_BRAIN_SUPABASE_URL:-}" ] && [ -n "${TEAM_BRAIN_SUPABASE_ANON_KEY:-}" ] || return 0
+  supabase_config_is_placeholder && return 0
+  local team_id=""
+  if [ -f "$CRED_FILE" ]; then
+    team_id=$(jq -r '.team_id // empty' "$CRED_FILE")
+  fi
+  [ -n "$team_id" ] || return 0
+  local capture_id source_ref topic payload
+  capture_id=$(jq -r '.capture_id // empty' <<<"$out_json")
+  source_ref=$(jq -r '.source_ref // empty' <<<"$out_json")
+  [ -n "$capture_id" ] || [ -n "$source_ref" ] || return 0
+  topic="team-brain:${team_id}:${key}"
+  payload=$(jq -n \
+    --arg tid "$team_id" \
+    --arg jk "$key" \
+    --arg cid "$capture_id" \
+    --arg ref "$source_ref" \
+    --arg deleted_at "$(jq -r '.deleted_at // empty' <<<"$out_json")" \
+    '{
+      team_id: $tid,
+      jira_key: $jk,
+      capture_id: (if $cid=="" then null else $cid end),
+      source_ref: (if $ref=="" then null else $ref end),
+      deleted: true,
+      deleted_at: (if $deleted_at=="" then null else $deleted_at end),
+      op: "UPDATE",
+      via: "client_broadcast_tombstone"
+    }')
+  local url="${TEAM_BRAIN_SUPABASE_URL%/}/realtime/v1/api/broadcast"
+  curl -sS -o /dev/null -X POST "$url" \
+    --max-time "${TEAM_BRAIN_HTTP_TIMEOUT:-20}" \
+    -H "apikey: ${TEAM_BRAIN_SUPABASE_ANON_KEY}" \
+    -H "Authorization: Bearer ${TEAM_BRAIN_SUPABASE_ANON_KEY}" \
+    -H "Content-Type: application/json" \
+    -d "$(jq -n --arg t "$topic" --argjson p "$payload" \
+      '{messages:[{topic:$t, event:"memory_changed", payload:$p}]}')" \
+    2>/dev/null || true
+}
+
 # Authenticated cache refresh after a push signal (merge-safe; used by realtime listener).
 cmd_pull_signal() {
   require_api_key
@@ -684,7 +731,7 @@ cmd_pull_signal() {
   new_count=$(jq '((.memories // .captures) // []) | length' <<<"$delta" 2>/dev/null || echo 0)
   payload=$(fetch_memories "$key" 2>/dev/null || true)
   if [ -n "${payload:-}" ]; then
-    merge_memory_cache "$key" "$payload"
+    merge_memory_cache "$key" "$payload" replace
     mirror_captures_to_md "$key" "$payload" >/dev/null 2>&1 || true
     since=$(jq -r '[((.memories // .captures) // [])[] | (.updated_at // .created_at)] | max // empty' <<<"$payload")
   fi
@@ -742,7 +789,13 @@ cmd_apply_pushed_memory() {
   key=$(echo "$key" | tr '[:lower:]' '[:upper:]')
   local mem
   mem=$(cat)
-  jq -e 'type=="object" and has("id") and has("body")' >/dev/null 2>&1 <<<"$mem" \
+  jq -e 'type=="object"' >/dev/null 2>&1 <<<"$mem" \
+    || die "_apply_pushed_memory: invalid memory JSON on stdin"
+  if jq -e '.deleted == true' >/dev/null 2>&1 <<<"$mem"; then
+    cmd_purge_pushed_memory "$key" "$mem"
+    return 0
+  fi
+  jq -e 'has("id") and has("body")' >/dev/null 2>&1 <<<"$mem" \
     || die "_apply_pushed_memory: invalid memory JSON on stdin"
   local incoming
   incoming=$(jq -n --argjson m "$mem" --arg key "$key" '{initiative: {jira_key: $key}, memories: [$m]}')
@@ -775,6 +828,54 @@ cmd_apply_pushed_memory() {
     ' "$(sync_state_path "$key")" >"$tmp" && mv "$tmp" "$(sync_state_path "$key")"
   fi
   echo "→ full push applied ${key}: 1 memory (decrypted locally; notify: $notify_path)" >&2
+  jq . "$notify_path"
+}
+
+# Tombstone purge from realtime push (deleted: true) or _purge_pushed_memory CLI.
+cmd_purge_pushed_memory() {
+  local key="${1:-}"
+  local payload="${2:-}"
+  [ -n "$key" ] || die "usage: _purge_pushed_memory <JIRA-KEY> (tombstone JSON on stdin or arg)"
+  key=$(echo "$key" | tr '[:lower:]' '[:upper:]')
+  if [ -z "$payload" ]; then
+    payload=$(cat)
+  fi
+  jq -e 'type=="object" and .deleted==true' >/dev/null 2>&1 <<<"$payload" \
+    || die "_purge_pushed_memory: payload must be object with deleted=true"
+  local capture_id source_ref
+  capture_id=$(jq -r '.capture_id // .id // empty' <<<"$payload")
+  source_ref=$(jq -r '.source_ref // empty' <<<"$payload")
+  purge_memory_from_cache "$key" "$capture_id" "$source_ref"
+  touch_sync_activity "$key"
+  mkdir -p "$(NOTIFY_DIR)"
+  ensure_team_gitignore
+  local notify_path
+  notify_path="$(NOTIFY_DIR)/${key}.json"
+  jq -n \
+    --arg key "$key" \
+    --arg now "$(iso_now)" \
+    --arg ref "$source_ref" \
+    --arg cid "$capture_id" \
+    '{
+      jira_key: $key,
+      notified_at: $now,
+      pull_count: 0,
+      source: "realtime_tombstone",
+      deleted: true,
+      capture_id: (if $cid=="" then null else $cid end),
+      source_ref: (if $ref=="" then null else $ref end),
+      agent_hint: "Peer tombstoned a memory — it was removed from your local cache. Do not recall the deleted source_ref."
+    }' >"$notify_path"
+  if [ -f "$(sync_state_path "$key")" ]; then
+    local tmp
+    tmp=$(mktemp)
+    jq --arg now "$(iso_now)" '
+      .last_pull_at = $now
+      | .last_push_at = $now
+      | .push = ((.push // {}) + {last_signal_at: $now, last_tombstone_at: $now})
+    ' "$(sync_state_path "$key")" >"$tmp" && mv "$tmp" "$(sync_state_path "$key")"
+  fi
+  echo "→ tombstone purge ${key}: ref=${source_ref:-?} id=${capture_id:-?} (notify: $notify_path)" >&2
   jq . "$notify_path"
 }
 
@@ -932,11 +1033,46 @@ cmd_doctor() {
 iso_now() { date -u +%Y-%m-%dT%H:%M:%SZ; }
 epoch_now() { date -u +%s; }
 
+# Remove tombstoned memory from local cache (by capture id and/or source_ref).
+purge_memory_from_cache() {
+  local key="$1"
+  local capture_id="${2:-}"
+  local source_ref="${3:-}"
+  local path="$TEAM_DIR/cache/${key}.json"
+  [ -f "$path" ] || return 0
+  if [ -z "$capture_id" ] && [ -z "$source_ref" ]; then
+    return 0
+  fi
+  local tmp synced
+  synced=$(iso_now)
+  tmp=$(mktemp)
+  jq -n --slurpfile old "$path" --arg synced "$synced" --arg cid "$capture_id" --arg ref "$source_ref" '
+    ($old[0].memories // []) as $mems |
+    [$mems[] | select(
+      (if $cid != "" then (.id|tostring) != $cid else true end)
+      and (if $ref != "" then (.source_ref // "") != $ref else true end)
+    )] as $kept |
+    {
+      jira_key: ($old[0].jira_key // null),
+      synced_at: $synced,
+      initiative: $old[0].initiative,
+      memories: $kept
+    }
+  ' >"$tmp" && mv "$tmp" "$path"
+  echo "Memory purged from cache → $path" >&2
+}
+
 # Merge incoming memories into cache by id (prefer newer updated_at/created_at).
-# Never drops local rows that server didn't send in a partial delta.
+# Mode replace: authoritative full snapshot (drops local rows absent from server).
+# Mode merge (default): never drops local rows missing from a partial delta.
 merge_memory_cache() {
   local key="$1"
   local incoming="$2"
+  local mode="${3:-merge}"
+  if [ "$mode" = "replace" ]; then
+    write_memory_cache "$key" "$incoming"
+    return 0
+  fi
   local path="$TEAM_DIR/cache/${key}.json"
   mkdir -p "$TEAM_DIR/cache"
   ensure_team_gitignore
@@ -1188,7 +1324,7 @@ cmd_sync_loop() {
       warned=0
     fi
 
-    local since cursor_payload delta new_count
+    local since cursor_payload delta new_count prev_count curr_count
     since=$(jq -r '.cursor // empty' "$state_path")
     if [ -n "$since" ]; then
       delta=$(fetch_memories "$key" "$since" 2>/dev/null || echo '{}')
@@ -1196,19 +1332,24 @@ cmd_sync_loop() {
       delta=$(fetch_memories "$key" 2>/dev/null || echo '{}')
     fi
     new_count=$(jq '((.memories // .captures) // []) | length' <<<"$delta" 2>/dev/null || echo 0)
-    if [ "${new_count:-0}" -gt 0 ]; then
-      echo "── $(iso_now) +${new_count} memory(ies) for $key ──" >&2
-      jq -r '
-        ((.memories // .captures) // []) | .[] |
-        "[\(.updated_at // .created_at)] @\(.author_name) \(.kind)\(if .source_ref then " ("+.source_ref+")" else "" end): \(.body | gsub("\n"; " "))"
-      ' <<<"$delta" 2>/dev/null || true
-      merge_memory_cache "$key" "$delta"
-      # Full refresh keeps export + initiative metadata perfect
-      cursor_payload=$(fetch_memories "$key" 2>/dev/null || true)
-      if [ -n "${cursor_payload:-}" ]; then
-        merge_memory_cache "$key" "$cursor_payload"
-        mirror_captures_to_md "$key" "$cursor_payload" >/dev/null 2>&1 || true
-        since=$(jq -r '[((.memories // .captures) // [])[] | (.updated_at // .created_at)] | max // empty' <<<"$cursor_payload")
+    prev_count=0
+    if [ -f "$TEAM_DIR/cache/${key}.json" ]; then
+      prev_count=$(jq '(.memories // []) | length' "$TEAM_DIR/cache/${key}.json" 2>/dev/null || echo 0)
+    fi
+    cursor_payload=$(fetch_memories "$key" 2>/dev/null || true)
+    if [ -n "${cursor_payload:-}" ]; then
+      merge_memory_cache "$key" "$cursor_payload" replace
+      mirror_captures_to_md "$key" "$cursor_payload" >/dev/null 2>&1 || true
+      curr_count=$(jq '((.memories // .captures) // []) | length' <<<"$cursor_payload" 2>/dev/null || echo 0)
+      since=$(jq -r '[((.memories // .captures) // [])[] | (.updated_at // .created_at)] | max // empty' <<<"$cursor_payload")
+      if [ "${new_count:-0}" -gt 0 ]; then
+        echo "── $(iso_now) +${new_count} memory(ies) for $key ──" >&2
+        jq -r '
+          ((.memories // .captures) // []) | .[] |
+          "[\(.updated_at // .created_at)] @\(.author_name) \(.kind)\(if .source_ref then " ("+.source_ref+")" else "" end): \(.body | gsub("\n"; " "))"
+        ' <<<"$delta" 2>/dev/null || true
+      elif [ "${curr_count:-0}" -lt "${prev_count:-0}" ]; then
+        echo "── $(iso_now) cache refreshed for $key (${prev_count} → ${curr_count} memories; tombstones evicted) ──" >&2
       fi
       tmp=$(mktemp)
       jq --arg now "$(iso_now)" --arg cur "${since:-}" --argjson n "$new_count" '
@@ -1594,18 +1735,22 @@ EOF
 cmd_join() {
   local invite=""
   local display="${USER:-engineer}"
-  local role="member"
+  local role=""
+  local role_set=0
   local positional=()
   while [ $# -gt 0 ]; do
     case "$1" in
-      --role) role="${2:-member}"; shift 2 ;;
-      -h|--help) die "usage: join <invite-code> [display-name] [--role member|viewer]" ;;
+      --role) role="${2:-}"; role_set=1; shift 2 ;;
+      -h|--help) die "usage: join <invite-code> [display-name] --role member|viewer" ;;
       *) positional+=("$1"); shift ;;
     esac
   done
   if [ ${#positional[@]} -ge 1 ]; then invite="${positional[0]}"; fi
   if [ ${#positional[@]} -ge 2 ]; then display="${positional[1]}"; fi
-  [ -n "$invite" ] || die "usage: join <invite-code> [display-name] [--role member|viewer]"
+  [ -n "$invite" ] || die "usage: join <invite-code> [display-name] --role member|viewer"
+  if [ "$role_set" -ne 1 ] || [ -z "$role" ]; then
+    die "join requires --role member|viewer — admin must assign your permission tier explicitly"
+  fi
   role=$(echo "$role" | tr '[:upper:]' '[:lower:]')
   case "$role" in
     member|viewer) ;;
@@ -2272,8 +2417,8 @@ cmd_delete() {
   fi
   rm -f "$tmp_err"
   sync_payload=$(fetch_memories "$key")
-  merge_memory_cache "$key" "$sync_payload"
   mirror_captures_to_md "$key" "$sync_payload"
+  maybe_client_broadcast_tombstone "$key" "$out"
   touch_sync_activity "$key"
   if jq -e '.deleted == true' >/dev/null 2>&1 <<<"$out"; then
     echo "→ tombstoned $source_ref (audit preserved in capture_revisions + memory_deletions)" >&2
@@ -2829,7 +2974,7 @@ Team Brain — collaborative memory client (Supabase)
   onboard <invite-code> "Your Name" [JIRA-KEY] --role member|viewer
       Admin-preassigned permission tier required (member=write+delete, viewer=read-only).
   register <team-name> [display-name]
-  join <invite-code> [display-name] [--role member|viewer]
+  join <invite-code> [display-name] --role member|viewer
   whoami
   pin show | pin set --jira KEY [--team-name NAME] [--project-ref REF]
       Commit-safe .team-brain/project.json (#39). Never secrets (anon/api_key/invite).
@@ -2966,6 +3111,7 @@ main() {
     broadcast-topic|broadcast_topic) cmd_broadcast_topic "$@" ;;
     _pull_signal) cmd_pull_signal "$@" ;;
     _apply_pushed_memory) cmd_apply_pushed_memory "$@" ;;
+    _purge_pushed_memory) cmd_purge_pushed_memory "$@" ;;
     enable-semantic|enable_semantic) cmd_enable_semantic "$@" ;;
     doctor|health) cmd_doctor "$@" ;;
     list) cmd_list "$@" ;;

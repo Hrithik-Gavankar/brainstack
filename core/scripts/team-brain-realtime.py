@@ -123,6 +123,30 @@ def _pull_signal(jira_key: str) -> None:
         print(f"→ _pull_signal failed ({proc.returncode})", file=sys.stderr)
 
 
+def _purge_pushed(jira_key: str, payload: dict[str, Any]) -> None:
+    """Remove a tombstoned memory from local cache (realtime delete signal)."""
+    script = _api_script()
+    env = os.environ.copy()
+    proc = subprocess.run(
+        ["bash", str(script), "_purge_pushed_memory", jira_key],
+        input=json.dumps(payload),
+        capture_output=True,
+        text=True,
+        env=env,
+        check=False,
+    )
+    if proc.stderr:
+        print(proc.stderr, file=sys.stderr, end="")
+    if proc.stdout:
+        print(proc.stdout, end="")
+    if proc.returncode != 0:
+        print(
+            f"→ _purge_pushed_memory failed ({proc.returncode}) — falling back to authenticated pull",
+            file=sys.stderr,
+        )
+        _pull_signal(jira_key)
+
+
 def _apply_pushed(jira_key: str, memory: dict[str, Any]) -> None:
     """Merge an already-decrypted memory straight into the local cache (full push)."""
     script = _api_script()
@@ -288,6 +312,15 @@ async def _listen(
                             continue
                         if isinstance(inner, dict) and inner.get("event") == "memory_changed":
                             inner = inner.get("payload") or inner
+                        if isinstance(inner, dict) and inner.get("deleted"):
+                            ref = inner.get("source_ref") or ""
+                            cid = inner.get("capture_id") or ""
+                            print(
+                                f"── push TOMBSTONE {jira_key} ref={ref} id={cid} ──",
+                                file=sys.stderr,
+                            )
+                            await asyncio.to_thread(_purge_pushed, jira_key, inner)
+                            continue
                         op = inner.get("op") if isinstance(inner, dict) else "?"
                         ref = inner.get("source_ref") if isinstance(inner, dict) else ""
                         body_ct = inner.get("body_ct") if isinstance(inner, dict) else None

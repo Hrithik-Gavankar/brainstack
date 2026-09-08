@@ -962,3 +962,125 @@ begin
   );
 end;
 $$;
+
+-- ---------------------------------------------------------------------------
+-- 11) Legacy list_captures — exclude tombstones (fetch_memories fallback path)
+-- ---------------------------------------------------------------------------
+
+create or replace function public.list_captures(
+  p_api_key text,
+  p_jira_key text,
+  p_limit int default 50
+)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  m public.members;
+  init public.initiatives;
+  result jsonb;
+begin
+  m := public.tb_resolve_member(p_api_key);
+
+  select * into init
+  from public.initiatives
+  where team_id = m.team_id and jira_key = upper(trim(p_jira_key))
+  limit 1;
+  if not found then
+    raise exception 'initiative not found — attach first';
+  end if;
+
+  select coalesce(jsonb_agg(to_jsonb(x) order by x.created_at desc), '[]'::jsonb)
+  into result
+  from (
+    select
+      c.id,
+      c.kind,
+      c.body,
+      c.created_at,
+      c.author_member_id,
+      mem.display_name as author_name
+    from public.captures c
+    join public.members mem on mem.id = c.author_member_id
+    where c.initiative_id = init.id
+      and c.deleted_at is null
+    order by c.created_at desc
+    limit greatest(1, least(coalesce(p_limit, 50), 200))
+  ) x;
+
+  return jsonb_build_object(
+    'initiative', jsonb_build_object(
+      'id', init.id,
+      'jira_key', init.jira_key,
+      'title', init.title,
+      'status', init.status,
+      'jira_url', init.jira_url
+    ),
+    'captures', result
+  );
+end;
+$$;
+
+-- ---------------------------------------------------------------------------
+-- 12) Realtime broadcast — tombstone signal so peers purge local cache (#66)
+-- ---------------------------------------------------------------------------
+
+create or replace function public.tb_notify_memory_changed()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  init public.initiatives;
+  author_name text;
+  topic text;
+  payload jsonb;
+  is_tombstone boolean;
+begin
+  select * into init from public.initiatives where id = NEW.initiative_id;
+  if not found then
+    return NEW;
+  end if;
+
+  select display_name into author_name from public.members where id = NEW.author_member_id;
+
+  is_tombstone := NEW.deleted_at is not null;
+
+  topic := 'team-brain:' || init.team_id::text || ':' || upper(init.jira_key);
+  payload := jsonb_build_object(
+    'team_id', init.team_id,
+    'jira_key', upper(init.jira_key),
+    'capture_id', NEW.id,
+    'source_ref', NEW.source_ref,
+    'kind', NEW.kind,
+    'content_hash', NEW.content_hash,
+    'author_name', author_name,
+    'created_at', NEW.created_at,
+    'updated_at', coalesce(NEW.updated_at, NEW.created_at),
+    'op', TG_OP,
+    'deleted', is_tombstone,
+    'deleted_at', NEW.deleted_at,
+    'body_ct', case when is_tombstone then null else NEW.body_ct end
+  );
+
+  begin
+    perform realtime.send(payload, 'memory_changed', topic, false);
+  exception
+    when undefined_function then
+      raise warning 'team-brain: realtime.send unavailable — apply on hosted Supabase or keep poll/watch';
+    when undefined_table then
+      raise warning 'team-brain: realtime schema unavailable — keep poll/watch';
+    when others then
+      raise warning 'team-brain broadcast skipped: %', SQLERRM;
+  end;
+
+  return NEW;
+end;
+$$;
+
+comment on function public.tb_notify_memory_changed() is
+  'Realtime Broadcast on capture write/tombstone (#31 + #66): deleted=true signals peers to purge cache.';
