@@ -229,6 +229,7 @@ Never invent stories without recalled memories.
 | `sync-status` | active \| sleep \| stopped (+ `compliance`) |
 | `compliance` | Soft MCP-first gate (`research_ok`, `agent_action`) |
 | `bootstrap` | Admin one-shot setup + share bundle |
+| `admin-setup` | **Preferred admin path** — fill `supabase/admin.setup.env`, then run script (no flags) |
 | `onboard` / `register` / `join` | Membership |
 | `attach` | Bind Jira key |
 | `recall` / `remember` | Search / save (`learning` kind ok); on `redundant_candidate` recall + same `source_ref` or `--queue`; admin may `--force` |
@@ -242,6 +243,20 @@ Never invent stories without recalled memories.
 MCP also exposes `prepare_research` (recall + compliance in one call).
 
 Beginner guide: `docs/team-brain-onboarding.md`
+
+### Admin onboarding (once per crew)
+
+One file — no scattered flags/env:
+
+```bash
+cp supabase/admin.setup.env.example supabase/admin.setup.env
+# edit every TEAM_BRAIN_* value (admin name, crew, Jira epic, Supabase URL + anon)
+bash core/scripts/team-brain-admin-setup.sh
+```
+
+Or: `bash core/scripts/team-brain-admin-setup.sh --init` then edit `supabase/admin.setup.env`.
+
+After success, DM `.team-brain/share-bundle.txt` to members. Runtime config lands in `supabase/project.public.env` (auto-written).
 
 ## Hard rules
 
