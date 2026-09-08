@@ -77,6 +77,7 @@ ON HUMAN CORRECTION (bad research / wrong sync summary)
   → optional learning at source_ref/learning (was wrong → prefer …)
   → prior body archived; history/restore for soft rollback if needed
   → delete(source_ref) to tombstone poisoned context (member/admin only)
+  → redundant_candidate on remember → recall + same source_ref, or queue for admin (pending approve <pending-id>)
 
 LONG SESSION (do not spam every turn)
   → after a long research block, OR about every 8–10 turns on this key
@@ -97,7 +98,7 @@ Check `sync-status <KEY>`:
 
 ## Prefer MCP tools if connected
 
-`start` / `stop` / `wake` / `touch` / `sync_status` / `compliance` / `prepare_research` / `peer_notify` / `recall` / `remember` / `correct` / `history` / `restore` / `delete_memory` / `list_members`
+`start` / `stop` / `wake` / `touch` / `sync_status` / `compliance` / `prepare_research` / `peer_notify` / `recall` / `remember` / `correct` / `history` / `restore` / `delete_memory` / `list_members` / `list_pending` / `approve_pending` / `reject_pending`
 
 ## Never
 

@@ -145,7 +145,7 @@ export TEAM_BRAIN_SUPABASE_ANON_KEY="eyJ..."
 
 ```bash
 # Replace with your invite and name
-bash core/scripts/team-brain-api.sh onboard ABC123DEF456GH78 "Bob" DEMO-1
+bash core/scripts/team-brain-api.sh onboard ABC123DEF456GH78 "Bob" DEMO-1 --role member
 ```
 
 Expected output includes:
@@ -353,6 +353,27 @@ bash core/scripts/team-brain-api.sh breakdown DEMO-1
 cat .team-brain/initiatives/DEMO-1-breakdown.md
 ```
 
+### Pending review (#67)
+
+- [ ] Near-duplicate `remember` returns `redundant_candidate` (not stored)
+- [ ] `remember --queue` returns `pending_submitted`
+- [ ] Admin `pending list` shows the submission
+- [ ] Admin `pending approve <pending-id>` promotes to live memory
+
+```bash
+# After a memory exists, try overlapping content
+bash core/scripts/team-brain-api.sh remember DEMO-1 research \
+  "Same finding as an existing memory body."
+
+# Queue override (member)
+bash core/scripts/team-brain-api.sh remember DEMO-1 research \
+  --source-ref "DEMO-1#slug" --queue "Improved finding for admin."
+
+# Admin inbox
+bash core/scripts/team-brain-api.sh pending list DEMO-1
+bash core/scripts/team-brain-api.sh pending approve <pending-id>
+```
+
 ### Cleanup
 
 - [ ] `stop DEMO-1` stops sync mode
@@ -434,6 +455,28 @@ bash core/scripts/team-brain-api.sh remember DEMO-1 research \
 # → undeleted: true in RPC response
 ```
 
+### Feedback engine: redundant memory + admin approval (#67)
+
+```bash
+# Member: near-duplicate blocked (not stored)
+bash core/scripts/team-brain-api.sh remember DEMO-1 research \
+  "API uses bearer tokens from /auth/token endpoint."
+# → redundant_candidate: true, matches[] shows DEMO-1#api-auth
+
+# Member: queue override for admin review
+bash core/scripts/team-brain-api.sh remember DEMO-1 research \
+  --source-ref "DEMO-1#api-auth" --queue \
+  "API uses OAuth2 device flow (preferred for CLI)."
+
+# Admin: review inbox
+bash core/scripts/team-brain-api.sh pending list DEMO-1
+bash core/scripts/team-brain-api.sh pending approve <pending-id> --note "Better finding"
+# → live memory updated; recall shows new body
+
+# Admin: reject duplicate
+bash core/scripts/team-brain-api.sh pending reject <pending-id> --note "Duplicate of Alice"
+```
+
 ---
 
 ## Troubleshooting
@@ -444,6 +487,8 @@ bash core/scripts/team-brain-api.sh remember DEMO-1 research \
 | `initiative not found` | Run `attach DEMO-1` first, or include key in onboard |
 | `member already exists` | Choose a different display name |
 | Empty `recall` | Nobody has `remember`ed yet — add the first memory |
+| `redundant_candidate` on remember | Similar memory exists — recall matches, reuse `source_ref`, or `remember --queue` |
+| `list_pending_memories unavailable` | Admin: apply `20260908120001_team_brain_pending_review.sql` |
 | `rate limit exceeded` | Wait 1 hour or ask admin to check rate limit settings |
 
 ---
@@ -467,7 +512,10 @@ bash core/scripts/team-brain-api.sh onboard <INVITE> "Name" <JIRA-KEY> --role me
 # Work session
 bash core/scripts/team-brain-api.sh start <JIRA-KEY>
 bash core/scripts/team-brain-api.sh remember <JIRA-KEY> research --source-ref "<KEY>#slug" "Finding"
+bash core/scripts/team-brain-api.sh remember <JIRA-KEY> research --queue "Override proposal"  # admin reviews
 bash core/scripts/team-brain-api.sh recall <JIRA-KEY> "search term"
+bash core/scripts/team-brain-api.sh pending list <JIRA-KEY>        # admin
+bash core/scripts/team-brain-api.sh pending approve <pending-id>   # admin
 bash core/scripts/team-brain-api.sh breakdown <JIRA-KEY>
 bash core/scripts/team-brain-api.sh stop <JIRA-KEY>
 

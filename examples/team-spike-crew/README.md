@@ -87,6 +87,7 @@ Then:
 3. Admin: `list-members` · `rotate-invite` · `set-role "Carol" --role member`
 4. `remember` → teammate `recall` / agent loop / MCP
 5. Remove poisoned memory: `delete <KEY> --source-ref <REF>` (member/admin)
+6. Feedback engine (#67): overlapping `remember` → `redundant_candidate`; member `remember … --queue` → admin `pending list` → `pending approve <pending-id>|reject <pending-id>`
 
 ### Roles (#40 + delete governance)
 
@@ -110,6 +111,23 @@ bash core/scripts/team-brain-api.sh correct DEMO-EE-1 \
 
 Expect `corrected.updated: true` and a `learning` memory at `DEMO-EE-1#ee-schema/learning`.  
 Bodies use prefer/avoid prose — not TODO/NO-TODO dumps.
+
+### Pending review example (#67)
+
+```bash
+# Member: blocked duplicate
+bash core/scripts/team-brain-api.sh remember DEMO-EE-1 research \
+  "Same body as an existing crew memory."
+
+# Member: queue override for admin
+bash core/scripts/team-brain-api.sh remember DEMO-EE-1 research \
+  --source-ref "DEMO-EE-1#ee-schema" --queue \
+  "Prefer packages/ansible-language-server for EE schema paths."
+
+# Admin
+bash core/scripts/team-brain-api.sh pending list DEMO-EE-1
+bash core/scripts/team-brain-api.sh pending approve <pending-id> --note "Supersedes prior note"
+```
 
 ### History / soft rollback example
 

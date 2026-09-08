@@ -265,7 +265,7 @@ bash core/scripts/team-brain-api.sh bootstrap \
 
 `supabase/.bootstrap-migrations.combined.sql`
 
-(all files in `supabase/migrations/` in timestamp order — includes digest fix `60809`)
+(all files in `supabase/migrations/` in timestamp order — includes delete permissions #66 and pending review #67)
 
 4. Continue at **Step 3** with `--skip-migrations`.
 
@@ -302,6 +302,26 @@ bash core/scripts/team-brain-api.sh bootstrap \
 Bootstrap prints the **share bundle** (invite + URL + anon + Jira key). Copy to Slack for joiners (Path A).
 
 **Do not commit** live URL/anon/DB password.
+
+### Step 4 — Admin: review queue (#67)
+
+When members hit overlapping research, they can **`remember … --queue`**. You approve or reject from the CLI (dashboard UI: [#69](https://github.com/Hrithik-Gavankar/brainstack/issues/69)):
+
+```bash
+# Audit crew roles
+bash core/scripts/team-brain-api.sh list-members
+
+# Review pending overrides for an initiative
+bash core/scripts/team-brain-api.sh pending list AAP-81423
+
+# Keep the improved finding (promotes to live memory)
+bash core/scripts/team-brain-api.sh pending approve <pending-id> --note "Supersedes prior auth note"
+
+# Discard a duplicate proposal
+bash core/scripts/team-brain-api.sh pending reject <pending-id> --note "Use existing source_ref"
+```
+
+Verify migrations: `bash core/scripts/team-brain-api.sh doctor` should report `pending review queue RPC present`.
 
 ### Manual path (same outcome, no bootstrap)
 
@@ -344,6 +364,8 @@ The always-on rule expects `start` → summarize cache → work → `remember` /
 | **Starting work on the ticket** | `start JIRA-KEY` (once) |
 | You / AI learned something durable | `remember` with `source_ref` |
 | AI got research wrong — you correct it | `correct` (or re-`remember` same `source_ref`) |
+| Overlapping research blocked | `remember` returns `redundant_candidate` — reuse `source_ref` or `--queue` |
+| Admin keeps improved finding | `pending list` → `pending approve <pending-id>` |
 | Keep sync awake | automatic via recall/remember; or `touch` |
 | Long spike / peer freshness | Optional once: `watch JIRA-KEY &` · agent: periodic `recall` (not every turn) |
 | Sync slept | Prompt → `wake JIRA-KEY` (not `watch`) |
@@ -474,8 +496,13 @@ Juniors can ignore MCP and use the bash commands or Cursor skill.
 ## Quick command cheat sheet
 
 ```bash
-# Join
-bash core/scripts/team-brain-api.sh onboard <INVITE> "Your Name" <JIRA-KEY>
+# Join (admin assigns role)
+bash core/scripts/team-brain-api.sh onboard <INVITE> "Your Name" <JIRA-KEY> --role member
+# or: ... --role viewer
+
+# Admin: review queued overrides (#67)
+bash core/scripts/team-brain-api.sh pending list <JIRA-KEY>
+bash core/scripts/team-brain-api.sh pending approve <pending-id>
 
 # Check
 bash core/scripts/team-brain-api.sh whoami
