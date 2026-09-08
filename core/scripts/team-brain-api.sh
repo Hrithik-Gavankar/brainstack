@@ -7,14 +7,14 @@
 #   bash team-brain-api.sh <command> [args...]
 #
 # Commands: onboard | register | join | whoami | attach | start | stop | wake |
-#           bootstrap | pin | remember | correct | history | restore | recall | capture |
-#           sync | watch | breakdown | metrics | aggregate | compliance | list | mirror | status |
+#           bootstrap | pin | remember | correct | history | restore | delete | recall | capture |
+#           sync | watch | breakdown | metrics | aggregate | compliance | list | list-members | mirror | status |
 #           sync-status | touch | broadcast-topic | rotate-invite | set-role |
 #           enable-semantic | doctor
 # Plan: docs/team-brain-memory.md — memories are SoT; md is optional export.
 # Realtime (#31): signal Broadcast + poll fallback — see migration …_realtime_broadcast.sql
 # Pin (#39): commit-safe .team-brain/project.json — never secrets.
-# Roles (#40): admin | member (write) | viewer (read-only).
+# Roles (#40): admin | member (write+delete) | viewer (read-only).
 # Aggregate (#35): metrics --team / aggregate — coverage + reuse; no BRAIN.md.
 
 set -euo pipefail
@@ -90,7 +90,9 @@ resolve_jira_key() {
 
 rpc_forbidden_hint() {
   local err="${1:-}"
-  if echo "$err" | grep -qi 'viewer role is read-only\|forbidden: viewer'; then
+  if echo "$err" | grep -qi 'delete requires member role'; then
+    echo "→ Delete requires member role (read+write+delete). Ask an admin for member access." >&2
+  elif echo "$err" | grep -qi 'viewer role is read-only\|forbidden: viewer'; then
     echo "→ Your role is viewer (read-only). Ask an admin for member/write access." >&2
   elif echo "$err" | grep -qi 'forbidden: admin only'; then
     echo "→ Admin only — ask a crew admin (rotate-invite / set-role)." >&2
@@ -898,9 +900,16 @@ cmd_doctor() {
         ok=0
       fi
       if rpc_try team_aggregate_metrics "$(jq -n --arg k "$TEAM_BRAIN_API_KEY" '{p_api_key:$k}')" >/dev/null 2>&1; then
-        echo "[ok]   migrations up to date (through #35 team_aggregate_metrics)"
+        echo "[ok]   migrations through team_aggregate_metrics (#35)"
       else
         echo "[warn] team_aggregate_metrics unavailable — apply latest supabase/migrations/*.sql"
+      fi
+      local del_probe_err
+      del_probe_err=$(rpc_try delete_memory "$(jq -n --arg k "$TEAM_BRAIN_API_KEY" '{p_api_key:$k,p_jira_key:"X",p_source_ref:"x"}')" 2>&1 >/dev/null || true)
+      if echo "$del_probe_err" | grep -Eqi 'Could not find the function|PGRST202|404|does not exist'; then
+        echo "[warn] delete_memory unavailable — apply 20260908000001_team_brain_delete_permissions.sql"
+      else
+        echo "[ok]   delete_memory RPC present (governance migration)"
       fi
       echo "[info] Full push needs: apply …_full_push_and_semantic_hardening.sql, then remember once to warm the broadcast key cache."
     else
@@ -1619,9 +1628,14 @@ cmd_join() {
     fi
   fi
   mkdir -p "$TEAM_DIR/initiatives"
-  if [ "$role" = "viewer" ]; then
-    echo "→ Joined as viewer (read-only). recall/list/breakdown OK; remember/correct forbidden." >&2
-  fi
+  case "$role" in
+    viewer)
+      echo "→ Joined as viewer (read-only). recall/list/breakdown OK; remember/correct/delete forbidden." >&2
+      ;;
+    member)
+      echo "→ Joined as member (read+write+delete). Admin should assign viewer|member explicitly via --role." >&2
+      ;;
+  esac
   echo "$out" | jq .
 }
 
@@ -1630,13 +1644,14 @@ cmd_onboard() {
   local invite=""
   local display=""
   local jira_key=""
-  local role="member"
+  local role=""
+  local role_set=0
   local positional=()
   while [ $# -gt 0 ]; do
     case "$1" in
-      --role) role="${2:-member}"; shift 2 ;;
+      --role) role="${2:-}"; role_set=1; shift 2 ;;
       -h|--help)
-        die "usage: onboard <invite-code> \"Your Name\" [JIRA-KEY] [--role member|viewer]"
+        die "usage: onboard <invite-code> \"Your Name\" [JIRA-KEY] --role member|viewer"
         ;;
       *) positional+=("$1"); shift ;;
     esac
@@ -1645,7 +1660,15 @@ cmd_onboard() {
   if [ ${#positional[@]} -ge 2 ]; then display="${positional[1]}"; fi
   if [ ${#positional[@]} -ge 3 ]; then jira_key="${positional[2]}"; fi
   [ -n "$invite" ] && [ -n "$display" ] || \
-    die "usage: onboard <invite-code> \"Your Name\" [JIRA-KEY] [--role member|viewer]"
+    die "usage: onboard <invite-code> \"Your Name\" [JIRA-KEY] --role member|viewer"
+  if [ "$role_set" -ne 1 ] || [ -z "$role" ]; then
+    die "onboard requires --role member|viewer — ask your admin which permission tier you need"
+  fi
+  role=$(echo "$role" | tr '[:upper:]' '[:lower:]')
+  case "$role" in
+    member|viewer) ;;
+    *) die "role must be member (read+write+delete) or viewer (read-only)" ;;
+  esac
 
   echo "→ Seeding config from public project + joining team…" >&2
   cmd_join "$invite" "$display" --role "$role" >/dev/null
@@ -1784,6 +1807,22 @@ cmd_set_role() {
   rpc set_member_role "$(jq -n \
     --arg k "$TEAM_BRAIN_API_KEY" --arg d "$name" --arg r "$role" \
     '{p_api_key:$k, p_display_name:$d, p_role:$r}')" | jq .
+}
+
+cmd_list_members() {
+  require_api_key
+  local out err tmp_err
+  tmp_err=$(mktemp)
+  if ! out=$(rpc_try list_members "$(jq -n --arg k "$TEAM_BRAIN_API_KEY" '{p_api_key:$k}')" 2>"$tmp_err"); then
+    err=$(tr '\n' ' ' <"$tmp_err" | sed 's/[[:space:]]*$//')
+    rm -f "$tmp_err"
+    if echo "$err" | grep -Eqi 'Could not find the function|PGRST202|404|does not exist'; then
+      die "list_members unavailable — apply migration 20260908000001_team_brain_delete_permissions.sql"
+    fi
+    die "list_members failed: ${err:-unknown error}"
+  fi
+  rm -f "$tmp_err"
+  echo "$out" | jq .
 }
 
 cmd_whoami() {
@@ -2186,6 +2225,60 @@ cmd_restore() {
     echo "→ restored $source_ref from revision $revision (current archived)" >&2
   elif jq -e '.deduped == true' >/dev/null 2>&1 <<<"$out"; then
     echo "→ already at revision $revision (no change)" >&2
+  fi
+  echo "$out" | jq .
+}
+
+# delete — tombstone memory at source_ref (member/admin only; audit preserved)
+cmd_delete() {
+  require_api_key
+  local key="${1:-}"
+  shift || true
+  local source_ref="${TEAM_BRAIN_SOURCE_REF:-}"
+  local usage='usage: delete <JIRA-KEY> --source-ref REF | delete <JIRA-KEY> <source_ref>'
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --source-ref)
+        source_ref="${2:-}"
+        shift 2 || die "$usage"
+        ;;
+      *)
+        if [ -z "$source_ref" ]; then
+          source_ref="$1"
+          shift
+        else
+          die "$usage"
+        fi
+        ;;
+    esac
+  done
+  [ -n "$key" ] || die "$usage"
+  [ -n "$source_ref" ] || die "delete requires source_ref. $usage"
+  key=$(echo "$key" | tr '[:lower:]' '[:upper:]')
+  local payload out sync_payload err tmp_err
+  payload=$(jq -n \
+    --arg k "$TEAM_BRAIN_API_KEY" \
+    --arg j "$key" \
+    --arg r "$source_ref" \
+    '{p_api_key:$k, p_jira_key:$j, p_source_ref:$r}')
+  tmp_err=$(mktemp)
+  if ! out=$(rpc_try delete_memory "$payload" 2>"$tmp_err"); then
+    err=$(tr '\n' ' ' <"$tmp_err" | sed 's/[[:space:]]*$//')
+    rm -f "$tmp_err"
+    if echo "$err" | grep -Eqi 'Could not find the function|PGRST202|404|does not exist'; then
+      die "delete_memory unavailable — apply migration 20260908000001_team_brain_delete_permissions.sql"
+    fi
+    die "delete_memory failed: ${err:-unknown error}"
+  fi
+  rm -f "$tmp_err"
+  sync_payload=$(fetch_memories "$key")
+  merge_memory_cache "$key" "$sync_payload"
+  mirror_captures_to_md "$key" "$sync_payload"
+  touch_sync_activity "$key"
+  if jq -e '.deleted == true' >/dev/null 2>&1 <<<"$out"; then
+    echo "→ tombstoned $source_ref (audit preserved in capture_revisions + memory_deletions)" >&2
+  elif jq -e '.deduped == true' >/dev/null 2>&1 <<<"$out"; then
+    echo "→ already deleted (no change)" >&2
   fi
   echo "$out" | jq .
 }
@@ -2733,7 +2826,8 @@ Team Brain — collaborative memory client (Supabase)
   bootstrap --team NAME --admin "Name" [options…]
       Admin one-shot: configure → migrate → register → print joiner share bundle.
       See: bash core/scripts/team-brain-bootstrap.sh --help
-  onboard <invite-code> "Your Name" [JIRA-KEY] [--role member|viewer]
+  onboard <invite-code> "Your Name" [JIRA-KEY] --role member|viewer
+      Admin-preassigned permission tier required (member=write+delete, viewer=read-only).
   register <team-name> [display-name]
   join <invite-code> [display-name] [--role member|viewer]
   whoami
@@ -2742,6 +2836,7 @@ Team Brain — collaborative memory client (Supabase)
   rotate-invite              Admin-only: rotate invite code (#40)
   set-role "Name" --role admin|member|viewer
       Admin-only: change a teammate's role (#40)
+  list-members               Admin-only: audit crew roles (display_name + role)
   attach [JIRA-KEY] [title] [status] [jira-url]
       Upsert initiative (writers only). Jira key optional if project.json pin set.
 
@@ -2765,6 +2860,8 @@ Team Brain — collaborative memory client (Supabase)
       List archived revisions + current body (apply memory-history migration).
   restore <JIRA-KEY> --source-ref REF --revision N
       Soft-rollback to revision N; archives current body first (audit preserved).
+  delete <JIRA-KEY> --source-ref REF | delete <JIRA-KEY> <source_ref>
+      Tombstone poisoned/stale memory (member/admin only; viewers forbidden). Audit preserved.
   capture …                 Compat alias for remember
 
   recall <JIRA-KEY> [query…]
@@ -2806,7 +2903,7 @@ Realtime push (#31 — full content, encrypted; poll always remains fallback):
 
 Roles / invites (#40):
   Apply migration 20260805000001_team_brain_roles_and_invites.sql
-  Roles: admin | member (write) | viewer (read-only)
+  Roles: admin | member (read+write+delete) | viewer (read-only)
   Admin: rotate-invite · set-role
 
 Repo pin (#39):
@@ -2844,6 +2941,7 @@ main() {
     pin) cmd_pin "$@" ;;
     rotate-invite|rotate_invite) cmd_rotate_invite "$@" ;;
     set-role|set_role) cmd_set_role "$@" ;;
+    list-members|list_members) cmd_list_members "$@" ;;
     attach) cmd_attach "$@" ;;
     start) cmd_start "$@" ;;
     stop) cmd_stop "$@" ;;
@@ -2856,6 +2954,7 @@ main() {
     correct) cmd_correct "$@" ;;
     history) cmd_history "$@" ;;
     restore) cmd_restore "$@" ;;
+    delete) cmd_delete "$@" ;;
     capture) cmd_capture "$@" ;;
     recall) cmd_recall "$@" ;;
     reembed) cmd_reembed "$@" ;;

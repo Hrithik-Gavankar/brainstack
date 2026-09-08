@@ -45,6 +45,12 @@ bash core/scripts/team-brain-api.sh onboard <INVITE> "Bob" --role member
 bash core/scripts/team-brain-api.sh start
 ```
 
+Read-only observer:
+
+```bash
+bash core/scripts/team-brain-api.sh onboard <INVITE> "Carol" --role viewer
+```
+
 ## Walkthrough (local files)
 
 ```bash
@@ -76,18 +82,19 @@ Or manual: apply migrations → `register "Spike Crew" "Alice"` ([migrations/REA
 
 Then:
 
-1. Teammate (write): `onboard <INVITE> "Bob"` (uses pin for Jira when present)
+1. Teammate (contributor): `onboard <INVITE> "Bob" --role member` (uses pin for Jira when present)
 2. Teammate (read-only): `onboard <INVITE> "Carol" --role viewer`
-3. Admin: `rotate-invite` · `set-role "Carol" --role member`
+3. Admin: `list-members` · `rotate-invite` · `set-role "Carol" --role member`
 4. `remember` → teammate `recall` / agent loop / MCP
+5. Remove poisoned memory: `delete <KEY> --source-ref <REF>` (member/admin)
 
-### Roles (#40)
+### Roles (#40 + delete governance)
 
-| Role | recall / list / breakdown | remember / correct / attach | rotate invite |
-|------|---------------------------|-----------------------------|---------------|
-| `admin` | ✅ | ✅ | ✅ |
-| `member` | ✅ | ✅ | ❌ |
-| `viewer` | ✅ | ❌ | ❌ |
+| Role | recall / list / breakdown | remember / correct / attach | delete | rotate invite |
+|------|---------------------------|-----------------------------|--------|---------------|
+| `admin` | ✅ | ✅ | ✅ | ✅ |
+| `member` | ✅ | ✅ | ✅ | ❌ |
+| `viewer` | ✅ | ❌ | ❌ | ❌ |
 
 ### Correction / learning example
 

@@ -14,13 +14,14 @@ Agent-native tools for collaborative initiative memory. Wraps [`team-brain-api.s
 | `broadcast_topic` | Realtime full-content push topic + per-team decrypt key for a Jira key (#31) |
 | `peer_notify` | Latest push notify file (`.team-brain/notify/<KEY>.json`) |
 | `pin_show` | Commit-safe repo pin (`project.json`) (#39) |
-| `rotate_invite` / `set_role` | Admin-only invite rotate / role change (#40) |
+| `rotate_invite` / `set_role` / `list_members` | Admin-only invite rotate / role change / crew audit (#40) |
 | `whoami` | Current member / team |
 | `attach` | Upsert Jira initiative + pull recent memories |
 | `remember` | Write memory (`source_ref`; update on overlap; kinds include `learning`) |
 | `correct` | Human correction — update `source_ref` + optional learning |
 | `history` | List archived revisions + current body for a `source_ref` |
 | `restore` | Soft-rollback to revision N (archives current first) |
+| `delete_memory` | Tombstone memory at `source_ref` (member/admin; audit preserved) |
 | `recall` | Search (query) or list recent (no query); includes `compliance` |
 | `list_recent` | Sync / list with optional `since` cursor |
 | `list_initiatives` | Team initiative index |
@@ -106,6 +107,7 @@ Apply `20260803000001_team_brain_memory_history.sql` for revision archive + `his
 Apply `20260804000001_team_brain_realtime_broadcast.sql` + `20260808000001_team_brain_full_push_and_semantic_hardening.sql` for full-content encrypted peer push (`start` / `watch --push`; poll remains fallback if `cryptography` or the key is unavailable).  
 Run `team-brain-api.sh enable-semantic openai|ollama` to opt in to vector `recall`; `team-brain-api.sh doctor` for a client readiness preflight.  
 Apply `20260805000001_team_brain_roles_and_invites.sql` for `viewer` + admin invite rotate.  
+Apply `20260908000001_team_brain_delete_permissions.sql` for `delete_memory` tombstone + `list_members`.  
 Commit `.team-brain/project.json` for repo pin (#39); `start`/`attach` accept an empty key when pinned.
 
 ### Chat examples (Cursor)

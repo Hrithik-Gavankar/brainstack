@@ -8,8 +8,8 @@ description: >-
 argument-hint: >-
   <command> — start | stop | wake | touch | sync-status | compliance |
     prepare_research | bootstrap | onboard | register | join | whoami | init |
-    attach | remember | correct | history | restore | recall | capture | sync |
-    watch | breakdown | status | detach
+    attach | remember | correct | history | restore | delete | recall | capture | sync |
+    watch | breakdown | status | list-members | detach
 tools: Read, Write, Shell, Glob, Grep
 ---
 
@@ -19,7 +19,7 @@ Part of **Brainstack**: personal=`engineer-brain`, crew=`team-brain`.
 
 | Prefer | Fallback |
 |--------|----------|
-| MCP `start` / `prepare_research` / `recall` / `remember` / `compliance` / `peer_notify` / `correct` / `history` / `restore` / `touch` | `bash …/team-brain-api.sh …` |
+| MCP `start` / `prepare_research` / `recall` / `remember` / `compliance` / `peer_notify` / `correct` / `history` / `restore` / `delete_memory` / `touch` | `bash …/team-brain-api.sh …` |
 
 ### Peer push (#31)
 
@@ -31,7 +31,17 @@ If push is unavailable (`TEAM_BRAIN_REALTIME=off` / no `websockets` / migration 
 
 - Prefer pinned Jira key from `.team-brain/project.json` when the user omits a key (`start` / `attach`).
 - Never put anon / api_key / invite into the pin — credentials stay gitignored.
-- `whoami.role`: `viewer` → recall only; `member`/`admin` → remember OK; only `admin` rotates invites.
+- `whoami.role`: `viewer` → recall only; `member`/`admin` → remember + delete OK; only `admin` rotates invites / `list_members`.
+
+### Permission tiers
+
+| Role | Read (recall, list, breakdown, history, metrics) | Write (remember, correct, restore, attach) | Delete (`delete_memory`) | Admin (rotate invite, set-role, list-members) |
+|------|---------------------------------------------------|--------------------------------------------|--------------------------|-----------------------------------------------|
+| `viewer` | ✅ | ❌ | ❌ | ❌ |
+| `member` | ✅ | ✅ | ✅ | ❌ |
+| `admin` | ✅ | ✅ | ✅ | ✅ |
+
+Onboard requires `--role member|viewer` (admin assigns tier explicitly).
 
 ## Compliance (policy=`stronger_prompts`)
 
@@ -224,6 +234,8 @@ Never invent stories without recalled memories.
 | `recall` / `remember` | Search / save (`learning` kind ok) |
 | `correct` | Update `source_ref` + optional learning |
 | `history` / `restore` | Revision audit trail / soft rollback |
+| `delete` | Tombstone poisoned memory (member/admin) |
+| `list-members` | Admin audit of crew roles |
 | `breakdown` / `metrics` / `status` | Plan / stats / config |
 
 MCP also exposes `prepare_research` (recall + compliance in one call).
