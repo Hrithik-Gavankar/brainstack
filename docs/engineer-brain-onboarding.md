@@ -140,5 +140,4 @@ Expected sources in every run: **git** + **gh** + **Jira (Atlassian MCP)** + **B
 ## Related docs
 
 - [core/COMMANDS.md](../core/COMMANDS.md) — full command reference
-- [workshop-brainstack-day0.md](workshop-brainstack-day0.md) — instructor-led walkthrough
 - [team-brain-onboarding.md](team-brain-onboarding.md) — crew shared memory (separate from personal standup)
