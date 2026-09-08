@@ -26,7 +26,7 @@ for daily syncs and quarterly reviews.
    accurate than local commits alone
 3. **BRAIN.md** at `${SKILL_DIR}/BRAIN.md` (the living document)
 4. **Agent transcripts** in the Cursor projects folder (demos, skill work, non-commit tasks)
-5. **Jira** via **Atlassian MCP** (Cursor marketplace plugin — required for `sync`)
+5. **Jira** — **Cursor:** Atlassian MCP (marketplace plugin, required for `sync`). **Other platforms:** `jira.sh` CLI when `JIRA_*` env is set.
 6. **Linear / other trackers** via integration skill (if available)
 
 **Critical:** Standup-relevant work is frequently *not* in authored git commits.
@@ -76,24 +76,6 @@ weekend, skip — standups don't happen on weekends.
    ```
    Plus BRAIN.md "Current Sprint Context" / upcoming events (demos, office hours, meetups).
 
-2b. **Jira signal (Atlassian MCP — required on every `sync`):**
-   - **Hard rule:** Never finalize standup without querying Jira. Git/`gh` alone miss
-     ticket work, ops/verify closes, hackathon filings, and doc-only deliverables.
-   - Prefer **`plugin-atlassian-atlassian`** (Cursor marketplace [Atlassian plugin](https://cursor.com/marketplace/atlassian)).
-     Do **not** rely on `jira.sh` in Cursor unless MCP is unavailable **and** `JIRA_*` env vars are set.
-   - If the namespace is missing or `needsAuth` → tell the user to complete
-     [engineer-brain-onboarding.md](../../../../docs/engineer-brain-onboarding.md) Step 3;
-     list Jira as **blocked** in standup — do not silently omit ticket context.
-   - When connected:
-     1. `getAccessibleAtlassianResources` → `cloudId` (e.g. `redhat.atlassian.net`)
-     2. `searchJiraIssuesUsingJql` — tickets **updated in the standup window**
-        (Monday: Friday only; Tue–Fri: prior calendar day)
-     3. `searchJiraIssuesUsingJql` — `assignee = currentUser() AND status in ("In Progress", "In Review", "Review")`
-     4. Optional: `sprint in openSprints()` — may be empty; in-progress query is the fallback
-     5. `getJiraIssue` for top 1–2 active keys when summary/epic context helps
-   - Fold tickets into standup bullets with impact language (`AAP-xxxxx`, epic name).
-     Prefer recently updated + In Progress over a raw issue dump.
-
 2a. **Calendar signal (gcal MCP, optional but preferred when connected):**
    - Call `status()` on the `gcal` MCP server first.
      - `configured: true` → call **`today_sync()`** (add `upcoming_sync(3)` or
@@ -111,6 +93,26 @@ weekend, skip — standups don't happen on weekends.
    - Treat calendar output as read-only signal — never invent events that
      didn't come from `gcal` or BRAIN.md. Precision over recall: when unsure,
      omit the meeting or ask the user once.
+
+2b. **Jira signal (Atlassian MCP — required on every Cursor `sync`):**
+   - **Hard rule:** Never finalize standup without querying Jira. Git/`gh` alone miss
+     ticket work, ops/verify closes, hackathon filings, and doc-only deliverables.
+   - Prefer **`plugin-atlassian-atlassian`** (Cursor marketplace [Atlassian plugin](https://cursor.com/marketplace/atlassian)).
+     Do **not** rely on `jira.sh` in Cursor unless MCP is unavailable **and** `JIRA_*` env vars are set.
+   - If the namespace is missing or `needsAuth` → tell the user to complete
+     [ONBOARDING.md](ONBOARDING.md) Step 3;
+     list Jira as **blocked** in standup — do not silently omit ticket context.
+   - When connected:
+     1. `getAccessibleAtlassianResources` → `cloudId` (pass to every `searchJiraIssuesUsingJql` call)
+     2. `searchJiraIssuesUsingJql` — tickets **updated in the standup window**
+        (Monday: Friday only; Tue–Fri: prior calendar day). Example Tue–Fri:
+        `assignee = currentUser() AND updated >= startOfDay(-1) ORDER BY updated DESC`
+     3. `searchJiraIssuesUsingJql` — `assignee = currentUser() AND statusCategory = "In Progress" ORDER BY updated DESC`
+        (aligns with `jira.sh active`; works across custom workflow status names)
+     4. Optional: `sprint in openSprints()` — may be empty; in-progress query is the fallback
+     5. `getJiraIssue` for top 1–2 active keys when summary/epic context helps
+   - Fold tickets into standup bullets with impact language (`PROJ-12345`, epic name).
+     Prefer recently updated + In Progress over a raw issue dump.
 
 3. Read `${SKILL_DIR}/BRAIN.md` for sprint context, active tickets, and
    scheduled team events (`Upcoming Events` table — the fallback when gcal
@@ -403,8 +405,8 @@ After each `update`, compare current state against previous state:
 
 ## Integration Points
 
-- **Daily sync**: Run `sync` before standup meetings — **always** includes Jira via Atlassian MCP
-- **Onboarding**: [engineer-brain-onboarding.md](../../../../docs/engineer-brain-onboarding.md) — Atlassian plugin setup
+- **Daily sync**: Run `sync` before standup meetings — **always** includes Jira (Atlassian MCP on Cursor)
+- **Onboarding**: [ONBOARDING.md](ONBOARDING.md) — Jira + platform setup (also at `docs/engineer-brain-onboarding.md` in the brainstack repo)
 - **Weekly reflection**: Run `reflect` on Fridays
 - **Monthly update**: Run `update` at month start
 - **Quarterly prep**: Run `quarterly` before performance reviews

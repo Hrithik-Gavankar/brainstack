@@ -11,7 +11,7 @@ for daily syncs and quarterly reviews.
    accurate than local commits alone
 3. **BRAIN.md** — the living document (located in the platform-specific directory or `core/BRAIN.md`)
 4. **Session/conversation history** (platform-specific: Cursor transcripts, Claude projects, etc.)
-5. **Jira** via **Atlassian MCP** (Cursor marketplace plugin — required for `sync`)
+5. **Jira** — **Cursor:** Atlassian MCP ([marketplace plugin](https://cursor.com/marketplace/atlassian), required for `sync`). **Other platforms:** `jira.sh` when `JIRA_URL`, `JIRA_EMAIL`, and `JIRA_API_TOKEN` are set.
 6. **Linear / other trackers** (if integration available)
 
 **Critical:** Standup-relevant work is frequently *not* in authored git commits.
@@ -59,15 +59,6 @@ weekend, skip — standups don't happen on weekends.
    - Recent releases on configured repos
    - BRAIN.md upcoming events
 
-2b. **Jira signal (Atlassian MCP — required on every `sync`):**
-   - **Hard rule:** Never finalize standup without querying Jira.
-   - Use **`plugin-atlassian-atlassian`** ([Atlassian Cursor plugin](https://cursor.com/marketplace/atlassian)).
-     Fallback: `bash core/scripts/jira.sh` only when MCP is unavailable **and** `JIRA_*` env vars are set.
-   - If namespace missing / `needsAuth` → point user to
-     [engineer-brain-onboarding.md](../docs/engineer-brain-onboarding.md) Step 3; mark Jira **blocked** in standup.
-   - When connected: `getAccessibleAtlassianResources` → JQL for tickets updated in the standup window +
-     In Progress/In Review assignments (+ optional open sprint). Merge into bullets with ticket keys.
-
 2a. **Calendar signal (gcal, optional but preferred when available):**
    - If the `gcal` MCP is connected, call `status()` first.
      - If `configured: true` → call **`today_sync()`** (on Mondays also
@@ -82,6 +73,20 @@ weekend, skip — standups don't happen on weekends.
      the platform can shell out; otherwise fall back to BRAIN.md `Upcoming Events`.
    - Calendar events are read-only signal only — never invent events that
      didn't come from `gcal`/BRAIN.md. Precision over recall.
+
+2b. **Jira signal (required on every `sync`):**
+   - **Hard rule:** Never finalize standup without querying Jira.
+   - **Cursor:** use **`plugin-atlassian-atlassian`** ([Atlassian plugin](https://cursor.com/marketplace/atlassian)).
+     If namespace missing / `needsAuth` → point user to `ONBOARDING.md` (installed) or
+     [engineer-brain-onboarding.md](../docs/engineer-brain-onboarding.md) Step 3; mark Jira **blocked** in standup.
+   - **Other platforms:** run `bash <path-to-scripts>/jira.sh done 1` (or `done 3` on Monday) when `JIRA_*` env is set.
+   - **When Atlassian MCP is connected (Cursor):**
+     1. `getAccessibleAtlassianResources` → `cloudId` (required for `searchJiraIssuesUsingJql`)
+     2. JQL — tickets updated in the standup window (e.g. `assignee = currentUser() AND updated >= startOfDay(-1)`)
+     3. JQL — `assignee = currentUser() AND statusCategory = "In Progress"` (matches `jira.sh active`)
+     4. Optional open sprint — merge into bullets with ticket keys (`PROJ-12345`).
+
+2c. **Platform note:** Atlassian MCP is **Cursor-only**. Claude Code, Copilot, Windsurf, Aider, and Continue.dev use `jira.sh` for the Jira signal — see [ONBOARDING.md](../docs/engineer-brain-onboarding.md) Step 5.
 
 3. Read `BRAIN.md` for sprint context, active tickets, and scheduled team
    events (`Upcoming Events` table — the fallback when gcal isn't configured).
@@ -215,7 +220,7 @@ Analyze current patterns and provide actionable feedback.
 Fetch your assigned Jira issues, grouped by status.
 
 **Preferred in Cursor:** Atlassian MCP (`plugin-atlassian-atlassian`) — see
-[engineer-brain-onboarding.md](../docs/engineer-brain-onboarding.md).
+[ONBOARDING.md](../docs/engineer-brain-onboarding.md) Step 3 (installed copy: `.engineer-brain/ONBOARDING.md` or `.cursor/skills/engineer-brain/ONBOARDING.md`).
 
 **CLI fallback** (terminals / non-MCP platforms):
 
@@ -240,8 +245,7 @@ Fetch your assigned Jira issues, grouped by status.
 **Required env vars:** `JIRA_URL`, `JIRA_EMAIL`, `JIRA_API_TOKEN`
 
 **Integration with other commands:**
-- **`sync` always uses Atlassian MCP** when the plugin is connected (see step 2b above).
-  CLI: when MCP unavailable, run `jira done 1` (or `jira done 3` on Monday).
+- **`sync`:** Cursor uses Atlassian MCP when the plugin is connected (see step 2b). Other platforms: `jira done 1` (or `jira done 3` on Monday) when MCP is unavailable.
 - When running `quarterly`, also run `jira quarterly` to include all closed Jira tasks for the quarter in the review content.
 - When running `reflect`, check `jira all` for stale assigned issues that haven't been updated recently.
 
@@ -412,8 +416,8 @@ After each `update`, compare current state against previous state:
 
 ## Integration Points
 
-- **Daily sync**: Run `sync` before standup meetings — **always** includes Jira via Atlassian MCP
-- **Onboarding**: [engineer-brain-onboarding.md](../docs/engineer-brain-onboarding.md) — Atlassian plugin setup
+- **Daily sync**: Run `sync` before standup meetings — always includes Jira (Atlassian MCP on Cursor; `jira.sh` elsewhere)
+- **Onboarding**: [engineer-brain-onboarding.md](../docs/engineer-brain-onboarding.md) — installed as `ONBOARDING.md` beside your skill or `.engineer-brain/`
 - **Weekly reflection**: Run `reflect` on Fridays
 - **Monthly update**: Run `update` at month start
 - **Quarterly prep**: Run `quarterly` before performance reviews

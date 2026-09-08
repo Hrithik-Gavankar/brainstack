@@ -1,5 +1,14 @@
 # Brainstack — Cursor IDE Setup
 
+## Prerequisites
+
+- **Git** + repos in your workspace
+- **GitHub CLI** — `gh auth login` (PRs, reviews, releases in `sync`)
+- **Atlassian MCP** — [Cursor marketplace plugin](https://cursor.com/marketplace/atlassian) + OAuth (required for Jira in `sync`)
+- Optional: **gcal MCP** — [setup](../../mcp/gcal/README.md) for hackathons, demos, workshops
+
+Full walkthrough: [engineer-brain-onboarding.md](../../docs/engineer-brain-onboarding.md) (installed copy: `.cursor/skills/engineer-brain/ONBOARDING.md`).
+
 ## Installation
 
 ### Option 1: Auto-install (recommended)
@@ -19,6 +28,8 @@ cp -r platforms/cursor/rules /path/to/your/workspace/.cursor/rules
 cp -r platforms/cursor/skills /path/to/your/workspace/.cursor/skills
 cp core/scripts/scan.sh /path/to/your/workspace/.cursor/skills/engineer-brain/scripts/
 cp core/scripts/doctor.sh /path/to/your/workspace/.cursor/skills/engineer-brain/scripts/
+cp core/scripts/jira.sh /path/to/your/workspace/.cursor/skills/engineer-brain/scripts/
+cp docs/engineer-brain-onboarding.md /path/to/your/workspace/.cursor/skills/engineer-brain/ONBOARDING.md
 cp core/BRAIN.md /path/to/your/workspace/.cursor/skills/engineer-brain/BRAIN.md
 mkdir -p /path/to/your/workspace/.cursor/skills/team-brain/scripts
 cp core/scripts/team-init.sh /path/to/your/workspace/.cursor/skills/team-brain/scripts/

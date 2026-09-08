@@ -119,15 +119,17 @@ Configure your workspace path to a common parent directory, or run the scanner m
 
 | Command | Recommended Frequency |
 |---------|----------------------|
-| `sync` | Daily, before standup — includes **Jira** (Atlassian MCP) + git + `gh` |
-
-### How do I set up Jira for `sync`?
-
-Install the **[Atlassian Cursor plugin](https://cursor.com/marketplace/atlassian)** and complete OAuth once.
-Step-by-step: [engineer-brain-onboarding.md](engineer-brain-onboarding.md). `sync` will not skip Jira when the plugin is connected.
+| `sync` | Daily, before standup — includes **Jira** + git + `gh` |
 | `update` | Monthly, or after major project changes |
 | `quarterly` | Once per quarter, before reviews |
 | `reflect` | Weekly (Fridays work well) |
+
+### How do I set up Jira for `sync`?
+
+**Cursor:** install the **[Atlassian Cursor plugin](https://cursor.com/marketplace/atlassian)** and complete OAuth once.
+Step-by-step: [engineer-brain-onboarding.md](engineer-brain-onboarding.md). `sync` will not skip Jira when the plugin is connected.
+
+**Other platforms** (Claude Code, Copilot, Windsurf, etc.): configure `JIRA_URL`, `JIRA_EMAIL`, and `JIRA_API_TOKEN`, then use `jira.sh` — see [engineer-brain-onboarding.md](engineer-brain-onboarding.md) Step 5 and [core/COMMANDS.md](../core/COMMANDS.md).
 
 ### Do I need to run commands manually?
 

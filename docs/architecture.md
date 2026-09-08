@@ -217,11 +217,16 @@ configured, falling back to BRAIN.md's `Upcoming Events` table otherwise.
 
 See [mcp/gcal/README.md](../mcp/gcal/README.md).
 
-### Integration: Jira (Atlassian MCP)
+### Integration: Jira
 
-Required for **`engineer-brain sync`** — ticket work often has no git/PR signal. One-time
-[Atlassian Cursor plugin](https://cursor.com/marketplace/atlassian) + OAuth; then every `sync`
-queries Jira via `plugin-atlassian-atlassian`. Setup: [engineer-brain-onboarding.md](engineer-brain-onboarding.md).
+Required for **`engineer-brain sync`** — ticket work often has no git/PR signal.
+
+| Platform | Jira signal |
+|----------|-------------|
+| **Cursor** | [Atlassian marketplace plugin](https://cursor.com/marketplace/atlassian) + OAuth → `plugin-atlassian-atlassian` MCP |
+| **Other adapters** | `core/scripts/jira.sh` when `JIRA_URL`, `JIRA_EMAIL`, `JIRA_API_TOKEN` are set |
+
+Setup: [engineer-brain-onboarding.md](engineer-brain-onboarding.md) (installed as `ONBOARDING.md` beside your skill or under `.engineer-brain/`).
 
 ---
 
