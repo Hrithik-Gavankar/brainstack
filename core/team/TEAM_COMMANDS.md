@@ -113,6 +113,7 @@ bash core/scripts/team-brain-api.sh correct AAP-81423 --source-ref "AAP-81423#cl
 | `pin` | Commit-safe `project.json` show/set (#39) — never secrets |
 | `rotate-invite` | Admin-only invite rotate (#40) |
 | `set-role` | Admin-only `admin`\|`member`\|`viewer` (#40) |
+| `list-members` | Admin-only crew role audit (display_name + role) |
 | `watch` | Near-realtime poll; `--push` adds Broadcast listener (poll always fallback) |
 | `broadcast-topic` | Show signal Broadcast topic for a Jira key (#31) |
 | `bootstrap` | **Admin one-shot** — migrate + register + share bundle |
@@ -123,6 +124,7 @@ bash core/scripts/team-brain-api.sh correct AAP-81423 --source-ref "AAP-81423#cl
 | `correct` | Correction loop: update `source_ref` + optional `learning` at `REF/learning` |
 | `history` | List archived revisions + current body for a `source_ref` |
 | `restore` | Soft-rollback to revision N (archives current first) |
+| `delete` | Tombstone memory at `source_ref` (member/admin; audit preserved) |
 | `recall` | List recent, or vector/FTS search |
 | `reembed` | Backfill embeddings for an initiative |
 | `watch` | Foreground poll only (prefer `start`) |

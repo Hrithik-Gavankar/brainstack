@@ -161,6 +161,8 @@ Manual/legacy path (still works, e.g. for one-off scripting): export `TEAM_BRAIN
       (`20260802000001_team_brain_learning_kind.sql`, issue [#30](https://github.com/Hrithik-Gavankar/brainstack/issues/30))
 - [x] **Memory version history / soft rollback** — `capture_revisions`; archive on `source_ref` update;  
       `history` / `restore` CLI+MCP (`20260803000001_team_brain_memory_history.sql`, issue [#34](https://github.com/Hrithik-Gavankar/brainstack/issues/34))
+- [x] **Governance / tombstone delete** — `delete_memory` RPC; `memory_deletions` audit; read RPCs exclude tombstones;  
+      peer cache eviction via realtime `deleted: true` + authoritative poll replace (`20260908000001_team_brain_delete_permissions.sql`, issue [#66](https://github.com/Hrithik-Gavankar/brainstack/issues/66))
 - [x] Optional long-lived push into the other agent session — encrypted full-content Broadcast + `notify/<KEY>.json` (#31); poll remains fallback
 
 ### Agent loop (what makes it a shared brain)
@@ -251,6 +253,31 @@ Use this as the build board (check off in PRs):
 
 ---
 
+## 7b. Tombstone delete + peer cache eviction (#66)
+
+When poisoned or stale team context must be removed (not just corrected), **members and admins** call `delete_memory` — viewers cannot.
+
+| Layer | Behavior |
+|-------|----------|
+| **Server** | Sets `captures.deleted_at`; appends `memory_deletions` + `capture_revisions` audit rows |
+| **Read RPCs** | `list_recent`, `search_memories`, `team_aggregate_metrics` exclude tombstones |
+| **Undelete** | `remember` at the same `source_ref` clears the tombstone (`undeleted: true`) |
+| **Local cache** | Authoritative poll replace each sync cycle; realtime push sends `deleted: true` so peers purge without manual cache wipe |
+
+```bash
+# Tombstone (member/admin)
+bash core/scripts/team-brain-api.sh delete AAP-81423 --source-ref "AAP-81423#bad-claim"
+
+# Admin audit crew tiers
+bash core/scripts/team-brain-api.sh list-members
+```
+
+**Workshop Part 5 flow:** A stores poison → B recalls → B deletes → A's cache evicts on next poll or realtime tombstone signal → A no longer recalls the deleted finding.
+
+Smoke tests: `tests/team-brain/cache-purge-smoke.sh` (local), `tests/team-brain/governance-smoke.sh` (live RPC, optional env).
+
+---
+
 ## 8. Future hardening (roadmap)
 
 | Capability | Today | Next |
@@ -260,6 +287,7 @@ Use this as the build board (check off in PRs):
 | Dedup (`source_ref`) | ✅ | — |
 | Correction / learning | ✅ `correct` + `learning` kind | — |
 | Version/history/soft rollback | ✅ `history` / `restore` + `capture_revisions` | Optional snapshots / UI |
+| Tombstone delete / governance | ✅ `delete` + `list-members`; peer cache eviction | Per-initiative ACLs (deferred) |
 | Semantic search | ✅ One-command opt-in (`enable-semantic`); FTS default (#4) | — |
 | Live push into other agent context | ✅ Full-content encrypted Broadcast + poll fallback (#31) | Optional key rotation command if a member is offboarded |
 | Model compliance | ✅ Stronger prompts + soft session gate (`compliance` / `prepare_research`; CLI not hard-blocked) | Optional hard gate / metrics later |

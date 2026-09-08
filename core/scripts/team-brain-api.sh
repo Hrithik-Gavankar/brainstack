@@ -7,14 +7,14 @@
 #   bash team-brain-api.sh <command> [args...]
 #
 # Commands: onboard | register | join | whoami | attach | start | stop | wake |
-#           bootstrap | pin | remember | correct | history | restore | recall | capture |
-#           sync | watch | breakdown | metrics | aggregate | compliance | list | mirror | status |
+#           bootstrap | pin | remember | correct | history | restore | delete | recall | capture |
+#           sync | watch | breakdown | metrics | aggregate | compliance | list | list-members | mirror | status |
 #           sync-status | touch | broadcast-topic | rotate-invite | set-role |
 #           enable-semantic | doctor
 # Plan: docs/team-brain-memory.md — memories are SoT; md is optional export.
 # Realtime (#31): signal Broadcast + poll fallback — see migration …_realtime_broadcast.sql
 # Pin (#39): commit-safe .team-brain/project.json — never secrets.
-# Roles (#40): admin | member (write) | viewer (read-only).
+# Roles (#40): admin | member (write+delete) | viewer (read-only).
 # Aggregate (#35): metrics --team / aggregate — coverage + reuse; no BRAIN.md.
 
 set -euo pipefail
@@ -90,7 +90,9 @@ resolve_jira_key() {
 
 rpc_forbidden_hint() {
   local err="${1:-}"
-  if echo "$err" | grep -qi 'viewer role is read-only\|forbidden: viewer'; then
+  if echo "$err" | grep -qi 'delete requires member role'; then
+    echo "→ Delete requires member role (read+write+delete). Ask an admin for member access." >&2
+  elif echo "$err" | grep -qi 'viewer role is read-only\|forbidden: viewer'; then
     echo "→ Your role is viewer (read-only). Ask an admin for member/write access." >&2
   elif echo "$err" | grep -qi 'forbidden: admin only'; then
     echo "→ Admin only — ask a crew admin (rotate-invite / set-role)." >&2
@@ -399,7 +401,8 @@ ensure_broadcast_key() {
   printf '%s' "$bk"
 }
 
-# Pull memories: prefer list_recent (P0); fall back to list_captures (v1).
+# Pull memories: prefer list_recent (P0); fall back to list_captures (v1 legacy).
+# Both paths exclude tombstones when delete_permissions migration is applied.
 fetch_memories() {
   local key="$1"
   local since="${2:-}"
@@ -664,6 +667,52 @@ maybe_client_broadcast() {
     2>/dev/null || true
 }
 
+# Best-effort tombstone broadcast after delete_memory (peers purge cache).
+maybe_client_broadcast_tombstone() {
+  local key="$1"
+  local out_json="${2:-}"
+  [ -n "$key" ] || return 0
+  key=$(echo "$key" | tr '[:lower:]' '[:upper:]')
+  load_config
+  [ -n "${TEAM_BRAIN_SUPABASE_URL:-}" ] && [ -n "${TEAM_BRAIN_SUPABASE_ANON_KEY:-}" ] || return 0
+  supabase_config_is_placeholder && return 0
+  local team_id=""
+  if [ -f "$CRED_FILE" ]; then
+    team_id=$(jq -r '.team_id // empty' "$CRED_FILE")
+  fi
+  [ -n "$team_id" ] || return 0
+  local capture_id source_ref topic payload
+  capture_id=$(jq -r '.capture_id // empty' <<<"$out_json")
+  source_ref=$(jq -r '.source_ref // empty' <<<"$out_json")
+  [ -n "$capture_id" ] || [ -n "$source_ref" ] || return 0
+  topic="team-brain:${team_id}:${key}"
+  payload=$(jq -n \
+    --arg tid "$team_id" \
+    --arg jk "$key" \
+    --arg cid "$capture_id" \
+    --arg ref "$source_ref" \
+    --arg deleted_at "$(jq -r '.deleted_at // empty' <<<"$out_json")" \
+    '{
+      team_id: $tid,
+      jira_key: $jk,
+      capture_id: (if $cid=="" then null else $cid end),
+      source_ref: (if $ref=="" then null else $ref end),
+      deleted: true,
+      deleted_at: (if $deleted_at=="" then null else $deleted_at end),
+      op: "UPDATE",
+      via: "client_broadcast_tombstone"
+    }')
+  local url="${TEAM_BRAIN_SUPABASE_URL%/}/realtime/v1/api/broadcast"
+  curl -sS -o /dev/null -X POST "$url" \
+    --max-time "${TEAM_BRAIN_HTTP_TIMEOUT:-20}" \
+    -H "apikey: ${TEAM_BRAIN_SUPABASE_ANON_KEY}" \
+    -H "Authorization: Bearer ${TEAM_BRAIN_SUPABASE_ANON_KEY}" \
+    -H "Content-Type: application/json" \
+    -d "$(jq -n --arg t "$topic" --argjson p "$payload" \
+      '{messages:[{topic:$t, event:"memory_changed", payload:$p}]}')" \
+    2>/dev/null || true
+}
+
 # Authenticated cache refresh after a push signal (merge-safe; used by realtime listener).
 cmd_pull_signal() {
   require_api_key
@@ -682,7 +731,7 @@ cmd_pull_signal() {
   new_count=$(jq '((.memories // .captures) // []) | length' <<<"$delta" 2>/dev/null || echo 0)
   payload=$(fetch_memories "$key" 2>/dev/null || true)
   if [ -n "${payload:-}" ]; then
-    merge_memory_cache "$key" "$payload"
+    merge_memory_cache "$key" "$payload" replace
     mirror_captures_to_md "$key" "$payload" >/dev/null 2>&1 || true
     since=$(jq -r '[((.memories // .captures) // [])[] | (.updated_at // .created_at)] | max // empty' <<<"$payload")
   fi
@@ -740,7 +789,13 @@ cmd_apply_pushed_memory() {
   key=$(echo "$key" | tr '[:lower:]' '[:upper:]')
   local mem
   mem=$(cat)
-  jq -e 'type=="object" and has("id") and has("body")' >/dev/null 2>&1 <<<"$mem" \
+  jq -e 'type=="object"' >/dev/null 2>&1 <<<"$mem" \
+    || die "_apply_pushed_memory: invalid memory JSON on stdin"
+  if jq -e '.deleted == true' >/dev/null 2>&1 <<<"$mem"; then
+    cmd_purge_pushed_memory "$key" "$mem"
+    return 0
+  fi
+  jq -e 'has("id") and has("body")' >/dev/null 2>&1 <<<"$mem" \
     || die "_apply_pushed_memory: invalid memory JSON on stdin"
   local incoming
   incoming=$(jq -n --argjson m "$mem" --arg key "$key" '{initiative: {jira_key: $key}, memories: [$m]}')
@@ -773,6 +828,54 @@ cmd_apply_pushed_memory() {
     ' "$(sync_state_path "$key")" >"$tmp" && mv "$tmp" "$(sync_state_path "$key")"
   fi
   echo "→ full push applied ${key}: 1 memory (decrypted locally; notify: $notify_path)" >&2
+  jq . "$notify_path"
+}
+
+# Tombstone purge from realtime push (deleted: true) or _purge_pushed_memory CLI.
+cmd_purge_pushed_memory() {
+  local key="${1:-}"
+  local payload="${2:-}"
+  [ -n "$key" ] || die "usage: _purge_pushed_memory <JIRA-KEY> (tombstone JSON on stdin or arg)"
+  key=$(echo "$key" | tr '[:lower:]' '[:upper:]')
+  if [ -z "$payload" ]; then
+    payload=$(cat)
+  fi
+  jq -e 'type=="object" and .deleted==true' >/dev/null 2>&1 <<<"$payload" \
+    || die "_purge_pushed_memory: payload must be object with deleted=true"
+  local capture_id source_ref
+  capture_id=$(jq -r '.capture_id // .id // empty' <<<"$payload")
+  source_ref=$(jq -r '.source_ref // empty' <<<"$payload")
+  purge_memory_from_cache "$key" "$capture_id" "$source_ref"
+  touch_sync_activity "$key"
+  mkdir -p "$(NOTIFY_DIR)"
+  ensure_team_gitignore
+  local notify_path
+  notify_path="$(NOTIFY_DIR)/${key}.json"
+  jq -n \
+    --arg key "$key" \
+    --arg now "$(iso_now)" \
+    --arg ref "$source_ref" \
+    --arg cid "$capture_id" \
+    '{
+      jira_key: $key,
+      notified_at: $now,
+      pull_count: 0,
+      source: "realtime_tombstone",
+      deleted: true,
+      capture_id: (if $cid=="" then null else $cid end),
+      source_ref: (if $ref=="" then null else $ref end),
+      agent_hint: "Peer tombstoned a memory — it was removed from your local cache. Do not recall the deleted source_ref."
+    }' >"$notify_path"
+  if [ -f "$(sync_state_path "$key")" ]; then
+    local tmp
+    tmp=$(mktemp)
+    jq --arg now "$(iso_now)" '
+      .last_pull_at = $now
+      | .last_push_at = $now
+      | .push = ((.push // {}) + {last_signal_at: $now, last_tombstone_at: $now})
+    ' "$(sync_state_path "$key")" >"$tmp" && mv "$tmp" "$(sync_state_path "$key")"
+  fi
+  echo "→ tombstone purge ${key}: ref=${source_ref:-?} id=${capture_id:-?} (notify: $notify_path)" >&2
   jq . "$notify_path"
 }
 
@@ -898,9 +1001,16 @@ cmd_doctor() {
         ok=0
       fi
       if rpc_try team_aggregate_metrics "$(jq -n --arg k "$TEAM_BRAIN_API_KEY" '{p_api_key:$k}')" >/dev/null 2>&1; then
-        echo "[ok]   migrations up to date (through #35 team_aggregate_metrics)"
+        echo "[ok]   migrations through team_aggregate_metrics (#35)"
       else
         echo "[warn] team_aggregate_metrics unavailable — apply latest supabase/migrations/*.sql"
+      fi
+      local del_probe_err
+      del_probe_err=$(rpc_try delete_memory "$(jq -n --arg k "$TEAM_BRAIN_API_KEY" '{p_api_key:$k,p_jira_key:"X",p_source_ref:"x"}')" 2>&1 >/dev/null || true)
+      if echo "$del_probe_err" | grep -Eqi 'Could not find the function|PGRST202|404|does not exist'; then
+        echo "[warn] delete_memory unavailable — apply 20260908000001_team_brain_delete_permissions.sql"
+      else
+        echo "[ok]   delete_memory RPC present (governance migration)"
       fi
       echo "[info] Full push needs: apply …_full_push_and_semantic_hardening.sql, then remember once to warm the broadcast key cache."
     else
@@ -923,11 +1033,46 @@ cmd_doctor() {
 iso_now() { date -u +%Y-%m-%dT%H:%M:%SZ; }
 epoch_now() { date -u +%s; }
 
+# Remove tombstoned memory from local cache (by capture id and/or source_ref).
+purge_memory_from_cache() {
+  local key="$1"
+  local capture_id="${2:-}"
+  local source_ref="${3:-}"
+  local path="$TEAM_DIR/cache/${key}.json"
+  [ -f "$path" ] || return 0
+  if [ -z "$capture_id" ] && [ -z "$source_ref" ]; then
+    return 0
+  fi
+  local tmp synced
+  synced=$(iso_now)
+  tmp=$(mktemp)
+  jq -n --slurpfile old "$path" --arg synced "$synced" --arg cid "$capture_id" --arg ref "$source_ref" '
+    ($old[0].memories // []) as $mems |
+    [$mems[] | select(
+      (if $cid != "" then (.id|tostring) != $cid else true end)
+      and (if $ref != "" then (.source_ref // "") != $ref else true end)
+    )] as $kept |
+    {
+      jira_key: ($old[0].jira_key // null),
+      synced_at: $synced,
+      initiative: $old[0].initiative,
+      memories: $kept
+    }
+  ' >"$tmp" && mv "$tmp" "$path"
+  echo "Memory purged from cache → $path" >&2
+}
+
 # Merge incoming memories into cache by id (prefer newer updated_at/created_at).
-# Never drops local rows that server didn't send in a partial delta.
+# Mode replace: authoritative full snapshot (drops local rows absent from server).
+# Mode merge (default): never drops local rows missing from a partial delta.
 merge_memory_cache() {
   local key="$1"
   local incoming="$2"
+  local mode="${3:-merge}"
+  if [ "$mode" = "replace" ]; then
+    write_memory_cache "$key" "$incoming"
+    return 0
+  fi
   local path="$TEAM_DIR/cache/${key}.json"
   mkdir -p "$TEAM_DIR/cache"
   ensure_team_gitignore
@@ -1179,7 +1324,7 @@ cmd_sync_loop() {
       warned=0
     fi
 
-    local since cursor_payload delta new_count
+    local since cursor_payload delta new_count prev_count curr_count
     since=$(jq -r '.cursor // empty' "$state_path")
     if [ -n "$since" ]; then
       delta=$(fetch_memories "$key" "$since" 2>/dev/null || echo '{}')
@@ -1187,19 +1332,24 @@ cmd_sync_loop() {
       delta=$(fetch_memories "$key" 2>/dev/null || echo '{}')
     fi
     new_count=$(jq '((.memories // .captures) // []) | length' <<<"$delta" 2>/dev/null || echo 0)
-    if [ "${new_count:-0}" -gt 0 ]; then
-      echo "── $(iso_now) +${new_count} memory(ies) for $key ──" >&2
-      jq -r '
-        ((.memories // .captures) // []) | .[] |
-        "[\(.updated_at // .created_at)] @\(.author_name) \(.kind)\(if .source_ref then " ("+.source_ref+")" else "" end): \(.body | gsub("\n"; " "))"
-      ' <<<"$delta" 2>/dev/null || true
-      merge_memory_cache "$key" "$delta"
-      # Full refresh keeps export + initiative metadata perfect
-      cursor_payload=$(fetch_memories "$key" 2>/dev/null || true)
-      if [ -n "${cursor_payload:-}" ]; then
-        merge_memory_cache "$key" "$cursor_payload"
-        mirror_captures_to_md "$key" "$cursor_payload" >/dev/null 2>&1 || true
-        since=$(jq -r '[((.memories // .captures) // [])[] | (.updated_at // .created_at)] | max // empty' <<<"$cursor_payload")
+    prev_count=0
+    if [ -f "$TEAM_DIR/cache/${key}.json" ]; then
+      prev_count=$(jq '(.memories // []) | length' "$TEAM_DIR/cache/${key}.json" 2>/dev/null || echo 0)
+    fi
+    cursor_payload=$(fetch_memories "$key" 2>/dev/null || true)
+    if [ -n "${cursor_payload:-}" ]; then
+      merge_memory_cache "$key" "$cursor_payload" replace
+      mirror_captures_to_md "$key" "$cursor_payload" >/dev/null 2>&1 || true
+      curr_count=$(jq '((.memories // .captures) // []) | length' <<<"$cursor_payload" 2>/dev/null || echo 0)
+      since=$(jq -r '[((.memories // .captures) // [])[] | (.updated_at // .created_at)] | max // empty' <<<"$cursor_payload")
+      if [ "${new_count:-0}" -gt 0 ]; then
+        echo "── $(iso_now) +${new_count} memory(ies) for $key ──" >&2
+        jq -r '
+          ((.memories // .captures) // []) | .[] |
+          "[\(.updated_at // .created_at)] @\(.author_name) \(.kind)\(if .source_ref then " ("+.source_ref+")" else "" end): \(.body | gsub("\n"; " "))"
+        ' <<<"$delta" 2>/dev/null || true
+      elif [ "${curr_count:-0}" -lt "${prev_count:-0}" ]; then
+        echo "── $(iso_now) cache refreshed for $key (${prev_count} → ${curr_count} memories; tombstones evicted) ──" >&2
       fi
       tmp=$(mktemp)
       jq --arg now "$(iso_now)" --arg cur "${since:-}" --argjson n "$new_count" '
@@ -1585,18 +1735,22 @@ EOF
 cmd_join() {
   local invite=""
   local display="${USER:-engineer}"
-  local role="member"
+  local role=""
+  local role_set=0
   local positional=()
   while [ $# -gt 0 ]; do
     case "$1" in
-      --role) role="${2:-member}"; shift 2 ;;
-      -h|--help) die "usage: join <invite-code> [display-name] [--role member|viewer]" ;;
+      --role) role="${2:-}"; role_set=1; shift 2 ;;
+      -h|--help) die "usage: join <invite-code> [display-name] --role member|viewer" ;;
       *) positional+=("$1"); shift ;;
     esac
   done
   if [ ${#positional[@]} -ge 1 ]; then invite="${positional[0]}"; fi
   if [ ${#positional[@]} -ge 2 ]; then display="${positional[1]}"; fi
-  [ -n "$invite" ] || die "usage: join <invite-code> [display-name] [--role member|viewer]"
+  [ -n "$invite" ] || die "usage: join <invite-code> [display-name] --role member|viewer"
+  if [ "$role_set" -ne 1 ] || [ -z "$role" ]; then
+    die "join requires --role member|viewer — admin must assign your permission tier explicitly"
+  fi
   role=$(echo "$role" | tr '[:upper:]' '[:lower:]')
   case "$role" in
     member|viewer) ;;
@@ -1619,9 +1773,14 @@ cmd_join() {
     fi
   fi
   mkdir -p "$TEAM_DIR/initiatives"
-  if [ "$role" = "viewer" ]; then
-    echo "→ Joined as viewer (read-only). recall/list/breakdown OK; remember/correct forbidden." >&2
-  fi
+  case "$role" in
+    viewer)
+      echo "→ Joined as viewer (read-only). recall/list/breakdown OK; remember/correct/delete forbidden." >&2
+      ;;
+    member)
+      echo "→ Joined as member (read+write+delete). Admin should assign viewer|member explicitly via --role." >&2
+      ;;
+  esac
   echo "$out" | jq .
 }
 
@@ -1630,13 +1789,14 @@ cmd_onboard() {
   local invite=""
   local display=""
   local jira_key=""
-  local role="member"
+  local role=""
+  local role_set=0
   local positional=()
   while [ $# -gt 0 ]; do
     case "$1" in
-      --role) role="${2:-member}"; shift 2 ;;
+      --role) role="${2:-}"; role_set=1; shift 2 ;;
       -h|--help)
-        die "usage: onboard <invite-code> \"Your Name\" [JIRA-KEY] [--role member|viewer]"
+        die "usage: onboard <invite-code> \"Your Name\" [JIRA-KEY] --role member|viewer"
         ;;
       *) positional+=("$1"); shift ;;
     esac
@@ -1645,7 +1805,15 @@ cmd_onboard() {
   if [ ${#positional[@]} -ge 2 ]; then display="${positional[1]}"; fi
   if [ ${#positional[@]} -ge 3 ]; then jira_key="${positional[2]}"; fi
   [ -n "$invite" ] && [ -n "$display" ] || \
-    die "usage: onboard <invite-code> \"Your Name\" [JIRA-KEY] [--role member|viewer]"
+    die "usage: onboard <invite-code> \"Your Name\" [JIRA-KEY] --role member|viewer"
+  if [ "$role_set" -ne 1 ] || [ -z "$role" ]; then
+    die "onboard requires --role member|viewer — ask your admin which permission tier you need"
+  fi
+  role=$(echo "$role" | tr '[:upper:]' '[:lower:]')
+  case "$role" in
+    member|viewer) ;;
+    *) die "role must be member (read+write+delete) or viewer (read-only)" ;;
+  esac
 
   echo "→ Seeding config from public project + joining team…" >&2
   cmd_join "$invite" "$display" --role "$role" >/dev/null
@@ -1784,6 +1952,22 @@ cmd_set_role() {
   rpc set_member_role "$(jq -n \
     --arg k "$TEAM_BRAIN_API_KEY" --arg d "$name" --arg r "$role" \
     '{p_api_key:$k, p_display_name:$d, p_role:$r}')" | jq .
+}
+
+cmd_list_members() {
+  require_api_key
+  local out err tmp_err
+  tmp_err=$(mktemp)
+  if ! out=$(rpc_try list_members "$(jq -n --arg k "$TEAM_BRAIN_API_KEY" '{p_api_key:$k}')" 2>"$tmp_err"); then
+    err=$(tr '\n' ' ' <"$tmp_err" | sed 's/[[:space:]]*$//')
+    rm -f "$tmp_err"
+    if echo "$err" | grep -Eqi 'Could not find the function|PGRST202|404|does not exist'; then
+      die "list_members unavailable — apply migration 20260908000001_team_brain_delete_permissions.sql"
+    fi
+    die "list_members failed: ${err:-unknown error}"
+  fi
+  rm -f "$tmp_err"
+  echo "$out" | jq .
 }
 
 cmd_whoami() {
@@ -2186,6 +2370,60 @@ cmd_restore() {
     echo "→ restored $source_ref from revision $revision (current archived)" >&2
   elif jq -e '.deduped == true' >/dev/null 2>&1 <<<"$out"; then
     echo "→ already at revision $revision (no change)" >&2
+  fi
+  echo "$out" | jq .
+}
+
+# delete — tombstone memory at source_ref (member/admin only; audit preserved)
+cmd_delete() {
+  require_api_key
+  local key="${1:-}"
+  shift || true
+  local source_ref="${TEAM_BRAIN_SOURCE_REF:-}"
+  local usage='usage: delete <JIRA-KEY> --source-ref REF | delete <JIRA-KEY> <source_ref>'
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --source-ref)
+        source_ref="${2:-}"
+        shift 2 || die "$usage"
+        ;;
+      *)
+        if [ -z "$source_ref" ]; then
+          source_ref="$1"
+          shift
+        else
+          die "$usage"
+        fi
+        ;;
+    esac
+  done
+  [ -n "$key" ] || die "$usage"
+  [ -n "$source_ref" ] || die "delete requires source_ref. $usage"
+  key=$(echo "$key" | tr '[:lower:]' '[:upper:]')
+  local payload out sync_payload err tmp_err
+  payload=$(jq -n \
+    --arg k "$TEAM_BRAIN_API_KEY" \
+    --arg j "$key" \
+    --arg r "$source_ref" \
+    '{p_api_key:$k, p_jira_key:$j, p_source_ref:$r}')
+  tmp_err=$(mktemp)
+  if ! out=$(rpc_try delete_memory "$payload" 2>"$tmp_err"); then
+    err=$(tr '\n' ' ' <"$tmp_err" | sed 's/[[:space:]]*$//')
+    rm -f "$tmp_err"
+    if echo "$err" | grep -Eqi 'Could not find the function|PGRST202|404|does not exist'; then
+      die "delete_memory unavailable — apply migration 20260908000001_team_brain_delete_permissions.sql"
+    fi
+    die "delete_memory failed: ${err:-unknown error}"
+  fi
+  rm -f "$tmp_err"
+  sync_payload=$(fetch_memories "$key")
+  mirror_captures_to_md "$key" "$sync_payload"
+  maybe_client_broadcast_tombstone "$key" "$out"
+  touch_sync_activity "$key"
+  if jq -e '.deleted == true' >/dev/null 2>&1 <<<"$out"; then
+    echo "→ tombstoned $source_ref (audit preserved in capture_revisions + memory_deletions)" >&2
+  elif jq -e '.deduped == true' >/dev/null 2>&1 <<<"$out"; then
+    echo "→ already deleted (no change)" >&2
   fi
   echo "$out" | jq .
 }
@@ -2733,15 +2971,17 @@ Team Brain — collaborative memory client (Supabase)
   bootstrap --team NAME --admin "Name" [options…]
       Admin one-shot: configure → migrate → register → print joiner share bundle.
       See: bash core/scripts/team-brain-bootstrap.sh --help
-  onboard <invite-code> "Your Name" [JIRA-KEY] [--role member|viewer]
+  onboard <invite-code> "Your Name" [JIRA-KEY] --role member|viewer
+      Admin-preassigned permission tier required (member=write+delete, viewer=read-only).
   register <team-name> [display-name]
-  join <invite-code> [display-name] [--role member|viewer]
+  join <invite-code> [display-name] --role member|viewer
   whoami
   pin show | pin set --jira KEY [--team-name NAME] [--project-ref REF]
       Commit-safe .team-brain/project.json (#39). Never secrets (anon/api_key/invite).
   rotate-invite              Admin-only: rotate invite code (#40)
   set-role "Name" --role admin|member|viewer
       Admin-only: change a teammate's role (#40)
+  list-members               Admin-only: audit crew roles (display_name + role)
   attach [JIRA-KEY] [title] [status] [jira-url]
       Upsert initiative (writers only). Jira key optional if project.json pin set.
 
@@ -2765,6 +3005,8 @@ Team Brain — collaborative memory client (Supabase)
       List archived revisions + current body (apply memory-history migration).
   restore <JIRA-KEY> --source-ref REF --revision N
       Soft-rollback to revision N; archives current body first (audit preserved).
+  delete <JIRA-KEY> --source-ref REF | delete <JIRA-KEY> <source_ref>
+      Tombstone poisoned/stale memory (member/admin only; viewers forbidden). Audit preserved.
   capture …                 Compat alias for remember
 
   recall <JIRA-KEY> [query…]
@@ -2806,7 +3048,7 @@ Realtime push (#31 — full content, encrypted; poll always remains fallback):
 
 Roles / invites (#40):
   Apply migration 20260805000001_team_brain_roles_and_invites.sql
-  Roles: admin | member (write) | viewer (read-only)
+  Roles: admin | member (read+write+delete) | viewer (read-only)
   Admin: rotate-invite · set-role
 
 Repo pin (#39):
@@ -2844,6 +3086,7 @@ main() {
     pin) cmd_pin "$@" ;;
     rotate-invite|rotate_invite) cmd_rotate_invite "$@" ;;
     set-role|set_role) cmd_set_role "$@" ;;
+    list-members|list_members) cmd_list_members "$@" ;;
     attach) cmd_attach "$@" ;;
     start) cmd_start "$@" ;;
     stop) cmd_stop "$@" ;;
@@ -2856,6 +3099,7 @@ main() {
     correct) cmd_correct "$@" ;;
     history) cmd_history "$@" ;;
     restore) cmd_restore "$@" ;;
+    delete) cmd_delete "$@" ;;
     capture) cmd_capture "$@" ;;
     recall) cmd_recall "$@" ;;
     reembed) cmd_reembed "$@" ;;
@@ -2867,6 +3111,7 @@ main() {
     broadcast-topic|broadcast_topic) cmd_broadcast_topic "$@" ;;
     _pull_signal) cmd_pull_signal "$@" ;;
     _apply_pushed_memory) cmd_apply_pushed_memory "$@" ;;
+    _purge_pushed_memory) cmd_purge_pushed_memory "$@" ;;
     enable-semantic|enable_semantic) cmd_enable_semantic "$@" ;;
     doctor|health) cmd_doctor "$@" ;;
     list) cmd_list "$@" ;;

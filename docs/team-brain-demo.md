@@ -86,9 +86,11 @@ Generates a draft epic breakdown from shared memory — stories, spikes, impleme
 | **Merge-safe writes** | Same `source_ref` = update, not duplicate |
 | **Idle sleep + wake** | Conserves resources; prompts to resume |
 | **Peer push** | Signal broadcast when teammates `remember` |
-| **Roles** | Admin / member (write) / viewer (read-only) |
+| **Roles** | Admin / member (read+write+delete) / viewer (read-only) |
+| **Delete** | Tombstone poisoned memory (`delete_memory` RPC) — member/admin only |
 | **Correction loop** | Fix bad research → learning memory |
 | **History / rollback** | Soft restore prior findings |
+| **Governance** | Explicit role at onboard; delete for poisoned context |
 | **MCP tools** | Native AI tool access (Cursor, Claude Code) |
 
 ---
@@ -109,7 +111,7 @@ Generates a draft epic breakdown from shared memory — stories, spikes, impleme
 - API keys hashed (SHA-256) — never plaintext
 - No anon SELECT on memory content
 - Rate-limited register/join (default 5 reg/h, 15 join/h)
-- Role-based write gates (viewers = read-only)
+- Role-based write gates (viewers = read-only; delete requires member)
 - Invite codes 16 hex chars; admin-only rotate
 
 ---
@@ -124,9 +126,18 @@ bash core/scripts/team-brain-api.sh bootstrap \
   --db-url "postgresql://…" --jira AAP-81423 --write-env
 ```
 
-**Teammate:**
+**Teammate (admin assigns role):**
 ```bash
-bash core/scripts/team-brain-api.sh onboard <INVITE> "Bob" AAP-81423
+# Contributor (read + write + delete):
+bash core/scripts/team-brain-api.sh onboard <INVITE> "Bob" AAP-81423 --role member
+
+# Read-only observer:
+bash core/scripts/team-brain-api.sh onboard <INVITE> "Carol" AAP-81423 --role viewer
+```
+
+**Admin audit crew permissions:**
+```bash
+bash core/scripts/team-brain-api.sh list-members
 ```
 
 **Work session:**
@@ -158,6 +169,11 @@ bash core/scripts/team-brain-api.sh start DEMO-1
 
 # 4. Breakdown
 bash core/scripts/team-brain-api.sh breakdown DEMO-1
+
+# 5. Governance demo — remove poisoned memory (member/admin)
+bash core/scripts/team-brain-api.sh delete DEMO-1 --source-ref "DEMO-1#bad-claim"
+# Peer A's cache evicts on realtime tombstone or next sync poll — no manual cache wipe.
+# Viewer attempt → forbidden: delete requires member role
 ```
 
 ### Cursor Chat Demo
@@ -212,7 +228,8 @@ Ready to dig in. What would you like to work on?
 3. **What about privacy?**
    - Each crew runs their own Supabase project.
    - No anon access to memory content — even the realtime push body travels app-layer encrypted (per-team key), never plaintext, never decrypted by the DB.
-   - Role-based: viewers can read but not write.
+   - Role-based: viewers can read but not write or delete.
+   - Admin assigns `viewer` or `member` at onboard time (`--role` required).
 
 4. **Does it work with Claude Code / VS Code?**
    - MCP server works with any MCP-compatible client.

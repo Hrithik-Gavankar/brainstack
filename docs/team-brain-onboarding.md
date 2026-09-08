@@ -47,7 +47,7 @@ Ask a teammate (crew admin) for **secrets** (Slack/chat is fine). The **Jira key
 | **Invite code** | 16 hex chars | From admin’s `register` / `rotate-invite` — never in git |
 | **Supabase URL + anon key** | `https://….supabase.co` + anon JWT | Crew’s project — local env / `project.public.env` only |
 | **Jira key** (if no pin) | `AAP-81423` | Or pull `.team-brain/project.json` from the product repo (#39) |
-| **Role** (optional) | `member` (write) or `viewer` (read-only) | Admin tells you which; default is write |
+| **Role** (required) | `member` (read+write+delete) or `viewer` (read-only) | Admin tells you which; pass `--role` on onboard |
 
 Also make sure you have:
 
@@ -90,11 +90,11 @@ Edit `supabase/project.public.env` (or export env / fill `.team-brain/team.yaml`
 ### Step 2 — Run one onboard command
 
 ```bash
-# Write member (default) — Jira from pin when omitted:
-bash core/scripts/team-brain-api.sh onboard INVITE_CODE "Your Name"
+# Contributor (read + write + delete) — Jira from pin when omitted:
+bash core/scripts/team-brain-api.sh onboard INVITE_CODE "Your Name" --role member
 
-# Or explicit Jira + write role:
-bash core/scripts/team-brain-api.sh onboard INVITE_CODE "Your Name" AAP-81423
+# Or explicit Jira + contributor role:
+bash core/scripts/team-brain-api.sh onboard INVITE_CODE "Your Name" AAP-81423 --role member
 
 # Read-only viewer:
 bash core/scripts/team-brain-api.sh onboard INVITE_CODE "Your Name" --role viewer
@@ -103,7 +103,7 @@ bash core/scripts/team-brain-api.sh onboard INVITE_CODE "Your Name" --role viewe
 **Real example:**
 
 ```bash
-bash core/scripts/team-brain-api.sh onboard 9F7AC910 "Ada Junior" AAP-81423
+bash core/scripts/team-brain-api.sh onboard 9F7AC910 "Ada Junior" AAP-81423 --role member
 ```
 
 Tips:
@@ -111,7 +111,7 @@ Tips:
 - Keep your name in quotes if it has a space: `"Ada Junior"`
 - Jira key can be upper or lower case; the tool normalizes it
 - Use a **display name that nobody else on the team already used** (duplicates are rejected)
-- Viewers can `recall` / `breakdown` but not `remember` / `attach` (ask admin for `set-role … member`)
+- Viewers can `recall` / `breakdown` but not `remember` / `attach` / `delete` (ask admin for `set-role … member`)
 
 ### Step 3 — Check that it worked
 

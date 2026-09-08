@@ -35,6 +35,7 @@ mcp = FastMCP(
         "Optional learning kind: what was wrong → what to prefer (natural language, "
         "no TODO/NO-TODO dumps). "
         "source_ref updates archive the prior body; history() / restore() for soft rollback. "
+        "delete_memory() tombstones poisoned context (member/admin only). "
         "If sync_status mode is sleep, prompt the user to wake before deep research. "
         "Peer push: start() may run Realtime Broadcast listener; check notify/<KEY>.json "
         "or sync_status.realtime_daemon after teammate remembers (poll/watch still fallback). "
@@ -414,6 +415,30 @@ def restore(jira_key: str, source_ref: str, revision: int) -> str:
     return _as_json(
         _run("restore", key, "--source-ref", ref, "--revision", str(rev))
     )
+
+
+@mcp.tool()
+def delete_memory(jira_key: str, source_ref: str) -> str:
+    """Tombstone a poisoned or stale memory at source_ref (member/admin only).
+
+    Viewers cannot delete — RPC returns forbidden. Audit preserved in
+    capture_revisions + memory_deletions. Hidden from recall/list/search.
+    Re-remember at the same source_ref undeletes (replaces content).
+    """
+    key = jira_key.strip().upper()
+    ref = source_ref.strip()
+    if not ref:
+        raise ValueError("source_ref is required for delete_memory")
+    return _as_json(_run("delete", key, "--source-ref", ref))
+
+
+@mcp.tool()
+def list_members() -> str:
+    """Admin-only: list crew members with display_name and role (no api_key).
+
+    Use before workshop demos to audit permission tiers.
+    """
+    return _as_json(_run("list-members"))
 
 
 @mcp.tool()
