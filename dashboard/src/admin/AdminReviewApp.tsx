@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Inbox, LogOut, RefreshCw, ShieldAlert } from "lucide-react";
 import { AdminCredentialsForm } from "./AdminCredentialsForm";
 import { PendingSubmissionCard } from "./PendingSubmissionCard";
@@ -35,8 +35,10 @@ export const AdminReviewApp = () => {
   const [actionMessage, setActionMessage] = useState<string | null>(null);
 
   const isAdmin = viewer?.role === "admin";
+  const refreshGenerationRef = useRef(0);
 
   const refreshQueue = useCallback(async (activeSession: TeamBrainSession) => {
+    const generation = ++refreshGenerationRef.current;
     setLoading(true);
     setError(null);
     try {
@@ -49,13 +51,21 @@ export const AdminReviewApp = () => {
           statusFilter,
         ),
       ]);
+      if (generation !== refreshGenerationRef.current) {
+        return;
+      }
       setViewer(who);
       setInitiatives(initiativeRows);
       setSubmissions(pendingPayload.pending ?? []);
     } catch (err) {
+      if (generation !== refreshGenerationRef.current) {
+        return;
+      }
       setError(err instanceof Error ? err.message : "Failed to load review queue");
     } finally {
-      setLoading(false);
+      if (generation === refreshGenerationRef.current) {
+        setLoading(false);
+      }
     }
   }, [jiraKey, statusFilter]);
 
@@ -75,6 +85,7 @@ export const AdminReviewApp = () => {
   }, []);
 
   const handleDisconnect = useCallback(() => {
+    refreshGenerationRef.current += 1;
     clearTeamBrainSession();
     setSession(null);
     setViewer(null);
