@@ -40,6 +40,9 @@ CRED_FILE="${TEAM_BRAIN_CREDENTIALS:-$TEAM_DIR/credentials.json}"
 CONFIG_YAML="${TEAM_BRAIN_CONFIG:-$TEAM_DIR/team.yaml}"
 PIN_FILE="${TEAM_BRAIN_PIN:-$TEAM_DIR/project.json}"
 
+# shellcheck source=team-brain-secret-utils.sh
+source "$SCRIPT_DIR/team-brain-secret-utils.sh"
+
 die() { echo "error: $*" >&2; exit 1; }
 
 # Commit-safe pin (#39). Never put anon / api_key / invite here.
@@ -439,7 +442,10 @@ save_credentials() {
   chmod 600 "$CRED_FILE" 2>/dev/null || true
   echo "Wrote credentials → $CRED_FILE" >&2
   if jq -e '.role == "admin" and (.invite_code // null) != null and .invite_code != ""' >/dev/null 2>&1 <<<"$json"; then
-    echo "Invite code (share with teammates; keep private from the public internet): $(jq -r .invite_code <<<"$json")" >&2
+    local invite_raw invite_mask
+    invite_raw=$(jq -r .invite_code <<<"$json")
+    invite_mask=$(tb_mask_secret "$invite_raw")
+    echo "Invite code (full value in $CRED_FILE and .team-brain/share-bundle.txt — share via DM only): $invite_mask" >&2
   fi
   echo "API key saved (keep private)." >&2
 }

@@ -326,7 +326,7 @@ def remember(
     """Save a finding for the crew — call IMMEDIATELY after durable research (do not wait).
 
     kind: research | decision | note | learning.
-    Always pass source_ref (e.g. AAP-81423#cli-schema).
+    Always pass source_ref (e.g. YOU_JIRA_TICKET_HERE#cli-schema).
     Identical body → deduped=true. Same source_ref + new body → updated=true (merge);
     prior body is archived (archived_revision) when the history migration is applied.
     Near-duplicate or cross-author conflict → redundant_candidate=true (not stored).

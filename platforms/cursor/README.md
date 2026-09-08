@@ -75,21 +75,21 @@ local — never commit it back to this repository.
 `team-brain.mdc` is installed with Cursor rules. **One chat line to start:**
 
 ```text
-I'm starting on AAP-81423 — start Team Brain sync.
+I'm starting on YOU_JIRA_TICKET_HERE — start Team Brain sync.
 ```
 
 ```text
-I'm starting on AAP-81423 — start Team Brain sync, summarize crew memory, then help me.
+I'm starting on YOU_JIRA_TICKET_HERE — start Team Brain sync, summarize crew memory, then help me.
 ```
 
 ```text
-/team-brain start AAP-81423
+/team-brain start YOU_JIRA_TICKET_HERE
 ```
 
 | Later | Say |
 |-------|-----|
-| After idle sleep | `Wake Team Brain sync for AAP-81423 and continue.` |
-| Done | `Stop Team Brain sync for AAP-81423.` |
+| After idle sleep | `Wake Team Brain sync for YOU_JIRA_TICKET_HERE and continue.` |
+| Done | `Stop Team Brain sync for YOU_JIRA_TICKET_HERE.` |
 
 While active the agent should summarize cache, `touch` each turn, and `remember` findings (`source_ref`).
 

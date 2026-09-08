@@ -160,7 +160,7 @@ Shared AI memory for crews working on the same Jira initiative. When one enginee
 
 ```mermaid
 flowchart LR
-    subgraph Crew["Crew on AAP-81423"]
+    subgraph Crew["Crew on YOU_JIRA_TICKET_HERE"]
         A1[Alice's Agent]
         A2[Bob's Agent]
         A3[Carol's Agent]
@@ -172,7 +172,7 @@ flowchart LR
     end
 
     subgraph Local["Each Engineer"]
-        CACHE["cache/AAP-81423.json"]
+        CACHE["cache/YOU_JIRA_TICKET_HERE.json"]
         MCP[MCP Tools]
     end
 
@@ -199,10 +199,10 @@ flowchart LR
 ### How It Works
 
 1. **Admin creates team** — `register "Team Atlas" "Alice"` → Supabase project + invite code
-2. **Teammates join** — `onboard <invite> "Bob" AAP-81423` → credentials + Jira key
-3. **Start sync mode** — "I'm starting on AAP-81423 — start Team Brain sync"
+2. **Teammates join** — `onboard <invite> "Bob" YOU_JIRA_TICKET_HERE` → credentials + Jira key
+3. **Start sync mode** — "I'm starting on YOU_JIRA_TICKET_HERE — start Team Brain sync"
 4. **Agents collaborate** — `remember` findings → peers get realtime push → `recall` when needed
-5. **Generate artifacts** — `breakdown AAP-81423` → story/spike draft from crew memory
+5. **Generate artifacts** — `breakdown YOU_JIRA_TICKET_HERE` → story/spike draft from crew memory
 
 ```
 Alice researches auth options → remember "prefer OAuth2 over SAML for SSO"
@@ -411,10 +411,10 @@ bash install.sh continue-dev ~/my-workspace
 "team-brain register …"                → admin creates team once
 
 # Sync mode (Cursor chat — one line to start crew work):
-"I'm starting on AAP-81423 — start Team Brain sync."
-"Wake Team Brain sync for AAP-81423 and continue."
-"Stop Team Brain sync for AAP-81423."
-"Breakdown AAP-81423 from Team Brain memory."
+"I'm starting on YOU_JIRA_TICKET_HERE — start Team Brain sync."
+"Wake Team Brain sync for YOU_JIRA_TICKET_HERE and continue."
+"Stop Team Brain sync for YOU_JIRA_TICKET_HERE."
+"Breakdown YOU_JIRA_TICKET_HERE from Team Brain memory."
 ```
 
 
@@ -424,9 +424,9 @@ bash install.sh continue-dev ~/my-workspace
 bash install.sh cursor ~/my-workspace
 # Personal: /engineer-brain sync
 # Admin once: bash core/scripts/team-brain-api.sh register "Team Atlas" "You"
-# Teammate:   bash core/scripts/team-brain-api.sh onboard <INVITE> "Name" AAP-81423
+# Teammate:   bash core/scripts/team-brain-api.sh onboard <INVITE> "Name" YOU_JIRA_TICKET_HERE
 # (Admin: own Supabase project → fill local project.public.env; joiners get URL+anon+invite)
-# Then in Cursor: I'm starting on AAP-81423 — start Team Brain sync.
+# Then in Cursor: I'm starting on YOU_JIRA_TICKET_HERE — start Team Brain sync.
 ```
 
 ---

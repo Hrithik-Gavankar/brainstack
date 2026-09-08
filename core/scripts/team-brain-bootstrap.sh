@@ -17,6 +17,9 @@ PUBLIC_ENV="${TEAM_BRAIN_PUBLIC_ENV:-$REPO_ROOT/supabase/project.public.env}"
 MIGRATIONS_DIR="$REPO_ROOT/supabase/migrations"
 SUPABASE_DIR="$REPO_ROOT/supabase"
 
+# shellcheck source=team-brain-secret-utils.sh
+source "$SCRIPT_DIR/team-brain-secret-utils.sh"
+
 die() { echo "error: $*" >&2; exit 1; }
 info() { echo "→ $*" >&2; }
 ok() { echo "✓ $*" >&2; }
@@ -60,7 +63,7 @@ Migration strategy (first match wins):
 
 Examples:
   # Hosted project you already filled in project.public.env + linked CLI:
-  bash core/scripts/team-brain-bootstrap.sh --team "Spike Crew" --admin "Alice" --jira AAP-81423
+  bash core/scripts/team-brain-bootstrap.sh --team "Spike Crew" --admin "Alice" --jira YOU_JIRA_TICKET_HERE
 
   # Pass URL/anon + DB URL for migrations:
   bash core/scripts/team-brain-bootstrap.sh --team "Spike Crew" --admin "Alice" \\
@@ -314,12 +317,16 @@ print_share_bundle() {
   local anon="$4"
   local jira="$5"
   local site="${6:-https://your-org.atlassian.net}"
+  local jira_key="${jira:-JIRA-KEY}"
+  local invite_mask anon_mask bundle_path full_bundle
 
-  cat <<EOF
+  invite_mask=$(tb_mask_secret "$invite")
+  anon_mask=$(tb_mask_secret "$anon")
+  export TEAM_BRAIN_DIR="${TEAM_BRAIN_DIR:-$REPO_ROOT/.team-brain}"
 
-╔══════════════════════════════════════════════════════════════════╗
-║  Team Brain — share bundle (admin → crew)                        ║
-╚══════════════════════════════════════════════════════════════════╝
+  full_bundle=$(cat <<EOF
+Team Brain — share bundle (admin → crew) — FULL SECRETS — gitignored local file
+Generated: $(date -u +"%Y-%m-%dT%H:%M:%SZ") UTC
 
 Team:     ${team}
 Invite:   ${invite}
@@ -328,18 +335,48 @@ Anon:     ${anon}
 Jira key: ${jira:-"(give teammates the ticket key)"}
 Jira:     ${site}
 
+Joiner (one shot):
+  bash core/scripts/team-brain-member-setup.sh \\
+    --invite ${invite} \\
+    --name "Their Name" \\
+    --url "${url}" \\
+    --anon "${anon}" \\
+    --role member
+
+Or set supabase/project.public.env (gitignored) with URL + anon, then:
+  bash core/scripts/team-brain-member-setup.sh --invite ${invite} --name "Their Name" --role member
+
+Do NOT commit this file or paste into public chat / PRs.
+EOF
+)
+  bundle_path=$(tb_write_share_bundle_file "$full_bundle")
+
+  cat <<EOF
+
+╔══════════════════════════════════════════════════════════════════╗
+║  Team Brain — share bundle (admin → crew)                        ║
+╚══════════════════════════════════════════════════════════════════╝
+
+Team:     ${team}
+Invite:   ${invite_mask}
+URL:      ${url}
+Anon:     ${anon_mask}
+Jira key: ${jira:-"(give teammates the ticket key)"}
+Jira:     ${site}
+
+Full invite + anon (for DM to joiners only):
+  → ${bundle_path}
+
 Joiner checklist (no Supabase account needed):
   1. Clone brainstack (or use installed skills)
-  2. Put URL + anon in local supabase/project.public.env (or .team-brain/team.yaml / env)
-  3. Admin assigns role (member = contributor, viewer = read-only), then run:
-       bash core/scripts/team-brain-api.sh onboard ${invite} "Their Name" ${jira:-JIRA-KEY} --role member
-     # or: ... --role viewer
-  4. Start sync:
-       bash core/scripts/team-brain-api.sh start ${jira:-JIRA-KEY}
+  2. Admin sends joiner the file above (or URL + anon + invite via DM — never public Slack/PR)
+  3. Joiner runs:
+       bash core/scripts/team-brain-member-setup.sh --invite <INVITE> --name "Their Name" --role member
+     (Use values from ${bundle_path})
 
 Admin after bootstrap:
   bash core/scripts/team-brain-api.sh list-members
-  bash core/scripts/team-brain-api.sh pending list ${jira:-JIRA-KEY}   # review queued overrides (#67)
+  bash core/scripts/team-brain-api.sh pending list ${jira_key}   # review queued overrides (#67)
   bash core/scripts/team-brain-api.sh doctor
 
 Do NOT commit live URL/anon/invite to a public fork.
@@ -347,6 +384,7 @@ Do NOT share service_role or member api_key in chat logs that get committed.
 
 Admin credentials saved under .team-brain/credentials.json (gitignored).
 EOF
+  tb_print_no_paste_warning
 }
 
 # ----- main -----

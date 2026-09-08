@@ -81,11 +81,11 @@ API="${SKILL_DIR}/scripts/team-brain-api.sh"
 User will often say things like:
 
 ```text
-I'm starting on AAP-81423 — start Team Brain sync.
-I'm starting on AAP-81423 — start Team Brain sync, summarize crew memory, then help me.
-/team-brain start AAP-81423
-Wake Team Brain sync for AAP-81423 and continue.
-Stop Team Brain sync for AAP-81423.
+I'm starting on YOU_JIRA_TICKET_HERE — start Team Brain sync.
+I'm starting on YOU_JIRA_TICKET_HERE — start Team Brain sync, summarize crew memory, then help me.
+/team-brain start YOU_JIRA_TICKET_HERE
+Wake Team Brain sync for YOU_JIRA_TICKET_HERE and continue.
+Stop Team Brain sync for YOU_JIRA_TICKET_HERE.
 ```
 
 Run:
@@ -165,7 +165,7 @@ That research is wrong — the schema lives in packages/ansible-language-server,
 ```
 
 ```text
-Correct Team Brain memory for AAP-81423#cli-schema — prefer …
+Correct Team Brain memory for YOU_JIRA_TICKET_HERE#cli-schema — prefer …
 ```
 
 Then:

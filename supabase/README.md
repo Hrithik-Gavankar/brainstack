@@ -4,7 +4,7 @@ Collaborative **AI memory** for a crew on the same Jira initiative:
 
 | Layer | Role |
 |-------|------|
-| **Jira** | Initiative identity (`AAP-81423`, …) |
+| **Jira** | Initiative identity (`YOU_JIRA_TICKET_HERE`, …) |
 | **Supabase** | Membership + shared memories (SoT) |
 | **Local cache** | `.team-brain/cache/<KEY>.json` for agents |
 | **Markdown** | Optional export under `initiatives/<KEY>.md` |
@@ -62,7 +62,7 @@ bash core/scripts/team-brain-api.sh bootstrap \
   --team "Spike Crew" --admin "Alice" \
   --url "https://YOUR_REF.supabase.co" \
   --anon "eyJ..." \
-  --jira AAP-81423 \
+  --jira YOU_JIRA_TICKET_HERE \
   --write-env
 
 # Step 2 — after pasting supabase/.bootstrap-migrations.combined.sql in SQL Editor:
@@ -70,7 +70,7 @@ bash core/scripts/team-brain-api.sh bootstrap \
   --team "Spike Crew" --admin "Alice" \
   --url "https://YOUR_REF.supabase.co" \
   --anon "eyJ..." \
-  --jira AAP-81423 \
+  --jira YOU_JIRA_TICKET_HERE \
   --write-env \
   --skip-migrations
 
@@ -80,11 +80,11 @@ bash core/scripts/team-brain-api.sh bootstrap \
   --url "https://YOUR_REF.supabase.co" \
   --anon "eyJ..." \
   --db-url "postgresql://postgres:YOUR_DB_PASSWORD@db.YOUR_REF.supabase.co:5432/postgres" \
-  --jira AAP-81423 \
+  --jira YOU_JIRA_TICKET_HERE \
   --write-env
 
 # Linked Supabase CLI:
-bash core/scripts/team-brain-api.sh bootstrap --team "Spike Crew" --admin "Alice" --jira AAP-81423
+bash core/scripts/team-brain-api.sh bootstrap --team "Spike Crew" --admin "Alice" --jira YOU_JIRA_TICKET_HERE
 
 # Local Docker demo:
 bash core/scripts/team-brain-api.sh bootstrap --team "Local Crew" --admin "Alice" --local --jira DEMO-1
@@ -110,15 +110,15 @@ Ask your admin for: **invite code**, **Jira key**, and the crew’s **Supabase U
 
 ```bash
 cd brainstack
-bash core/scripts/team-brain-api.sh onboard <INVITE> "Your Name" AAP-81423
+bash core/scripts/team-brain-api.sh onboard <INVITE> "Your Name" YOU_JIRA_TICKET_HERE
 ```
 
 **Day to day**
 
 ```bash
-bash core/scripts/team-brain-api.sh remember AAP-81423 research "What I learned…"
-bash core/scripts/team-brain-api.sh recall AAP-81423
-bash core/scripts/team-brain-api.sh breakdown AAP-81423
+bash core/scripts/team-brain-api.sh remember YOU_JIRA_TICKET_HERE research "What I learned…"
+bash core/scripts/team-brain-api.sh recall YOU_JIRA_TICKET_HERE
+bash core/scripts/team-brain-api.sh breakdown YOU_JIRA_TICKET_HERE
 ```
 
 ---

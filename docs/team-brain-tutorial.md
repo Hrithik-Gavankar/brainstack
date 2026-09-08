@@ -525,10 +525,10 @@ bash core/scripts/team-brain-api.sh sync-status <JIRA-KEY>
 bash core/scripts/team-brain-api.sh metrics <JIRA-KEY>
 
 # Cursor chat
-"I'm starting on AAP-81423 — start Team Brain sync."
+"I'm starting on YOU_JIRA_TICKET_HERE — start Team Brain sync."
 "Remember: CLI entrypoint is in pkg/scaffold."
 "What does Team Brain know about scaffold?"
-"Breakdown AAP-81423 from Team Brain memory."
+"Breakdown YOU_JIRA_TICKET_HERE from Team Brain memory."
 ```
 
 ---

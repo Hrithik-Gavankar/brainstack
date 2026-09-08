@@ -5,11 +5,13 @@
 **You do not need:** your own Supabase account, a `service_role` key, or Docker.  
 **You do need from your admin:** invite code, Jira key, and the crew’s Supabase **project URL + anon key** (placeholders ship in the repo — not a live project).
 
+> **Workshop demo scripts:** `docs/workshop-brainstack-day0.md` (local workshop copy — not in the public repo) documents **`team-brain-admin-setup.sh`** / **`team-brain-member-setup.sh`** with demo epic **`KAN-4`**. Everything below uses **`YOU_JIRA_TICKET_HERE`** (replace with your ticket key).
+
 ---
 
 ## What is Team Brain? (30 seconds)
 
-You and your teammates work on the **same Jira ticket** (for example `AAP-81423`).
+You and your teammates work on the **same Jira ticket** (for example `YOU_JIRA_TICKET_HERE`).
 
 Without Team Brain, each person’s AI starts cold and re-researches the same things.
 
@@ -46,7 +48,7 @@ Ask a teammate (crew admin) for **secrets** (Slack/chat is fine). The **Jira key
 |---------|---------|--------|
 | **Invite code** | 16 hex chars | From admin’s `register` / `rotate-invite` — never in git |
 | **Supabase URL + anon key** | `https://….supabase.co` + anon JWT | Crew’s project — local env / `project.public.env` only |
-| **Jira key** (if no pin) | `AAP-81423` | Or pull `.team-brain/project.json` from the product repo (#39) |
+| **Jira key** (if no pin) | `YOU_JIRA_TICKET_HERE` | Or pull `.team-brain/project.json` from the product repo (#39) |
 | **Role** (required) | `member` (read+write+delete) or `viewer` (read-only) | Admin tells you which; pass `--role` on onboard |
 
 Also make sure you have:
@@ -70,11 +72,11 @@ Many crews commit **only** `.team-brain/project.json` (Jira key + team name — 
 ```bash
 # In the product workspace (example shape):
 cat .team-brain/project.json
-# { "default_jira_key": "AAP-81423", "team_name": "Spike Crew", … }
+# { "default_jira_key": "YOU_JIRA_TICKET_HERE", "team_name": "Spike Crew", … }
 ```
 
 Example fixture: [examples/team-spike-crew/project.json](../examples/team-spike-crew/project.json).  
-Admin creates/updates the pin with: `bash core/scripts/team-brain-api.sh pin set --jira AAP-81423 --team-name "Spike Crew"`.
+Admin creates/updates the pin with: `bash core/scripts/team-brain-api.sh pin set --jira YOU_JIRA_TICKET_HERE --team-name "Spike Crew"`.
 
 ### Step 1 — Open a terminal in the right place
 
@@ -95,7 +97,7 @@ Edit `supabase/project.public.env` (or export env / fill `.team-brain/team.yaml`
 bash core/scripts/team-brain-api.sh onboard INVITE_CODE "Your Name" --role member
 
 # Or explicit Jira + contributor role:
-bash core/scripts/team-brain-api.sh onboard INVITE_CODE "Your Name" AAP-81423 --role member
+bash core/scripts/team-brain-api.sh onboard INVITE_CODE "Your Name" YOU_JIRA_TICKET_HERE --role member
 
 # Read-only viewer:
 bash core/scripts/team-brain-api.sh onboard INVITE_CODE "Your Name" --role viewer
@@ -104,7 +106,7 @@ bash core/scripts/team-brain-api.sh onboard INVITE_CODE "Your Name" --role viewe
 **Real example:**
 
 ```bash
-bash core/scripts/team-brain-api.sh onboard 9F7AC910 "Ada Junior" AAP-81423 --role member
+bash core/scripts/team-brain-api.sh onboard 9F7AC910 "Ada Junior" YOU_JIRA_TICKET_HERE --role member
 ```
 
 Tips:
@@ -145,9 +147,9 @@ Team Brain created a folder next to your work (often the parent workspace), for 
 ├── credentials.json    ← YOUR secret — never commit or paste in Slack
 ├── team.yaml           ← often has URL+anon locally — do not commit anon
 ├── cache/
-│   └── AAP-81423.json  ← what agents should read
+│   └── YOU_JIRA_TICKET_HERE.json  ← what agents should read
 └── initiatives/
-    └── AAP-81423.md    ← optional human-readable export
+    └── YOU_JIRA_TICKET_HERE.md    ← optional human-readable export
 ```
 
 **Safety rule:** never commit `credentials.json`. Never share your `api_key`. Sharing the **invite code** with a new teammate is OK.
@@ -161,12 +163,12 @@ Use the **same Jira key** your crew is on.
 ### 1) Start sync (the only manual step before work)
 
 ```bash
-bash core/scripts/team-brain-api.sh start AAP-81423
+bash core/scripts/team-brain-api.sh start YOU_JIRA_TICKET_HERE
 ```
 
 This:
 
-- Loads crew memories into `.team-brain/cache/AAP-81423.json`
+- Loads crew memories into `.team-brain/cache/YOU_JIRA_TICKET_HERE.json`
 - Starts **background sync** (merge-safe pull)
 - Stays awake while you/`touch`/`remember`/`recall` stay active
 - **Sleeps after 1 hour** of no local activity (warning ~5 min before)
@@ -174,13 +176,13 @@ This:
 Check:
 
 ```bash
-bash core/scripts/team-brain-api.sh sync-status AAP-81423
+bash core/scripts/team-brain-api.sh sync-status YOU_JIRA_TICKET_HERE
 ```
 
 Optional topic search anytime:
 
 ```bash
-bash core/scripts/team-brain-api.sh recall AAP-81423 "scaffold"
+bash core/scripts/team-brain-api.sh recall YOU_JIRA_TICKET_HERE "scaffold"
 ```
 
 ### 2) Save something useful you learned
@@ -188,7 +190,7 @@ bash core/scripts/team-brain-api.sh recall AAP-81423 "scaffold"
 Keep it short and professional (a teammate’s AI will see this). Prefer a stable `--source-ref`:
 
 ```bash
-bash core/scripts/team-brain-api.sh remember AAP-81423 research --source-ref "AAP-81423#cli-entrypoint" "Found CLI entrypoint in pkg/scaffold — start there for EE schema."
+bash core/scripts/team-brain-api.sh remember YOU_JIRA_TICKET_HERE research --source-ref "YOU_JIRA_TICKET_HERE#cli-entrypoint" "Found CLI entrypoint in pkg/scaffold — start there for EE schema."
 ```
 
 | Kind | When to use |
@@ -206,19 +208,19 @@ Merge rules:
 ### 3) Draft stories / stop when done
 
 ```bash
-bash core/scripts/team-brain-api.sh breakdown AAP-81423
-bash core/scripts/team-brain-api.sh stop AAP-81423
+bash core/scripts/team-brain-api.sh breakdown YOU_JIRA_TICKET_HERE
+bash core/scripts/team-brain-api.sh stop YOU_JIRA_TICKET_HERE
 ```
 
-If sync slept: `wake AAP-81423` (or `start` again).
+If sync slept: `wake YOU_JIRA_TICKET_HERE` (or `start` again).
 
 ### Optional — background `watch` on long spikes
 
 Sync mode already pulls while active, but during a **long** research session you can keep the cache warmer without waiting for idle sleep or the next `start`:
 
 ```bash
-bash core/scripts/team-brain-api.sh watch AAP-81423 &
-# or with Realtime push (full content, encrypted; falls back to signal+pull without `cryptography`): watch AAP-81423 --push &
+bash core/scripts/team-brain-api.sh watch YOU_JIRA_TICKET_HERE &
+# or with Realtime push (full content, encrypted; falls back to signal+pull without `cryptography`): watch YOU_JIRA_TICKET_HERE --push &
 ```
 
 Run it **once** when the spike gets long — not every command. Cursor agents also refresh via periodic `recall` (see the team-brain skill); `watch` is the human/CLI companion. If sync **slept**, use `wake` (or `start`) — `watch` does not replace sleep/wake.
@@ -257,7 +259,7 @@ bash core/scripts/team-brain-api.sh bootstrap \
   --team "Team Name" --admin "Your Name" \
   --url "https://YOUR_REF.supabase.co" \
   --anon "eyJ..." \
-  --jira AAP-81423 \
+  --jira YOU_JIRA_TICKET_HERE \
   --write-env
 ```
 
@@ -280,7 +282,7 @@ bash core/scripts/team-brain-api.sh bootstrap \
   --url "https://YOUR_REF.supabase.co" \
   --anon "eyJ..." \
   --db-url "postgresql://postgres:YOUR_DB_PASSWORD@db.YOUR_REF.supabase.co:5432/postgres" \
-  --jira AAP-81423 \
+  --jira YOU_JIRA_TICKET_HERE \
   --write-env
 ```
 
@@ -295,7 +297,7 @@ bash core/scripts/team-brain-api.sh bootstrap \
   --team "Team Name" --admin "Your Name" \
   --url "https://YOUR_REF.supabase.co" \
   --anon "eyJ..." \
-  --jira AAP-81423 \
+  --jira YOU_JIRA_TICKET_HERE \
   --write-env \
   --skip-migrations
 ```
@@ -313,7 +315,7 @@ When members hit overlapping research, they can **`remember … --queue`**. You 
 bash core/scripts/team-brain-api.sh list-members
 
 # Review pending overrides for an initiative
-bash core/scripts/team-brain-api.sh pending list AAP-81423
+bash core/scripts/team-brain-api.sh pending list YOU_JIRA_TICKET_HERE
 
 # Keep the improved finding (promotes to live memory)
 bash core/scripts/team-brain-api.sh pending approve <pending-id> --note "Supersedes prior auth note"
@@ -333,7 +335,7 @@ Verify migrations: `bash core/scripts/team-brain-api.sh doctor` should report `p
 
 ```bash
 bash core/scripts/team-brain-api.sh register "Team Name" "Your Name"
-bash core/scripts/team-brain-api.sh attach AAP-81423 "Short title" "active" "https://your-org.atlassian.net/browse/AAP-81423"
+bash core/scripts/team-brain-api.sh attach YOU_JIRA_TICKET_HERE "Short title" "active" "https://your-org.atlassian.net/browse/YOU_JIRA_TICKET_HERE"
 ```
 
 > **Note:** New teams get 16-character invite codes. Only admins see the invite via `register` / `whoami` / bootstrap share bundle — joiners’ `credentials.json` does not store it.
@@ -355,7 +357,7 @@ bash core/scripts/team-brain-api.sh attach AAP-81423 "Short title" "active" "htt
 | **Peer push while sync/`watch` active** | ✅ Signal Broadcast (#31) + poll fallback; needs `start` or `watch` once |
 | **Push into open chat with zero `start`** | ❌ Still needs you (or the agent) to enter sync mode once |
 
-**Cursor:** say *“I’m starting on AAP-81423 — start Team Brain sync.”*  
+**Cursor:** say *“I’m starting on YOU_JIRA_TICKET_HERE — start Team Brain sync.”*  
 The always-on rule expects `start` → summarize cache → work → `remember` / `touch`.
 
 ## Daily habits (keep it simple)
@@ -379,7 +381,7 @@ The always-on rule expects `start` → summarize cache → work → `remember` /
 Agents can be wrong. When you paste a correction, the AI should **update** the matching memory (same `source_ref`) — not leave a stale row and not invent a second topic slug.
 
 ```bash
-bash core/scripts/team-brain-api.sh correct AAP-81423 --source-ref "AAP-81423#cli-schema" \
+bash core/scripts/team-brain-api.sh correct YOU_JIRA_TICKET_HERE --source-ref "YOU_JIRA_TICKET_HERE#cli-schema" \
   --was "Claimed schema lived in tox-ansible" \
   "EE schema path lives in packages/ansible-language-server."
 ```
@@ -390,8 +392,8 @@ Memory bodies should be natural prefer/avoid guidance — not TODO/NO-TODO lists
 Each `source_ref` update **archives** the prior body. Inspect or soft-rollback:
 
 ```bash
-bash core/scripts/team-brain-api.sh history AAP-81423 --source-ref "AAP-81423#cli-schema"
-bash core/scripts/team-brain-api.sh restore AAP-81423 --source-ref "AAP-81423#cli-schema" --revision 1
+bash core/scripts/team-brain-api.sh history YOU_JIRA_TICKET_HERE --source-ref "YOU_JIRA_TICKET_HERE#cli-schema"
+bash core/scripts/team-brain-api.sh restore YOU_JIRA_TICKET_HERE --source-ref "YOU_JIRA_TICKET_HERE#cli-schema" --revision 1
 ```
 
 `restore` keeps the audit trail (current body is archived before rollback).
@@ -399,11 +401,11 @@ bash core/scripts/team-brain-api.sh restore AAP-81423 --source-ref "AAP-81423#cl
 In Cursor you can say:
 
 ```text
-Correct Team Brain for AAP-81423#cli-schema — the schema is in packages/ansible-language-server, not tox-ansible.
+Correct Team Brain for YOU_JIRA_TICKET_HERE#cli-schema — the schema is in packages/ansible-language-server, not tox-ansible.
 ```
 
 ```text
-Show Team Brain history for AAP-81423#cli-schema and restore revision 1 if needed.
+Show Team Brain history for YOU_JIRA_TICKET_HERE#cli-schema and restore revision 1 if needed.
 ```
 
 Apply once on the crew Supabase project:
@@ -431,27 +433,27 @@ That installs:
 Paste into Cursor chat / Composer (pick one):
 
 ```text
-I'm starting on AAP-81423 — start Team Brain sync.
+I'm starting on YOU_JIRA_TICKET_HERE — start Team Brain sync.
 ```
 
 ```text
-I'm starting on AAP-81423 — start Team Brain sync, summarize crew memory, then help me.
+I'm starting on YOU_JIRA_TICKET_HERE — start Team Brain sync, summarize crew memory, then help me.
 ```
 
 ```text
-/team-brain start AAP-81423
+/team-brain start YOU_JIRA_TICKET_HERE
 ```
 
 Other useful lines:
 
 | When | Say this |
 |------|----------|
-| Keep working after a break | `Wake Team Brain sync for AAP-81423 and continue.` |
-| Done for the day | `Stop Team Brain sync for AAP-81423.` |
-| Check state | `What's my Team Brain sync-status for AAP-81423?` |
-| Compliance | `What's Team Brain compliance for AAP-81423?` |
-| Plan stories | `Breakdown AAP-81423 from Team Brain memory.` |
-| Fix bad research | `Correct Team Brain for AAP-81423#<slug> — …` |
+| Keep working after a break | `Wake Team Brain sync for YOU_JIRA_TICKET_HERE and continue.` |
+| Done for the day | `Stop Team Brain sync for YOU_JIRA_TICKET_HERE.` |
+| Check state | `What's my Team Brain sync-status for YOU_JIRA_TICKET_HERE?` |
+| Compliance | `What's Team Brain compliance for YOU_JIRA_TICKET_HERE?` |
+| Plan stories | `Breakdown YOU_JIRA_TICKET_HERE from Team Brain memory.` |
+| Fix bad research | `Correct Team Brain for YOU_JIRA_TICKET_HERE#<slug> — …` |
 
 Then work. After findings the AI should `remember` (and `touch`) without you asking.  
 If `compliance.agent_action` is set, the agent should follow it before deep research.  
@@ -524,9 +526,9 @@ bash core/scripts/team-brain-api.sh metrics <JIRA-KEY>
 bash core/scripts/team-brain-api.sh metrics --team   # crew coverage + reuse (#35)
 
 # Or in Cursor chat:
-#   I'm starting on AAP-81423 — start Team Brain sync.
-#   Wake Team Brain sync for AAP-81423 and continue.
-#   Stop Team Brain sync for AAP-81423.
+#   I'm starting on YOU_JIRA_TICKET_HERE — start Team Brain sync.
+#   Wake Team Brain sync for YOU_JIRA_TICKET_HERE and continue.
+#   Stop Team Brain sync for YOU_JIRA_TICKET_HERE.
 ```
 
 ---

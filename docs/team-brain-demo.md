@@ -29,7 +29,7 @@ With Team Brain, knowledge compounds:
 
 ```bash
 # In Cursor chat:
-"I'm starting on AAP-81423 — start Team Brain sync."
+"I'm starting on YOU_JIRA_TICKET_HERE — start Team Brain sync."
 ```
 
 What happens:
@@ -41,8 +41,8 @@ What happens:
 
 ```bash
 # AI finds something useful:
-bash core/scripts/team-brain-api.sh remember AAP-81423 research \
-  --source-ref "AAP-81423#cli-entrypoint" \
+bash core/scripts/team-brain-api.sh remember YOU_JIRA_TICKET_HERE research \
+  --source-ref "YOU_JIRA_TICKET_HERE#cli-entrypoint" \
   "CLI entrypoint is in pkg/scaffold — start here for EE schema."
 ```
 
@@ -53,7 +53,7 @@ bash core/scripts/team-brain-api.sh remember AAP-81423 research \
 
 ```bash
 # Bob's AI pulls the knowledge:
-bash core/scripts/team-brain-api.sh recall AAP-81423 "scaffold"
+bash core/scripts/team-brain-api.sh recall YOU_JIRA_TICKET_HERE "scaffold"
 ```
 
 Result:
@@ -63,7 +63,7 @@ Result:
   "memories": [{
     "author": "Alice",
     "body": "CLI entrypoint is in pkg/scaffold — start here for EE schema.",
-    "source_ref": "AAP-81423#cli-entrypoint"
+    "source_ref": "YOU_JIRA_TICKET_HERE#cli-entrypoint"
   }]
 }
 ```
@@ -71,7 +71,7 @@ Result:
 ### 4. Breakdown into stories
 
 ```bash
-bash core/scripts/team-brain-api.sh breakdown AAP-81423
+bash core/scripts/team-brain-api.sh breakdown YOU_JIRA_TICKET_HERE
 ```
 
 Generates a draft epic breakdown from shared memory — stories, spikes, implementation hints.
@@ -124,27 +124,27 @@ Generates a draft epic breakdown from shared memory — stories, spikes, impleme
 bash core/scripts/team-brain-api.sh bootstrap \
   --team "Spike Crew" --admin "Alice" \
   --url "https://….supabase.co" --anon "eyJ…" \
-  --db-url "postgresql://…" --jira AAP-81423 --write-env
+  --db-url "postgresql://…" --jira YOU_JIRA_TICKET_HERE --write-env
 ```
 
 **Teammate (admin assigns role):**
 ```bash
 # Contributor (read + write + delete):
-bash core/scripts/team-brain-api.sh onboard <INVITE> "Bob" AAP-81423 --role member
+bash core/scripts/team-brain-api.sh onboard <INVITE> "Bob" YOU_JIRA_TICKET_HERE --role member
 
 # Read-only observer:
-bash core/scripts/team-brain-api.sh onboard <INVITE> "Carol" AAP-81423 --role viewer
+bash core/scripts/team-brain-api.sh onboard <INVITE> "Carol" YOU_JIRA_TICKET_HERE --role viewer
 ```
 
 **Admin audit crew permissions:**
 ```bash
 bash core/scripts/team-brain-api.sh list-members
-bash core/scripts/team-brain-api.sh pending list AAP-81423   # review queued overrides (#67)
+bash core/scripts/team-brain-api.sh pending list YOU_JIRA_TICKET_HERE   # review queued overrides (#67)
 ```
 
 **Work session:**
 ```
-I'm starting on AAP-81423 — start Team Brain sync.
+I'm starting on YOU_JIRA_TICKET_HERE — start Team Brain sync.
 ```
 
 ---
@@ -191,9 +191,9 @@ bash core/scripts/team-brain-api.sh remember DEMO-1 research \
 ### Cursor Chat Demo
 
 ```
-User: I'm starting on AAP-81423 — start Team Brain sync.
+User: I'm starting on YOU_JIRA_TICKET_HERE — start Team Brain sync.
 
-AI: ✓ Loaded 3 crew memories for AAP-81423.
+AI: ✓ Loaded 3 crew memories for YOU_JIRA_TICKET_HERE.
 
 Summary:
 • CLI entrypoint in pkg/scaffold (Alice)
@@ -235,7 +235,7 @@ Ready to dig in. What would you like to work on?
 
 2. **Why not just share BRAIN.md?**
    - `BRAIN.md` is personal (career, growth).
-   - Team Brain is initiative-scoped (AAP-81423 work only).
+   - Team Brain is initiative-scoped (YOU_JIRA_TICKET_HERE work only).
 
 3. **What about privacy?**
    - Each crew runs their own Supabase project.
