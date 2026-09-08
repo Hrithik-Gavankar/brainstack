@@ -328,7 +328,7 @@ bash core/scripts/team-brain-api.sh pending reject <pending-id> --note "Duplicat
 
 **Workshop Part 5:** B tries to re-store A's topic → feedback engine blocks → B recalls A's `source_ref` OR queues → admin keeps only the improved version.
 
-**UI dashboard:** [#69](https://github.com/Hrithik-Gavankar/brainstack/issues/69) — admin review inbox (CLI/MCP is v1).
+**Admin review dashboard:** [`dashboard/`](../dashboard/README.md#team-brain-admin-review-queue) — local `/admin/review` UI (same RPCs as CLI). Run `npm run dev` in `dashboard/`, open `/admin/review`, connect with admin `tb_…` key. GitHub Pages demo does **not** include live review (credentials stay local).
 
 ---
 
@@ -339,7 +339,7 @@ bash core/scripts/team-brain-api.sh pending reject <pending-id> --note "Duplicat
 | Recall before research | ✅ Rule/skill/MCP | Keep mandatory |
 | Remember after findings | ✅ Direct save | Keep mandatory |
 | Dedup (`source_ref`) | ✅ | — |
-| Redundant guard + pending queue | ✅ CLI/MCP (#67) | Admin dashboard UI |
+| Redundant guard + pending queue | ✅ CLI/MCP (#67) | ✅ Admin dashboard UI (`dashboard/admin/review`) |
 | Correction / learning | ✅ `correct` + `learning` kind | — |
 | Version/history/soft rollback | ✅ `history` / `restore` + `capture_revisions` | Optional snapshots / UI |
 | Tombstone delete / governance | ✅ `delete` + `list-members`; peer cache eviction | Per-initiative ACLs (deferred) |
