@@ -82,7 +82,7 @@ weekend, skip — standups don't happen on weekends.
    - Prefer **`plugin-atlassian-atlassian`** (Cursor marketplace [Atlassian plugin](https://cursor.com/marketplace/atlassian)).
      Do **not** rely on `jira.sh` in Cursor unless MCP is unavailable **and** `JIRA_*` env vars are set.
    - If the namespace is missing or `needsAuth` → tell the user to complete
-     [engineer-brain-onboarding.md](../../../docs/engineer-brain-onboarding.md) Step 3;
+     [engineer-brain-onboarding.md](../../../../docs/engineer-brain-onboarding.md) Step 3;
      list Jira as **blocked** in standup — do not silently omit ticket context.
    - When connected:
      1. `getAccessibleAtlassianResources` → `cloudId` (e.g. `redhat.atlassian.net`)
@@ -404,7 +404,7 @@ After each `update`, compare current state against previous state:
 ## Integration Points
 
 - **Daily sync**: Run `sync` before standup meetings — **always** includes Jira via Atlassian MCP
-- **Onboarding**: [engineer-brain-onboarding.md](../../../docs/engineer-brain-onboarding.md) — Atlassian plugin setup
+- **Onboarding**: [engineer-brain-onboarding.md](../../../../docs/engineer-brain-onboarding.md) — Atlassian plugin setup
 - **Weekly reflection**: Run `reflect` on Fridays
 - **Monthly update**: Run `update` at month start
 - **Quarterly prep**: Run `quarterly` before performance reviews
