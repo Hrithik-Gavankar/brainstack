@@ -9,7 +9,7 @@ description: >-
   "update my brain", "brain scan", "engineering context", or ask about
   your own work patterns, "doctor", "health check", "brain health",
   "watch PRs", "PR digest", "review queue".
-argument-hint: <command> — sync | update | quarterly | reflect | scan [days] | doctor | watch [--repos ...] [--stale-days N] [--loop N]
+argument-hint: <command> — sync | update [--quiet] | diff [days-ago] | quarterly | reflect | scan [days] | doctor | watch [--repos ...] [--stale-days N] [--loop N]
 tools: Read, Write, Shell, Glob, Grep
 ---
 
@@ -169,18 +169,23 @@ When the user pastes or describes their real standup after a generated sync:
    `scripts/scan.sh` config and/or the sync steps above in the same session.
 5. Confirm to the user what changed — do not re-litigate the correction.
 
-### `update` (refresh the brain)
+### `update [--quiet]` (refresh the brain)
 
 Re-scan everything and update BRAIN.md.
 
-1. Run the full scan for the last 30 days:
+1. Snapshot the current brain before editing:
+   ```bash
+   bash "${SKILL_DIR}/scripts/brain-history.sh" begin "${SKILL_DIR}/BRAIN.md"
+   ```
+
+2. Run the full scan for the last 30 days:
    ```bash
    bash "${SKILL_DIR}/scripts/scan.sh" "$HOME/path/to/workspace" 30
    ```
 
-2. Read the current `${SKILL_DIR}/BRAIN.md`.
+3. Read the current `${SKILL_DIR}/BRAIN.md`.
 
-3. For each section in BRAIN.md, update with fresh data:
+4. For each section in BRAIN.md, update with fresh data:
    - **Active Repositories**: re-count commits, update last-active dates
    - **Expertise Map**: reclassify based on new commits and file patterns
    - **Work Patterns**: recalculate commit type distribution and velocity
@@ -189,16 +194,25 @@ Re-scan everything and update BRAIN.md.
    - **Learning Log**: add entries for new technologies or patterns encountered
    - **Quarterly Template**: append new accomplishments
 
-4. Write the updated BRAIN.md back.
+5. Write the updated BRAIN.md back.
 
-5. Print a summary of what changed:
+6. Display the real colored diff (append `--quiet` only if requested):
+   ```bash
+   bash "${SKILL_DIR}/scripts/brain-history.sh" finish "${SKILL_DIR}/BRAIN.md" [--quiet]
    ```
-   ## Brain Updated — [DATE]
-   - X new commits since last update
-   - New expertise signal: [if any new repo or tech area]
-   - Velocity trend: [up/down/stable]
-   - Growth checklist: X/Y items addressed
-   ```
+   Show the helper output as-is: dated "Brain Updated" header, categorized changes
+   (new/cooling repos, expertise moves, velocity), then the colored detailed diff.
+   Do not invent a summary from memory.
+
+### `diff [days-ago]` (inspect brain history)
+
+```bash
+bash "${SKILL_DIR}/scripts/brain-history.sh" diff "${SKILL_DIR}/BRAIN.md" [days-ago]
+```
+
+This compares the current brain with the most recent saved pre-update version, or
+the newest version at least `days-ago` days old. History stays local in
+`${SKILL_DIR}/history/` and must not be committed.
 
 ### `quarterly` (performance review prep)
 

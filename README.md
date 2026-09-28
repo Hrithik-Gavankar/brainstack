@@ -340,7 +340,8 @@ Both scopes work with every major AI coding assistant. Same brain, native format
 | Command | Description |
 |---------|-------------|
 | `engineer-brain sync` | Generate paste-ready standup notes from git history |
-| `engineer-brain update` | Refresh BRAIN.md with latest commits, patterns, and metrics |
+| `engineer-brain update [--quiet]` | Refresh BRAIN.md and show a colored, categorized diff |
+| `engineer-brain diff [days-ago]` | Compare the current brain with a saved local version |
 | `engineer-brain quarterly` | Generate structured quarterly review with impact numbers |
 | `engineer-brain reflect` | Pattern analysis: blind spots, habits, recommendations |
 | `engineer-brain scan [days]` | Raw multi-repo git scan (add `--json` for structured output) |
