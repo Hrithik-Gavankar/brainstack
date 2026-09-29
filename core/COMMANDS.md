@@ -109,18 +109,23 @@ weekend, skip — standups don't happen on weekends.
    ground truth: update BRAIN.md sprint context, note missed signal types, and improve
    scanner config when the gap is systemic. Do not argue with the correction.
 
-### `update` (refresh the brain)
+### `update [--quiet]` (refresh the brain)
 
 Re-scan everything and update BRAIN.md.
 
-1. Run the full scan for the last 30 days:
+1. Before changing BRAIN.md, save its current state:
+   ```bash
+   bash <path-to-scripts>/brain-history.sh begin <path-to-BRAIN.md>
+   ```
+
+2. Run the full scan for the last 30 days:
    ```bash
    bash <path-to-scripts>/scan.sh "$HOME/path/to/workspace" 30
    ```
 
-2. Read the current `BRAIN.md`.
+3. Read the current `BRAIN.md`.
 
-3. For each section in BRAIN.md, update with fresh data:
+4. For each section in BRAIN.md, update with fresh data:
    - **Active Repositories**: re-count commits, update last-active dates
    - **Expertise Map**: reclassify based on new commits and file patterns
    - **Work Patterns**: recalculate commit type distribution and velocity
@@ -129,16 +134,30 @@ Re-scan everything and update BRAIN.md.
    - **Learning Log**: add entries for new technologies or patterns encountered
    - **Quarterly Template**: append new accomplishments
 
-4. Write the updated BRAIN.md back.
+5. Write the updated BRAIN.md back.
 
-5. Print a summary of what changed:
+6. Show the deterministic, colored before/after diff. Pass `--quiet` only when the
+   user invoked `update --quiet`:
+   ```bash
+   bash <path-to-scripts>/brain-history.sh finish <path-to-BRAIN.md> [--quiet]
    ```
-   ## Brain Updated — [DATE]
-   - X new commits since last update
-   - New expertise signal: [if any new repo or tech area]
-   - Velocity trend: [up/down/stable]
-   - Growth checklist: X/Y items addressed
-   ```
+   The helper prints a dated summary with categorized learning signals (new/cooling
+   repos, expertise level moves, velocity shifts), then a colored unified diff
+   (green=added, red=removed, yellow=hunks). Never fabricate this summary from
+   memory; use the helper output.
+
+### `diff [days-ago]` (inspect brain history)
+
+Compare the current BRAIN.md with a saved pre-update version. `days-ago` defaults to
+`0` (the most recent update); a positive value selects the newest version at least
+that many days old.
+
+```bash
+bash <path-to-scripts>/brain-history.sh diff <path-to-BRAIN.md> [days-ago]
+```
+
+History is stored beside BRAIN.md under `history/`. It contains personal brain data,
+stays local, and must not be committed.
 
 ### `quarterly` (performance review prep)
 
