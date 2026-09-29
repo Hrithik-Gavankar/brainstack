@@ -58,6 +58,8 @@ extract_repos() {
       gsub(/^\|[[:space:]]+|[[:space:]]+\|$/, "", line)
       n=split(line, cols, /[[:space:]]*\|[[:space:]]*/)
       name=cols[1]
+      # Match list-style rows: strip markdown emphasis so **api** == api.
+      gsub(/[*`_]/, "", name)
       if (name == "" || name ~ /^:?-+:?$/ || tolower(name) == "repo") next
       detail=""
       if (n >= 4 && cols[4] != "") detail=detail "last-active " cols[4]
@@ -123,10 +125,12 @@ extract_expertise() {
   ' "$1"
 }
 
-# Best-effort weekly velocity integer from Work Patterns / Velocity sections.
+# Weekly velocity integer only from explicit commits/week (or commits per week).
+# Avoid loose "velocity + any number" matches that misread templates like
+# "Velocity increased 2.5x" as "2 commits/week".
 extract_velocity() {
   awk '
-    BEGIN { in_section=0; best="" }
+    BEGIN { in_section=0 }
     /^## / {
       in_section = ($0 ~ /^## (Work Patterns|Velocity)/)
       next
@@ -134,18 +138,14 @@ extract_velocity() {
     in_section && /^## / { exit }
     !in_section { next }
     {
-      line=tolower($0)
       if (match($0, /([0-9]+)([[:space:]]*commits?[[:space:]]*\/[[:space:]]*week|[[:space:]]*commits?[[:space:]]+per[[:space:]]+week)/)) {
-        if (match($0, /[0-9]+/)) {
-          print substr($0, RSTART, RLENGTH)
+        text=substr($0, RSTART, RLENGTH)
+        if (match(text, /[0-9]+/)) {
+          print substr(text, RSTART, RLENGTH)
           exit
         }
       }
-      if (line ~ /velocity/ && match($0, /[0-9]+/)) {
-        best=substr($0, RSTART, RLENGTH)
-      }
     }
-    END { if (best != "") print best }
   ' "$1"
 }
 

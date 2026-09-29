@@ -131,4 +131,90 @@ bash "$SCRIPT" begin "$BRAIN"
 unchanged=$(bash "$SCRIPT" finish "$BRAIN")
 grep -q 'Brain unchanged' <<<"$unchanged"
 
+# Bold table repo names must not look like new/cooling when only markdown changes.
+cat >"$BRAIN" <<'EOF'
+# Engineer Brain
+
+## Active Repositories
+
+| Repo | Role | Contribution Level | Last Active | Focus Area |
+|------|------|--------------------|-------------|------------|
+| **api** | Primary | Moderate | 2026-07-12 | services |
+
+## Expertise Map
+
+### Strong (proven at current and past roles)
+- Go: 20 commits
+
+### Growing (actively building)
+
+## Work Patterns
+
+### Velocity Trend
+- Velocity increased 2.5x
+EOF
+
+bash "$SCRIPT" begin "$BRAIN"
+cat >"$BRAIN" <<'EOF'
+# Engineer Brain
+
+## Active Repositories
+
+| Repo | Role | Contribution Level | Last Active | Focus Area |
+|------|------|--------------------|-------------|------------|
+| api | Primary | Moderate | 2026-07-12 | services |
+
+## Expertise Map
+
+### Strong (proven at current and past roles)
+- Go: 20 commits
+
+### Growing (actively building)
+
+## Work Patterns
+
+### Velocity Trend
+- Velocity trend is up this month
+EOF
+
+bold_out=$(bash "$SCRIPT" finish "$BRAIN")
+if grep -q 'New repo contributed to: api' <<<"$bold_out"; then
+  echo "bold table normalization failed: reported api as new" >&2
+  exit 1
+fi
+if grep -q 'Cooling repo: api' <<<"$bold_out"; then
+  echo "bold table normalization failed: reported api as cooling" >&2
+  exit 1
+fi
+if grep -q 'Velocity:' <<<"$bold_out"; then
+  echo "loose velocity fallback must not emit commits/week from prose" >&2
+  exit 1
+fi
+
+# Explicit commits/week still detected when present.
+bash "$SCRIPT" begin "$BRAIN"
+cat >"$BRAIN" <<'EOF'
+# Engineer Brain
+
+## Active Repositories
+
+| Repo | Role | Contribution Level | Last Active | Focus Area |
+|------|------|--------------------|-------------|------------|
+| api | Primary | Moderate | 2026-07-12 | services |
+
+## Expertise Map
+
+### Strong (proven at current and past roles)
+- Go: 20 commits
+
+### Growing (actively building)
+
+## Work Patterns
+
+### Velocity Trend
+- Velocity: 10 commits/week
+EOF
+vel_out=$(bash "$SCRIPT" finish "$BRAIN")
+grep -q 'Velocity: 10 commits/week' <<<"$vel_out"
+
 echo "brain-history smoke passed"
